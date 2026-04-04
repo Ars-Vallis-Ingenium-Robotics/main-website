@@ -140,15 +140,6 @@ const EVENT_TYPES = {
 
 const events = [
   {
-    title: "Test Event",
-    type: "testing",
-    timezoneLabel: "Pacific",
-    datetime: "2026-04-04T00:00:00-07:00",
-    endDatetime: "2026-04-04T00:10:00-07:00",
-    displayDate: "Apr 4, 2026 · 11:00 PM Pacific",
-    location: "Location not specified",
-  },
-  {
     title: "Panda Express Fundraiser",
     type: "fundraiser",
     timezoneLabel: "Pacific",
@@ -156,7 +147,7 @@ const events = [
     endDatetime: "2026-04-09T17:00:00-07:00",
     displayDate: "Apr 9, 2026 · 8:00 AM - 5:00 PM Pacific",
     location: "Panda Express, University Student Union, Fresno State",
-    link: "../Logos/smsLogo.png",
+    link: "../Files/placeholderPdf.pdf",
     linkLabel: "Fundraiser Flyer",
   },
   {
@@ -165,7 +156,7 @@ const events = [
     timezoneLabel: "Pacific",
     datetime: "2026-04-04T11:00:00-07:00",
     endDatetime: "2026-04-04T23:00:00-07:00",
-    displayDate: "Apr 4, 2026 · 11:00 PM Pacific",
+    displayDate: "Apr 4, 2026 · 11:00 AM - 11:00 PM Pacific",
     location: "CEO's House, Fresno, CA",
   },
   {
