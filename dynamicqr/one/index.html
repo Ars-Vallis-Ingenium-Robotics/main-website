@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Redirecting...</title>
+    <script>
+        // --- CONFIGURATION ---
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycxRwZBMaw8XNaPhnFTtW3uN49nQ94Uh903BaW-lwSQBy_H_pmgs_eqVKkgMLZqBtq/exec";
+        const LANDING_PAGE = "https://avirobotics.org/";
+        const CAMPAIGN = "QR_Main_2026";
+
+        function redirect() {
+            // 1. Capture info
+            const ua = encodeURIComponent(navigator.userAgent);
+            const timestamp = new Date().toISOString();
+            
+            // 2. The "Background Ping"
+            // We use 'no-cors' so the browser doesn't stop the redirect 
+            // if Google takes a second to respond.
+            fetch(`${GOOGLE_SCRIPT_URL}?ua=${ua}&campaign=${CAMPAIGN}`, { 
+                mode: 'no-cors' 
+            });
+
+            // 3. The Instant Jump
+            // .replace() is better than .href because it doesn't 
+            // clutter the user's "Back" button history.
+            window.location.replace(LANDING_PAGE);
+        }
+
+        // Run as soon as the script loads
+        redirect();
+    </script>
+    
+    <noscript>
+        <meta http-equiv="refresh" content="0;url=https://avirobotics.org/">
+    </noscript>
+</head>
+<body style="background: #ffffff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <p>Loading...</p>
+</body>
+</html>
