@@ -202,7 +202,7 @@ body{
 }
 
 /* Disclaimer */
-.footerDisclaimer{
+.disclaimer{
   margin-top: clamp(14px, 3vw, 18px);
   color: var(--muted);
   font-size: 10px;
