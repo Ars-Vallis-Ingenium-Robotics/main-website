@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AVI Robotics — Important Countdowns</title>
+
+  <link rel="apple-touch-icon" sizes="180x180" href="../Logos/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../Logos/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../Logos/favicon/favicon-16x16.png">
+  <link rel="manifest" href="../Logos/favicon/site.webmanifest">
+
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="stylesheet" href="./countdowns.css" />
+</head>
+
+<body>
+  <main class="wrap" role="main" aria-label="Important countdowns">
+    <section class="card">
+      <header class="hero">
+        <div class="logoWrap" aria-label="Alternating club logos">
+          <img
+            id="heroLogo"
+            class="logo"
+            src="../Logos/aviDogDefault.png"
+            alt="Ars Vallis Ingenium Robotics logo"
+            decoding="async"
+            loading="eager"
+          />
+        </div>
+
+        <div class="heroText">
+          <h1 class="title">Upcoming Events/Deadlines</h1>
+          <p class="subtitle" id="heroClubText">
+            Ars Vallis Ingenium (AVI) Robotics
+          </p>
+        </div>
+      </header>
+
+      <div class="divider" role="separator" aria-hidden="true"></div>
+
+      <section
+        class="countdownGrid"
+        id="countdownGrid"
+        aria-label="Countdown cards"
+      ></section>
+
+      <div class="divider" role="separator" aria-hidden="true"></div>
+
+      <footer class="footer">
+        <span class="pill" id="heroFooterLabel">AVI Robotics</span>
+        <span class="dot" aria-hidden="true">•</span>
+        <span class="fineprint">Live countdowns update every second.</span>
+      </footer>
+    </section>
+
+    <div class="bg" aria-hidden="true">
+      <div class="blob blobA"></div>
+      <div class="blob blobB"></div>
+      <div class="grid"></div>
+    </div>
+  </main>
+
+  <script src="./countdowns.js" defer></script>
+</body>
+</html>
