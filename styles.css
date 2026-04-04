@@ -127,6 +127,9 @@ body{
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  /* increase gap between button rows */
+
+
 }
 
 /* Buttons */
@@ -196,6 +199,15 @@ body{
   align-items:center;
   color: var(--muted);
   font-size: 13px;
+}
+
+/* Disclaimer */
+.disclaimer{
+  margin-top: clamp(14px, 3vw, 18px);
+  color: var(--muted);
+  font-size: 10px;
+  font-style: italic;
+  text-align: center;
 }
 
 .pill{
