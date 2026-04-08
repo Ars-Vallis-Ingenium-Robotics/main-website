@@ -147,7 +147,7 @@ const events = [
     endDatetime: "2026-04-09T17:00:00-07:00",
     displayDate: "Apr 9, 2026 · 8:00 AM - 5:00 PM Pacific",
     location: "Panda Express, University Student Union, Fresno State",
-    link: "../Files/placeholderPdf.pdf",
+    link: "../Files/2026-04-09-panda-fundraiser.pdf",
     linkLabel: "Fundraiser Flyer",
   },
   {
