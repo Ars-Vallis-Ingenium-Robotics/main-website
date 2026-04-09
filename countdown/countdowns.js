@@ -164,7 +164,7 @@ const events = [
     type: "competition",
     timezoneLabel: "Pacific",
     datetime: "2026-04-25T09:00:00-07:00",
-    endDatetime: "2026-04-27T17:00:00-07:00",
+    endDatetime: "2026-04-25T17:00:00-07:00",
     displayDate: "Apr 25, 2026 · 9:00 AM Pacific",
     location: "Watsonville, CA",
   },
