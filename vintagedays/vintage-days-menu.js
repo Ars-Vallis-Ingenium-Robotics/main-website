@@ -2,7 +2,7 @@ const PAYMENT_OPTIONS = [
   {
     name: "PayPal",
     className: "paypal",
-    href: "https://www.paypal.com/", // replace with your real PayPal link
+    href: "https://www.paypal.com/ncp/payment/F39AVSPWEY5AU", // replace with your real PayPal link
   },
   // {
   //   name: "Venmo",
