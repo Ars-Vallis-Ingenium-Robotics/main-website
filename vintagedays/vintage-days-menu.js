@@ -28,9 +28,9 @@ const MENU = {
     className: "tea",
     hint: "Cup drinks and add-ons",
     items: [
-      { name: "Thai Tea w/ Boba", price: "$5.00", image: "./images/thai-tea.jpg" },
-      { name: "Black Tea w/ Boba", price: "$5.00", image: "./images/black-tea.jpg" },
-      { name: "Strawberry Milk Tea", price: "$5.00", image: "./images/strawberry-milk-tea.jpg" }
+      { name: "Thai Tea w/ Boba", price: "$6.00", image: "./images/thai-tea.jpg" },
+      { name: "Black Tea w/ Boba", price: "$6.00", image: "./images/black-tea.jpg" },
+      { name: "Strawberry Milk Tea", price: "$6.00", image: "./images/strawberry-milk-tea.jpg" }
     ]
   },
   food: {
@@ -39,9 +39,10 @@ const MENU = {
     className: "food",
     hint: "Hot food items",
     items: [
-      { name: "Platter", price: "$12.00", image: "./images/platter.jpg" },
-      { name: "Drumstick", price: "$2.50", image: "./images/drumstick.jpg" },
-      { name: "Fries", price: "$5.00", image: "./images/fries.jpg" }
+      { name: "Plate", desc: "Includes 2x Drumsticks & Fries", price: "$12.00", image: "./images/platter.jpg" },
+      { name: "Kid's Plate", desc: "Includes 1x Drumstick & Fries", price: "$5.00", image: "./images/kids-plate.jpg" },
+      { name: "Drumstick", price: "$4.00", image: "./images/drumstick.jpg" },
+      { name: "Fries", price: "$6.00", image: "./images/fries.jpg" }
     ]
   },
   combo: {
@@ -50,7 +51,7 @@ const MENU = {
     className: "combo",
     hint: "Featured bundle",
     items: [
-      { name: "Platter w/ Drink", desc: "Includes one drink", price: "$15.00", image: "./images/platter-drink.jpg" }
+      { name: "Plate w/ Drink", desc: "Includes 2x Drumsticks, Fries, and one drink", price: "$17.00", image: "./images/platter-drink.jpg" }
     ]
   },
   extra: {
@@ -59,7 +60,8 @@ const MENU = {
     className: "extra",
     hint: "Small upgrades",
     items: [
-      { name: "Extra Syrup or Boba", price: "$0.50", image: "./images/extra-boba.jpg" }
+      { name: "Extra Drizzle or Boba", price: "$0.50", image: "./images/extra-boba.jpg" },
+      { name: "Alternative Milk", price: "$0.50", image: "./images/extra-boba.jpg" }
     ]
   }
 };
