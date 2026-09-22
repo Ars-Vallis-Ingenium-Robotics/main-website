@@ -141,9 +141,13 @@ a { color: inherit; }
   border-radius: 999px;
 }
 .site-nav a:hover,
-.site-nav a:focus-visible {
+.site-nav a:focus-visible,
+.site-nav a[aria-current="page"] {
   color: var(--text);
   background: rgba(255,255,255,0.08);
+}
+.site-nav a[aria-current="page"] {
+  border: 1px solid rgba(104,225,253,0.35);
 }
 
 .nav-toggle {
@@ -376,6 +380,48 @@ figcaption {
   border-radius: var(--radius-lg);
   background: linear-gradient(135deg, rgba(255,255,255,0.095), rgba(255,255,255,0.035));
 }
+.page-hero {
+  padding: clamp(2.6rem, 8vw, 5.5rem) 0 clamp(1.2rem, 4vw, 2rem);
+}
+.page-hero h1 { max-width: 12ch; }
+.page-hero .hero-lede { max-width: 62rem; }
+.split-panel,
+.image-callout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  gap: clamp(1.5rem, 5vw, 4rem);
+  align-items: start;
+  padding: clamp(1.4rem, 4vw, 2.2rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(255,255,255,0.095), rgba(255,255,255,0.035));
+}
+.image-callout { align-items: center; }
+.image-callout .feature-image { transform: none; }
+.timeline {
+  display: grid;
+  gap: 1rem;
+}
+.timeline-item {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--panel), rgba(255,255,255,0.035));
+}
+.timeline-item > span {
+  width: 2.35rem;
+  height: 2.35rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #06101d;
+  background: linear-gradient(135deg, var(--cyan), var(--green));
+  font-weight: 950;
+}
+.timeline-item p { margin-bottom: 0; }
 .mission-copy p:first-child { margin-top: 0; }
 .mission-copy p:last-child { margin-bottom: 0; }
 
@@ -390,6 +436,7 @@ figcaption {
   gap: 1rem;
 }
 .three-up { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.two-up { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .info-card {
   min-height: 18rem;
   display: flex;
@@ -529,12 +576,15 @@ figcaption {
   .site-nav a { padding: 0.85rem 1rem; }
   .hero,
   .mission-grid,
+  .split-panel,
+  .image-callout,
   .sponsor-panel,
   .cta-band { grid-template-columns: 1fr; }
   .hero { min-height: auto; padding-top: 1.5rem; }
   h1 { max-width: 10ch; }
   .hero-visual { min-height: 29rem; }
-  .three-up { grid-template-columns: 1fr; }
+  .three-up,
+  .two-up { grid-template-columns: 1fr; }
   .info-card { min-height: auto; }
   .sponsor-actions { max-width: 32rem; }
 }
