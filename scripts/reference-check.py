@@ -9,6 +9,7 @@ pages = [
     "history.html",
     "programs.html",
     "outreach.html",
+    "tools.html",
     "sponsors.html",
     "sms.html",
 ]
