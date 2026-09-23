@@ -707,22 +707,181 @@ body::before{
 .telemetry-stack dt{font:800 .68rem ui-monospace,monospace;color:var(--avi-gold)}
 .telemetry-stack dd{margin:.22rem 0 0;color:var(--muted-strong);font-size:.84rem}
 .tool-card .card-icon{font-family:ui-monospace,monospace;font-size:.82rem}
-.sms-brand{
-  --cyan: var(--sms-teal);
-  --green: var(--sms-green);
-  background:
-    radial-gradient(circle at 78% 8%, rgba(31,182,166,.22), transparent 26rem),
-    radial-gradient(circle at 15% 0%, rgba(159,254,125,.11), transparent 21rem),
-    linear-gradient(180deg, #02090b 0%, var(--sms-deep) 56%, #041111 100%);
+
+/* Logo-palette redesign: de-slop AVI and SMS */
+:root{
+  --avi-logo-blue:#1060e0;
+  --avi-logo-slate:#305060;
+  --avi-logo-steel:#707080;
+  --avi-logo-pale:#b0c0e0;
+  --sms-cream:#f0e0d0;
+  --sms-teal-logo:#20c0b0;
+  --sms-dark-logo:#100f0d;
 }
-.sms-brand .site-header{border-color:rgba(31,182,166,.34)}
-.sms-brand .site-nav a[aria-current="page"]{background:rgba(31,182,166,.14);border-color:rgba(159,254,125,.50)}
-.sms-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.52fr);gap:clamp(1.5rem,5vw,4rem);align-items:center;padding:clamp(3rem,8vw,6rem) 0 clamp(1.4rem,4vw,2rem)}
-.sms-hero h1{max-width:11ch}
-.sms-badge-card{position:relative;display:grid;place-items:center;text-align:center;min-height:26rem;padding:2rem;border:1px solid rgba(31,182,166,.42);border-radius:18px;background:linear-gradient(180deg,rgba(31,182,166,.13),rgba(255,255,255,.035));box-shadow:var(--shadow);overflow:hidden}
-.sms-badge-card::before{content:"";position:absolute;inset:1rem;border:1px dashed rgba(159,254,125,.35);border-radius:14px}
-.sms-badge-card img{position:relative;width:min(18rem,80%);filter:drop-shadow(0 24px 42px rgba(0,0,0,.45))}
-.sms-badge-card p,.sms-badge-card strong{position:relative}.sms-badge-card p{margin:.8rem 0 .2rem;color:var(--muted)}.sms-badge-card strong{color:var(--sms-green);letter-spacing:.16em;font-size:.78rem}
-.sms-brand .button-primary{background:linear-gradient(135deg,var(--sms-teal),var(--sms-green));}
-.sms-brand .card-icon{background:linear-gradient(135deg,var(--sms-teal),var(--sms-green));}
-@media(max-width:920px){.sms-hero{grid-template-columns:1fr}.telemetry-stack{grid-template-columns:1fr}.avi-systems-panel{min-height:28rem}}
+body:not(.sms-site){
+  background:
+    linear-gradient(90deg, rgba(16,96,224,.12) 0 1px, transparent 1px 100%),
+    linear-gradient(180deg, #f4f7fb 0%, #dfe7f2 48%, #cbd6e2 100%);
+  background-size: 72px 72px, auto;
+  color:#102033;
+}
+body:not(.sms-site)::before{
+  opacity:.55;
+  background-image:linear-gradient(135deg, transparent 0 58%, rgba(16,96,224,.08) 58% 59%, transparent 59% 100%);
+  background-size:96px 96px;
+  mask-image:none;
+}
+body:not(.sms-site) .site-header,
+body:not(.sms-site) .info-card,
+body:not(.sms-site) .timeline-item,
+body:not(.sms-site) .split-panel,
+body:not(.sms-site) .mission-grid,
+body:not(.sms-site) .sponsor-panel,
+body:not(.sms-site) .cta-band{
+  background:rgba(255,255,255,.78);
+  border-color:rgba(48,80,96,.22);
+  color:#102033;
+  box-shadow:0 18px 36px rgba(48,80,96,.10);
+}
+body:not(.sms-site) p,
+body:not(.sms-site) .hero-lede,
+body:not(.sms-site) .mission-copy,
+body:not(.sms-site) .section-heading p,
+body:not(.sms-site) dd{ color:#314457; }
+body:not(.sms-site) h1,
+body:not(.sms-site) h2,
+body:not(.sms-site) h3,
+body:not(.sms-site) .brand-copy strong{ color:#091a2d; }
+body:not(.sms-site) .eyebrow,
+body:not(.sms-site) .info-card a,
+body:not(.sms-site) .footer-links a{ color:var(--avi-logo-blue); }
+body:not(.sms-site) .site-nav a{ color:#1d3147; }
+body:not(.sms-site) .site-nav a[aria-current="page"]{ background:#e7eefb; border-color:rgba(16,96,224,.42); color:#0d45a0; }
+body:not(.sms-site) .button-primary,
+body:not(.sms-site) .card-icon{ background:linear-gradient(135deg,var(--avi-logo-blue),var(--avi-logo-slate)); color:white; }
+body:not(.sms-site) .button-secondary,
+body:not(.sms-site) .button-ghost,
+body:not(.sms-site) .mini-link{ border-color:rgba(48,80,96,.25); color:#102033; background:rgba(255,255,255,.7); }
+body:not(.sms-site) .avi-systems-panel{
+  background:#eef3f9;
+  border-color:rgba(16,96,224,.28);
+  box-shadow:0 24px 50px rgba(16,96,224,.16);
+}
+body:not(.sms-site) .panel-ruler{ background:#102033; color:#dfe9ff; border-color:rgba(16,96,224,.36); }
+body:not(.sms-site) .blueprint-grid{ background-color:#f9fbfe; background-image:linear-gradient(rgba(48,80,96,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(48,80,96,.12) 1px,transparent 1px); }
+body:not(.sms-site) .valley-line{ background:linear-gradient(90deg,transparent,var(--avi-logo-blue),var(--avi-logo-slate),transparent); }
+body:not(.sms-site) .rov-glyph{ border-color:#203a54; box-shadow:inset 0 0 0 1px rgba(16,96,224,.24); }
+body:not(.sms-site) .rov-glyph::before,
+body:not(.sms-site) .rov-glyph::after{ background:#203a54; }
+body:not(.sms-site) .rov-glyph span{ border-color:var(--avi-logo-blue); background:#eef3f9; }
+body:not(.sms-site) .node{ background:#102033; border-color:rgba(16,96,224,.65); color:#fff; }
+body:not(.sms-site) .telemetry-stack{ border-color:rgba(48,80,96,.20); background:#e8eef5; }
+body:not(.sms-site) .telemetry-stack div{ background:white; border-color:rgba(48,80,96,.18); }
+body:not(.sms-site) .telemetry-stack dt{ color:var(--avi-logo-blue); }
+body:not(.sms-site) .telemetry-stack dd{ color:#314457; }
+.sms-site{
+  --bg:#100f0d;
+  --ink:#100f0d;
+  --paper:#f0e0d0;
+  --foam:#20c0b0;
+  --sea:#0a6f68;
+  margin:0;
+  color:var(--ink);
+  background:
+    linear-gradient(180deg, rgba(32,192,176,.18), rgba(16,15,13,0) 34rem),
+    var(--paper);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.sms-site::before{ display:none; }
+.sms-header{
+  width:min(1120px, calc(100% - 32px));
+  margin:18px auto 0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  padding:.8rem 1rem;
+  border:2px solid var(--ink);
+  background:var(--paper);
+  box-shadow:8px 8px 0 var(--ink);
+  position:sticky;
+  top:14px;
+  z-index:20;
+}
+.sms-brand-lockup{ display:flex; align-items:center; gap:.8rem; color:var(--ink); text-decoration:none; }
+.sms-brand-mark{ width:54px; height:54px; display:grid; place-items:center; background:#fff8ee; border:2px solid var(--ink); overflow:hidden; }
+.sms-brand-mark img{ width:180%; height:180%; object-fit:contain; }
+.sms-brand-lockup strong{ display:block; font-size:1rem; text-transform:uppercase; letter-spacing:.06em; }
+.sms-brand-lockup em{ display:block; font-style:normal; font-size:.78rem; color:var(--sea); font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.sms-nav{ display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; justify-content:flex-end; }
+.sms-nav a{ color:var(--ink); text-decoration:none; font-weight:900; font-size:.82rem; text-transform:uppercase; letter-spacing:.06em; padding:.7rem .82rem; border:2px solid transparent; }
+.sms-nav a:hover,.sms-nav a:focus-visible,.sms-nav a[aria-current="page"]{ border-color:var(--ink); background:#fff8ee; }
+.sms-nav .parent-org-link{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+.sms-shell,.sms-section,.sms-footer{ width:min(1120px, calc(100% - 32px)); margin-inline:auto; }
+.sms-hero{
+  display:grid;
+  grid-template-columns:minmax(0, .95fr) minmax(300px,.62fr);
+  gap:clamp(1.2rem,4vw,3rem);
+  align-items:stretch;
+  padding:clamp(3rem,8vw,6rem) 0 2rem;
+}
+.sms-hero-copy{ padding:clamp(1rem,3vw,2rem) 0; }
+.sms-site .eyebrow{ color:var(--sea); font-weight:950; letter-spacing:.18em; }
+.sms-site h1{ color:var(--ink); font-size:clamp(3.2rem,8vw,7.6rem); line-height:.82; letter-spacing:-.08em; max-width:9ch; }
+.sms-site h2{ color:var(--ink); font-size:clamp(1.8rem,4vw,3.4rem); line-height:.94; letter-spacing:-.045em; }
+.sms-site h3{ color:var(--ink); }
+.sms-site p,.sms-site .hero-lede{ color:#3a3029; }
+.sms-site .hero-lede{ max-width:58ch; font-size:1.1rem; }
+.sms-site .button{ border-radius:0; border:2px solid var(--ink); box-shadow:5px 5px 0 var(--ink); }
+.sms-site .button-primary{ background:var(--foam); color:var(--ink); }
+.sms-site .button-secondary{ background:#fff8ee; color:var(--ink); }
+.sms-badge-card{
+  min-height:28rem;
+  border:2px solid var(--ink);
+  border-radius:0;
+  background:
+    linear-gradient(90deg, rgba(16,15,13,.08) 0 1px, transparent 1px 100%),
+    linear-gradient(180deg, #fff8ee, #e8d2bd);
+  background-size:18px 18px, auto;
+  box-shadow:10px 10px 0 var(--ink);
+}
+.sms-badge-card::before{ inset:1.2rem; border:2px dashed var(--foam); border-radius:0; }
+.sms-badge-card img{ width:min(20rem,86%); filter:none; }
+.sms-badge-card p{ color:#4b3d32; font-weight:800; }
+.sms-badge-card strong{ color:var(--sea); }
+.sms-section{
+  margin-top:2rem;
+  padding:clamp(1.2rem,3vw,2rem);
+  border:2px solid var(--ink);
+  background:#fff8ee;
+  box-shadow:8px 8px 0 var(--ink);
+}
+.sms-split{ display:grid; grid-template-columns:.65fr 1fr; gap:clamp(1rem,4vw,3rem); align-items:start; }
+.sms-site .cards{ gap:1rem; }
+.sms-site .info-card{
+  background:var(--paper);
+  border:2px solid var(--ink);
+  border-radius:0;
+  box-shadow:5px 5px 0 rgba(16,15,13,.95);
+  color:var(--ink);
+}
+.sms-site .card-icon{ border-radius:0; background:var(--foam); color:var(--ink); border:2px solid var(--ink); font-weight:950; }
+.sms-site .info-card a{ color:var(--sea); font-weight:950; }
+.sms-ops .info-card:nth-child(2){ background:#d9f4ed; }
+.sms-ops .info-card:nth-child(3){ background:#efe1cf; }
+.sms-footer{
+  margin-top:3rem;
+  margin-bottom:2rem;
+  border:2px solid var(--ink);
+  background:var(--ink);
+  color:var(--paper);
+  box-shadow:8px 8px 0 var(--foam);
+}
+.sms-footer h2,.sms-footer p,.sms-footer .fineprint{ color:var(--paper); }
+.sms-footer .footer-links a{ color:var(--paper); border-color:rgba(240,224,208,.45); }
+@media(max-width:920px){
+  .sms-header{ align-items:flex-start; position:relative; top:auto; }
+  .sms-header .sms-nav{ width:100%; justify-content:flex-start; }
+  .sms-hero,.sms-split{ grid-template-columns:1fr; }
+  .sms-site h1{ font-size:clamp(3rem,17vw,5.7rem); }
+}
