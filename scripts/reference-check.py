@@ -12,6 +12,13 @@ pages = [
     "tools.html",
     "sponsors.html",
     "sms.html",
+    "concepts/index.html",
+    "concepts/recommendation/index.html",
+    "concepts/recommendation/sms.html",
+    "concepts/option-1/index.html",
+    "concepts/option-1/sms.html",
+    "concepts/option-2/index.html",
+    "concepts/option-2/sms.html",
 ]
 
 class Parser(HTMLParser):
