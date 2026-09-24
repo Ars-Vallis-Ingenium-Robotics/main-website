@@ -3,10 +3,11 @@
   const btn = document.querySelector('[data-mode-toggle]');
   const key = 'avi-concept-theme';
   const saved = localStorage.getItem(key);
-  if (saved) document.documentElement.dataset.theme = saved;
+  if (saved) { document.documentElement.dataset.theme = saved; if (document.body) document.body.dataset.theme = saved; }
   if (btn) btn.addEventListener('click', () => {
     const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
+    document.body.dataset.theme = next;
     localStorage.setItem(key, next);
   });
 })();
