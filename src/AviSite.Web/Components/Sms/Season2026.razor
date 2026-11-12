@@ -15,7 +15,7 @@
 
 <section class="sms-section">
     <div class="wrap">
-        <Timeline Items="ClubFacts.SmsSeason2026" Class="timeline--sms" NextWhen="2027" NextTitle="Explorer class. In progress."
+        <Timeline Items="ClubFacts.SmsSeason2026" Id="sms26" Class="timeline--sms" NextWhen="2027" NextTitle="Explorer class. In progress."
                   NextBody="A bigger class, harder missions and a new robot. The 2027 build is happening right now on Friday nights."
                   NextHref="@Links.Avi("/join")" NextLink="Join the build" />
     </div>
@@ -41,18 +41,8 @@
 </section>
 
 <section class="sms-section sms-section--flush" aria-label="Photos from St. John's">
-    <div class="wrap"><p class="sms-kicker sms-kicker--dark">St. John's, Newfoundland · June 2026</p></div>
-    <div class="canada-wall">
-        <Photo Key="worlds-backdrop" Sizes="(min-width: 56rem) 50vw, 100vw" Class="canada-wall__a" />
-        <Photo Key="worlds-institute" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__b" />
-        <Photo Key="worlds-display" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__c" />
-        <Photo Key="worlds-wavetank" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__d" />
-        <Photo Key="worlds-hallway" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__e" />
-        <Photo Key="worlds-auditorium" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__f" />
-        <Photo Key="worlds-awards-crowd" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__g" />
-        <Photo Key="worlds-checkin" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__h" />
-        <Photo Key="worlds-team-rosie" Sizes="(min-width: 56rem) 50vw, 100vw" Class="canada-wall__i" />
-    </div>
+    <div class="wrap"><p class="sms-kicker">St. John's, Newfoundland · June 2026</p></div>
+    <Collage Keys="@canada" Label="Photos from St. John's" Class="collage-band--sms" />
 </section>
 
 <section class="sms-section" aria-labelledby="docs-title">
@@ -73,6 +63,13 @@
 </section>
 
 @code {
+    private static readonly IReadOnlyList<string> canada =
+    [
+        "worlds-backdrop", "worlds-rosie-hall", "worlds-institute", "worlds-jump", "worlds-display", "worlds-wavetank",
+        "worlds-laugh", "worlds-hallway", "worlds-lifevest", "worlds-rosie-red", "worlds-auditorium", "worlds-captains",
+        "worlds-fix", "worlds-awards-crowd", "worlds-stjohns", "worlds-checkin", "worlds-group-outside", "worlds-team-rosie",
+    ];
+
     private static readonly (string Title, string File, string Note)[] docs =
     [
         ("Technical documentation", "sms-2026-technical-documentation.pdf", "The full engineering write-up. PDF, 2.9 MB"),

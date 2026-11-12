@@ -6,7 +6,7 @@ namespace AviSite.Web.Content;
 /// </summary>
 public static class ClubFacts
 {
-    public sealed record Person(string Name, string Role, string? Group = null)
+    public sealed record Person(string Name, string Role, string? Group = null, string? Email = null)
     {
         /// <summary>File stem under wwwroot/img/people (built by tools/images/build_people.py).</summary>
         public string Slug => string.Join('-', Name.Replace("Dr. ", "").ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
@@ -17,17 +17,16 @@ public static class ClubFacts
 
     /// <param name="Moments">A curated view of what happened inside this block of time.</param>
     public sealed record Milestone(string When, string Title, string Body, string? Photo = null, IReadOnlyList<Moment>? Moments = null);
-    public sealed record OrgNode(Person Person, IReadOnlyList<OrgNode>? Reports = null);
     public sealed record Stat(string Value, string Label);
 
-    // Source: AVI Robotics - Meeting Minutes (10/9/26), officer roll call.
+    // Source: AVI Robotics - Meeting Minutes (10/9/26), officer roll call. Role addresses: Robert (Nov 2026).
     public static readonly IReadOnlyList<Person> Officers =
     [
-        new("Declan Doss", "President"),
-        new("Dottie Gunn", "Vice President"),
-        new("Jaime Jaurigue", "Treasurer"),
-        new("Ansh Josan", "Secretary"),
-        new("Robert Voss", "MATE CEO"),
+        new("Declan Doss", "President", Email: "president@avirobotics.org"),
+        new("Dottie Gunn", "Vice President", Email: "vicepresident@avirobotics.org"),
+        new("Jaime Jaurigue", "Treasurer", Email: "treasurer@avirobotics.org"),
+        new("Ansh Josan", "Secretary", Email: "secretary@avirobotics.org"),
+        new("Robert Voss", "MATE CEO", Email: "ceo@sms.avirobotics.org"),
     ];
 
     public static readonly IReadOnlyList<Person> Leads =
@@ -50,51 +49,15 @@ public static class ClubFacts
     public static readonly IReadOnlyList<Person> Mentors =
     [
         new("Adam Garabedian", "Mentor · 2026 and 2027 seasons"),
-        new("Dalton Cowen", "Mentor · 2027 season"),
+        new("Dalton Cowin", "Mentor · 2027 season"),
     ];
 
     // Source: Robert Voss (Nov 2026).
     public static readonly IReadOnlyList<Person> Founders =
     [
-        new("Robert Voss", "Co-founder"),
-        new("Declan Doss", "Co-founder"),
-        new("Timothy Cromwell", "Co-founder"),
-    ];
-
-    // Source: 2026 SMS Technical Documentation + Engineering Presentation outline.
-    public static readonly IReadOnlyList<Person> SmsCSuite2026 =
-    [
-        new("Robert Voss", "Chief Executive Officer"),
-        new("Timothy Cromwell", "Chief Operating Officer"),
-        new("Declan Doss", "Chief Technical Officer"),
-        new("Caleb Bahne", "Chief Design Officer"),
-        new("Santiago Flores", "Chief Planning & Safety Officer, Deck Management Lead"),
-    ];
-
-    // Sources: "Team & Subsystem Structure" (Sept 2025), Engineering Presentation outline,
-    // 2026 Technical Documentation lead labels. TODO(confirm) with Robert.
-    public static readonly OrgNode SmsOrg2026 =
-        new(new("Robert Voss", "Chief Executive Officer"),
-        [
-            new(new("Timothy Cromwell", "Chief Operating Officer"),
-            [
-                new(new("Jaime Jaurigue", "Chief Financial Officer")),
-                new(new("Maria Roceo Sy", "Chief Marketing Officer")),
-                new(new("Santiago Flores", "Chief Planning & Safety Officer · Deck Management")),
-            ]),
-            new(new("Declan Doss", "Chief Technical Officer")),
-            new(new("Caleb Bahne", "Chief Design Officer")),
-        ]);
-
-    /// <summary>Subsystem leads, who report to the CTO and CDO.</summary>
-    public static readonly IReadOnlyList<Person> SmsLeads2026 =
-    [
-        new("Dottie Gunn", "Mechanical Lead", "ROV Chassis & Propulsion"),
-        new("Sam Heinrichs", "Mechanical Lead", "ROV Manipulators"),
-        new("Ansh Josan", "Electrical Lead", "ROV Controls & Electronics · GUI & Comms"),
-        new("Dalton Cowen", "Programming Lead", "ROV software"),
-        new("Cal Limdren", "Mechanical Lead", "Float Chassis & Buoyancy"),
-        new("Matthias Cockrum", "Electrical Lead", "Float Controls & Electronics"),
+        new("Robert Voss", "Co-founder", Email: "robert.a.voss@avirobotics.org"),
+        new("Declan Doss", "Co-founder", Email: "declan.doss@avirobotics.org"),
+        new("Timothy Cromwell", "Co-founder", Email: "timothy.cromwell@avirobotics.org"),
     ];
 
     public sealed record Sponsor(string Name, string Logo, int Tier, int W, int H);
@@ -163,9 +126,9 @@ public static class ClubFacts
             "The robot gets wet for the first time. Weeks of leak hunting end with a successful water test on April 4. In between, we volunteer at two runs and MESA.",
             "first-water",
             [
-                new("Mar 14", "Pi Day Run", "Tabling and volunteering at the Pi Day Run.", "pi-day-group"),
+                new("Mar 14", "Pi Day Run", "Tabling and volunteering at the Pi Day Run.", "pi-day-demo"),
                 new("Mar 21", "First water test", "The PVC prototype goes in the pool for the first time, and someone has to go in after it.", "first-water-night"),
-                new("Mar 28", "UHC Foundation Fun Run", "Showing an early ROV to families at the UHC Foundation's 2026 Fun Run.", "uhc-fun-run"),
+                new("Mar 28", "UHC Foundation Fun Run", "Showing an early ROV to runners and families at the UHC Foundation's 2026 Fun Run.", "uhc-crowd"),
                 new("Apr 4", "It stays dry", "The water test that finally works.", "pool-proto"),
                 new("Apr 11", "MESA volunteering", null, "mesa-apr"),
             ]),
@@ -196,14 +159,15 @@ public static class ClubFacts
                 new("June 2026", "The team in St. John's", null, "worlds-backdrop"),
             ]),
         new("Fall 2026", "Year two",
-            "A new officer board, workshops every Friday, a second Blank Check Project and more outreach. SMS moves up to the Explorer class for 2027 and a Micromouse team starts forming.",
+            "A new officer board, workshops every Friday, a second Blank Check Project, more outreach, and our first trophy on campus: we won the club booth decorating contest. SMS moves up to the Explorer class for 2027 and a Micromouse team starts forming.",
             "fall-group-2026",
             [
                 new("Sept 2", "Traditions Day", "Recruiting with ROSIE on the table.", "traditions-booth"),
                 new("Oct 3", "MESA Saturday Academy", null, "mesa-outreach"),
                 new("Oct 9", "Club photo", "About fifty of us in front of the Lyles College of Engineering.", "fall-group-2026"),
-                new("Oct 16 – Nov 13", "Blank Check Project, round two", "New members learn by building in teams, with a technical lead for each group.", "bcp-workshop"),
-                new("Oct 30", "Phantom Bash", null, "phantom-booth"),
+                new("Oct 16 – Nov 13", "Blank Check Project, round two", "New members learn by building in teams, with a technical lead for each group.", "bcp-build"),
+                new("Fall 2026", "We won the booth decorating contest", "Our Ars Vallis Ingenium booth took first place in the club booth decorating contest.", "phantom-booth"),
+                new("Oct 30", "Phantom Bash", "Costumes, a decorated booth and a Blank Check Project work night.", "phantom-costumes"),
                 new("Nov 7", "MESA, with Sundog", null, "mesa-nov"),
             ]),
     ];
@@ -246,7 +210,7 @@ public static class ClubFacts
             "Pilots trained on ThrustMaster flight sticks with 44 programmable buttons. The full GUI came together and the technical documentation was submitted.",
             "worlds-rosie-station",
             [
-                new("May 2 – 3", "Pilot selection and flight-stick testing"),
+                new("May 2 – 3", "Pilot selection and flight-stick testing", "Candidate pilots fly ROSIE in a backyard pool.", "rosie-backyard"),
                 new("May 4", "Tether counter and float GUI finished"),
                 new("May 11", "Full GUI finished"),
                 new("May 21", "Technical documentation submitted"),
@@ -256,7 +220,17 @@ public static class ClubFacts
             "pool-adam-deploy",
             [
                 new("June 4", "ROSIE dives", null, "pool-rosie-dive"),
+                new("June 4", "Under the surface", null, "rosie-deep"),
                 new("June 4", "Guests under the tent", null, "pool-day-crowd"),
+                new("June 4", "ADAM goes in", "Lowering the float into the water by hand.", "adam-water"),
+            ]),
+        new("June 17", "Joint showcase with Crush Depth",
+            "One last run before Worlds, alongside Crush Depth, the Clovis Community College team where AVI's founders started.",
+            "rosie-in-pool",
+            [
+                new("June 17", "ROSIE in the water", null, "sms-underwater"),
+                new("June 17", "On deck", null, "rosie-poolside"),
+                new("June 17", "Both teams", "SMS and Crush Depth together at the Fresno State pool.", "showcase-group"),
             ]),
         new("June 22 – 28", "World Championship, St. John's",
             "Thirteen students and two robots fly from LAX to St. John's, Newfoundland.",
@@ -269,6 +243,11 @@ public static class ClubFacts
                 new("June 28", "Home to Fresno", null, "worlds-backdrop"),
             ]),
     ];
+
+    /// <summary>The MATE ROV Competition (our competition).</summary>
+    public const string MateUrl = "https://materovcompetition.org/";
+    /// <summary>Crush Depth has no site of its own yet, so link its home: Clovis Community College engineering. Source: Robert (Nov 2026).</summary>
+    public const string CrushDepthUrl = "https://cloviscollege.edu/academics/guided-pathways/stem-computer-science/engineering.html";
 
     public const string MeetingTime = "Fridays, 5:30 to 7:30 PM";
     public const string MeetingRoom = "EE 389, Fresno State";

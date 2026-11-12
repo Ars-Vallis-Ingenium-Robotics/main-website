@@ -6,9 +6,9 @@ public static class SecurityHeaders
     // allowed only because the PayPal button iframe host injects them.
     private const string Csp =
         "default-src 'self'; " +
-        "script-src 'self' https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com; " +
+        "script-src 'self' 'wasm-unsafe-eval' https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com; " +
         "style-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data: https://*.paypal.com https://*.paypalobjects.com; " +
+        "img-src 'self' data: blob: https://i.ytimg.com https://*.paypal.com https://*.paypalobjects.com; " +
         "font-src 'self'; " +
         "connect-src 'self' https://*.paypal.com https://*.paypalobjects.com; " +
         "frame-src https://*.paypal.com https://*.paypalobjects.com https://www.youtube-nocookie.com; " + // SMS videos (YouTube)

@@ -22,14 +22,14 @@
     </div>
 </section>
 
-<section class="section section--blurple" aria-labelledby="pillars-title">
+<section class="section section--paper-2" aria-labelledby="pillars-title">
     <div class="wrap">
-        <p class="eyebrow eyebrow--on-accent">How AVI works</p>
+        <p class="eyebrow">How AVI works</p>
         <h2 class="h2" id="pillars-title">Four ways in.</h2>
         <ul class="pillars" role="list">
             <li class="pillar reveal"><span class="pillar__num mono">01</span><h3 class="pillar__title">Teams</h3><p>Competition teams run like small companies. <a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a> builds underwater robots for MATE ROV; a Micromouse team is forming.</p></li>
-            <li class="pillar reveal"><span class="pillar__num mono">02</span><h3 class="pillar__title">Blank Check Projects</h3><p>Four-week team builds where new members design and finish something real.</p></li>
-            <li class="pillar reveal"><span class="pillar__num mono">03</span><h3 class="pillar__title">Workshops</h3><p>Programming, electronics, CAD and design, every Friday night.</p></li>
+            <li class="pillar reveal"><span class="pillar__num mono">02</span><h3 class="pillar__title">Blank Check Projects</h3><p>Four-week team builds where new members design and finish something real. <a href="/projects">How they work</a></p></li>
+            <li class="pillar reveal"><span class="pillar__num mono">03</span><h3 class="pillar__title">Workshops</h3><p>Programming, electronics, CAD and design, every Friday night. <a href="/projects">The tracks</a></p></li>
             <li class="pillar reveal"><span class="pillar__num mono">04</span><h3 class="pillar__title">Outreach</h3><p>MESA, community runs, regional competitions and open houses.</p></li>
         </ul>
     </div>
@@ -41,7 +41,8 @@
             <p class="eyebrow">Blank Check Projects</p>
             <h2 class="h2" id="bcp-title">Blank check. (Because we're broke.)</h2>
             <p class="lede">Every fall, new members split into teams and get four weeks to design and build a themed, interactive display that combines mechanical motion, embedded electronics, programming and promotion.</p>
-            <Photo Key="bcp-workshop" Sizes="(min-width: 56rem) 40vw, 100vw" Class="photo--frame" />
+            <Photo Key="bcp-build" Sizes="(min-width: 56rem) 40vw, 100vw" Class="photo--frame" />
+            <a class="btn btn--accent" href="/projects">Projects and workshops</a>
         </div>
         <div class="reveal">
             <SpecSheet Rows="@bcp" />
@@ -51,17 +52,7 @@
 </section>
 
 <section class="section section--flush" aria-label="Photos of AVI">
-    <div class="wrap collage">
-        <Photo Key="fall-group-2026" Sizes="(min-width: 56rem) 50vw, 100vw" Class="collage__a reveal" />
-        <Photo Key="pi-day-booth" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__b reveal" />
-        <Photo Key="traditions-demo" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__c reveal" />
-        <Photo Key="phantom-booth" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__d reveal" />
-        <Photo Key="worlds-backdrop" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__e reveal" />
-        <Photo Key="uhc-fun-run" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__f reveal" />
-        <Photo Key="first-water" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__g reveal" />
-        <Photo Key="booth-installed" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__h reveal" />
-        <Photo Key="mesa-nov" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__i reveal" />
-    </div>
+    <Collage Keys="@collage" Label="Photos of AVI" />
 </section>
 
 <section class="section">
@@ -99,6 +90,13 @@
 </section>
 
 @code {
+    private static readonly IReadOnlyList<string> collage =
+    [
+        "fall-group-2026", "uhc-kid", "rosie-in-pool", "bcp-build", "pi-day-booth", "traditions-demo",
+        "worlds-backdrop", "phantom-booth", "first-water", "monterey-crew", "mesa-feb-fun", "worlds-jump",
+        "uhc-crowd", "booth-installed", "bcp-solder", "mesa-nov", "pool-guests", "worlds-rosie-hall",
+    ];
+
     private readonly IReadOnlyList<(string, string)> departments =
     [
         ("Design & manufacturing", "CAD, 3D printing, machining, chassis, manipulators"),

@@ -106,3 +106,12 @@ links on /sms and absolute ones on the SMS host.
 2. Screenshot at 375px and 1440px and look at them.
 3. Keyboard: tab through, focus always visible, Escape closes the menu.
 4. Run `/impeccable critique` and `npx impeccable detect` (once Impeccable is installed).
+
+## Round 6 rules (Nov 2026)
+- Home opens on a landing: only the club photo, "AVI" and a scroll cue. Scrolling sends AVI and the buttons up into the
+  nav bar while the header slides in (scroll-driven CSS; static fallback without support or with reduced motion).
+- Photo galleries use the soft-shape collage (`<Collage>`): rounded squares, circles, arches, pills, leaves. No hard
+  polygon crops. Bands run edge to edge and fade out at the sides.
+- Every photo not inside a link opens in the lightbox (`media.js`). Add `no-zoom` to opt out.
+- No scroll-snap on horizontal strips (it stutters). No hover "lift" on things that aren't clickable (sponsor logos).
+- Timelines: chapters open into their own sub-timeline (View Transitions morph); every moment opens a pop-up.

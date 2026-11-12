@@ -323,5 +323,181 @@
   "key": "marketing-display",
   "src": "tools/images/packet/marketing-display.jpg",
   "alt": "SMS's 2026 marketing display poster: ROSIE, ADAM, design rationale and the company roster"
+ },
+ {
+  "key": "rosie-underwater",
+  "src": "tools/images/packet/rosie-underwater.png",
+  "alt": "ROSIE underwater in a pool, thrusters and claw visible"
+ },
+ {
+  "key": "pilot-station",
+  "src": "tools/images/packet/pilot-station.png",
+  "alt": "The SMS pilot station: two flight sticks and the laptop running our pilot GUI"
+ },
+ {
+  "key": "thruster-bench",
+  "src": "tools/images/packet/thruster-bench.png",
+  "alt": "ROSIE's eight thrusters wired up for a bench test"
+ },
+ {
+  "key": "rosie-in-pool",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-06-17 SMS and CD Joint Showcase - Fresno State/RAV00494.JPG",
+  "alt": "ROSIE in the Fresno State pool, seen from the deck"
+ },
+ {
+  "key": "rosie-poolside",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-06-17 SMS and CD Joint Showcase - Fresno State/RAV00478.JPG",
+  "alt": "ROSIE on the pool deck at Fresno State, thrusters and claw facing the camera"
+ },
+ {
+  "key": "rosie-backyard",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-05-02 Water Testing - Pilot Selection/RAV00009.JPG",
+  "alt": "ROSIE flying in a backyard pool during pilot selection, May 2026"
+ },
+ {
+  "key": "rosie-deep",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-06-04 Water Testing FS Pool/RAV00330.JPG",
+  "alt": "ROSIE under the surface of the Fresno State pool"
+ },
+ {
+  "key": "adam-water",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-06-04 Water Testing FS Pool/RAV00309.JPG",
+  "alt": "A member lowers ADAM, the profiling float, into the Fresno State pool",
+  "crop": [
+   0.0,
+   0.3,
+   1.0,
+   0.98
+  ]
+ },
+ {
+  "key": "showcase-group",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-06-17 SMS and CD Joint Showcase - Fresno State/RAV00570.JPG",
+  "alt": "SMS and Crush Depth together at the Fresno State pool after the joint showcase"
+ },
+ {
+  "key": "uhc-tent",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-28 UHC Run Tabling/Pictures/RAV00003.JPG",
+  "alt": "AVI's table under the Lyles College of Engineering tent at the UHC Foundation Fun Run"
+ },
+ {
+  "key": "uhc-crowd",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-28 UHC Run Tabling/Pictures/RAV00021.JPG",
+  "alt": "Runners and families crowding the AVI table at the UHC Fun Run"
+ },
+ {
+  "key": "uhc-kid",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-28 UHC Run Tabling/Pictures/RAV00069.JPG",
+  "alt": "A young visitor checks out an ROV at the UHC Fun Run"
+ },
+ {
+  "key": "uhc-kids",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-28 UHC Run Tabling/Pictures/RAV00075.JPG",
+  "alt": "Kids gathered around the robots at the UHC Fun Run"
+ },
+ {
+  "key": "uhc-table",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-28 UHC Run Tabling/Pictures/RAV00081.JPG",
+  "alt": "Visitors at the AVI table at the UHC Fun Run, ROSIE prototype on display"
+ },
+ {
+  "key": "pi-day-demo",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-14 Pi Day Run/Pictures/RAV00029.JPG",
+  "alt": "Demonstrating a robot to runners at the Pi Day Run"
+ },
+ {
+  "key": "monterey-crew",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-25 Monterey Regional/RAV00018.JPG",
+  "alt": "AVI volunteers together at the MATE Monterey regional"
+ },
+ {
+  "key": "monterey-pool",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-25 Monterey Regional/RAV00028.JPG",
+  "alt": "AVI volunteers by the competition pool at the Monterey regional"
+ },
+ {
+  "key": "mesa-feb-fun",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-02-07 MESA Volunteering/DSC02279.JPG",
+  "alt": "AVI volunteers goofing around after the February 2026 MESA event"
+ },
+ {
+  "key": "bcp-kit",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-16 AVI Meeting 7 - BCP Intro/RAV04362.JPG",
+  "alt": "A Blank Check Project kit box"
+ },
+ {
+  "key": "bcp-intro",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-16 AVI Meeting 7 - BCP Intro/RAV04368.JPG",
+  "alt": "Introducing Blank Check Projects to the club, October 2026"
+ },
+ {
+  "key": "bcp-build",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-16 AVI Meeting 7 - BCP Intro/RAV04356.JPG",
+  "alt": "Members helping each other wire a Blank Check Project"
+ },
+ {
+  "key": "bcp-team",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-16 AVI Meeting 7 - BCP Intro/RAV04434.JPG",
+  "alt": "A Blank Check Project team at work"
+ },
+ {
+  "key": "bcp-solder",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-16 AVI Meeting 7 - BCP Intro/RAV04446.JPG",
+  "alt": "Members building circuits at a Blank Check Project session"
+ },
+ {
+  "key": "workshop-cad",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-09 AVI Meeting 6/RAV04290.JPG",
+  "alt": "A design-for-manufacturing workshop in the computer lab, fall 2026"
+ },
+ {
+  "key": "workshop-code",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-09 AVI Meeting 6/RAV04283.JPG",
+  "alt": "Members working through a programming workshop"
+ },
+ {
+  "key": "phantom-costumes",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-30 AVI Meeting 9 - BCP and Phantom Bash/RAV04660.JPG",
+  "alt": "Members in costume at the Phantom Bash meeting, October 2026"
+ },
+ {
+  "key": "worlds-rosie-hall",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00715.JPG",
+  "alt": "ROSIE on the floor of a locker-lined hallway at Worlds"
+ },
+ {
+  "key": "worlds-jump",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00664.JPG",
+  "alt": "A team member jumping for the camera outside the venue in St. John's"
+ },
+ {
+  "key": "worlds-laugh",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00641.JPG",
+  "alt": "Team members laughing while waiting to check in"
+ },
+ {
+  "key": "worlds-rosie-red",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00760.JPG",
+  "alt": "ROSIE on the Fresno State table at Worlds"
+ },
+ {
+  "key": "worlds-fix",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00726.JPG",
+  "alt": "A member working on electronics in the hallway before inspections"
+ },
+ {
+  "key": "worlds-stjohns",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 5 - Exploring St Johns/RAV02026.JPG",
+  "alt": "A stone building in downtown St. John's, Newfoundland"
+ },
+ {
+  "key": "worlds-lifevest",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01467.JPG",
+  "alt": "A member in a life vest on the wave tank deck"
+ },
+ {
+  "key": "worlds-group-outside",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01745.JPG",
+  "alt": "The SMS team together outside on the last competition day"
  }
 ]

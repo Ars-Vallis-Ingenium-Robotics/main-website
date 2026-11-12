@@ -1,0 +1,25 @@
+@*
+    Interactive 3D model (self-hosted <model-viewer>, loaded by media.js only on pages that use it).
+    The model file is big, so it waits behind a poster until the visitor asks for it (reveal="manual").
+    Models: tools/models/README.md explains how the CAD exports were simplified.
+*@
+<figure class="model @Class">
+    <model-viewer src="/models/@(Name).glb" poster="/models/@(Name)-poster.webp" alt="@Alt"
+                  reveal="manual" loading="lazy" camera-controls touch-action="pan-y" auto-rotate auto-rotate-delay="0" rotation-per-second="18deg"
+                  camera-orbit="35deg 72deg auto" field-of-view="18deg" exposure="1.1" shadow-intensity="1" environment-image="neutral"
+                  interaction-prompt="none">
+        <button class="model__go btn btn--accent" type="button" data-model-reveal>
+            <span aria-hidden="true">⟳</span> Spin it in 3D <span class="model__size mono">@SizeLabel</span>
+        </button>
+    </model-viewer>
+    <noscript><img src="/models/@(Name)-poster.webp" alt="@Alt" /></noscript>
+    <figcaption class="model__caption mono">@Caption</figcaption>
+</figure>
+
+@code {
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+    [Parameter, EditorRequired] public string Alt { get; set; } = "";
+    [Parameter] public string Caption { get; set; } = "Drag to turn it. Pinch or scroll to zoom.";
+    [Parameter] public string SizeLabel { get; set; } = "";
+    [Parameter] public string? Class { get; set; }
+}

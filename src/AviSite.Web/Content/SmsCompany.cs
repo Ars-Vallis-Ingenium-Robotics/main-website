@@ -2,7 +2,8 @@ namespace AviSite.Web.Content;
 
 /// <summary>
 /// Sequoia Marine Solutions 2026: leadership bios and the crews (subsystems) with their members.
-/// Sources: 2026 marketing display (company roster with subsystem and major), 2026 technical
+/// Sources: 2026 marketing display (company roster with subsystem and major), the January 2026
+/// "MATE Subsystem Selection" sheet (which crew each software/electrical member joined), 2026 technical
 /// documentation, "Marketing Display Content" notes, SMS Master Timeline, Team & Subsystem Structure doc.
 /// </summary>
 public static class SmsCompany
@@ -37,37 +38,37 @@ public static class SmsCompany
             "The body of ROSIE: an aluminum T-slot frame around the pressure hull, with eight 3D-printed thruster mounts.",
             ["T-slot rail frame that lets anything be mounted and slid into place", "Eight vectored thrusters in 3D-printed PETG mounts and shrouds", "A removable hull: the enclosure clamps pivot open for access to the electronics", "PVC legs for a stable stance on deck"],
             ["Anapaula Mena", "Carlos Vidrio Vasquez", "Dana Martinez", "Jag Dhillon", "Jovani Herrera", "Leilah Hunt", "Natalie Maciel", "Robel Gembre", "Tony Garcia"],
-            "worlds-rosie-table"),
+            "rosie-poolside"),
         new("manipulators", "ROV Manipulators", "Sam Heinrichs",
             "Everything ROSIE grabs with: a rotating claw and four harpoons.",
             ["A claw with a 360-degree rotating wrist, printed in flexible, grippy filament so it doesn't damage specimens", "Four harpoons that pick up samples and rope on the fly"],
             ["Alex Ellis", "Anthony Nichols", "Brianna Vidrio", "Ethan Kelstrom", "Jovani Mendez", "Will Junnila"],
             "worlds-rosie-station"),
-        new("controls", "ROV Controls & Electronics", "Dalton Cowen",
+        new("controls", "ROV Controls & Electronics", "Dalton Cowin",
             "The ROV's electronics and software: power, motor control and the code the pilots fly.",
             ["A 48 V / 30 A power system", "Motor control for eight thrusters", "Flight-stick piloting with 44 programmable buttons"],
-            ["Earl Orejola", "Andres Jimenez", "Clarissa Morgan", "Ekin Thao", "Haroon Ahmad", "Jonathan Anguiano", "Luis Delgado", "Nathaniel Garcia"],
-            "worlds-float-electronics"),
+            ["Clarissa Morgan", "Earl Orejola", "Haroon Ahmad"],
+            "thruster-bench"),
         new("gui", "GUI & Communications", "Ansh Josan",
             "The pilot's screen and the link between the deck and the robot.",
             ["The pilot GUI with camera views", "Controller mapping for pilot and co-pilot", "Photogrammetry: building 3D models from the ROV's cameras", "The tether: power down to the ROV and two-way Ethernet"],
-            ["Kyle Pham"],
-            "worlds-rosie-feed"),
+            ["Guillermo Prado (pilot)", "Kyle Pham", "Nathaniel Garcia"],
+            "pilot-station"),
         new("float", "Float Chassis & Buoyancy", "Cal Limdren",
             "ADAM's body and its buoyancy engine: a pump moves water in and out of a bladder, so the float sinks and rises with no thrusters.",
             ["A peristaltic-pump buoyancy engine", "Removable internals on rails for easy service", "Ballast plates to fine-tune mass", "Cold-tested to 2 °C before competition"],
-            ["Christian Thao", "Ethan Fernandez", "Jonathan Camarena", "Kellen Davis", "Lizbet Robledo", "Mario Ortiz", "Wyatt Grogan"],
-            "adam-display"),
+            ["Christian Thao", "Ethan Fernandez", "Jonathan Camarena", "Kellen Davis", "Lizbet Robledo", "Mario Ortiz"],
+            "adam-water"),
         new("float-electronics", "Float Controls & Electronics", "Matthias Cockrum",
             "ADAM's brain: custom PCBs, sensors and the code for vertical profiles.",
             ["Three generations of custom PCBs designed in KiCad", "Vertical-profiling and collision-avoidance software", "The surface receiver and float GUI"],
-            [],
+            ["Andres Jimenez", "Ekin Thao", "Jonathan Anguiano", "Luis Delgado", "Wyatt Grogan"],
             "worlds-float-electronics"),
         new("deck", "Deck Management", "Santiago Flores",
             "The crew on the pool deck: tether handling, safety and running the mission clock.",
             ["Tether management on deck", "Safety procedures and the job safety analysis"],
-            ["Abraham Cortes", "Christopher Torres", "Evencio Cortes", "Robert Jason Capps", "Guillermo Prado (pilot)"],
-            "pool-day-crowd"),
+            ["Abraham Cortes", "Christopher Torres", "Evencio Cortes", "Robert Jason Capps"],
+            "sms-pool-pilot"),
     ];
 
     /// <summary>Support roles outside the seven crews.</summary>

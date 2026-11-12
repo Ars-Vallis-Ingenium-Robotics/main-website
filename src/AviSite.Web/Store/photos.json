@@ -767,5 +767,441 @@
   "h": 1800,
   "focus": "50% 50%",
   "lqip": "data:image/webp;base64,UklGRqIAAABXRUJQVlA4IJYAAADQBACdASoYABIAPu1qr1CppaQiqAqpMB2JZACdMswBqa9a7D9zkg5VGi7u3pX+AAD+31n5PeSYCfFaTn30Wgl45T6y1N9z0A+mArVZNlHiPRjp5FXoaFdOGw7CRXuEE5KQtUk/chxc2wDZ3pmQ40pD9UEokFRA1jwokdU+h9ZBXbyJDNPobeMEoDmMzzR5K7BntUhQoAA="
+ },
+ "rosie-underwater": {
+  "alt": "ROSIE underwater in a pool, thrusters and claw visible",
+  "widths": [
+   480,
+   960,
+   1600
+  ],
+  "w": 1600,
+  "h": 900,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAACwAwCdASoYAA4APu1iqU2ppaQiMAgBMB2JZgCdMoR4GBxPXDpCAADvg6dNLQe8kIA7xQrDE7m4Yi4TufUgIAW+foJmyFt5yeR3Dz8zkQjm1AVdiVYPrlE/XY1QD+/7gAA="
+ },
+ "pilot-station": {
+  "alt": "The SMS pilot station: two flight sticks and the laptop running our pilot GUI",
+  "widths": [
+   480
+  ],
+  "w": 480,
+  "h": 254,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAAAQBACdASoYAA0APu1krU6ppaSiMAgBMB2JZQAAVUnb6EsY52wOEZJMwAD+olqW3Z4P1d/PkAq6MtN4HOUwAmSbacxPPgrBjpGe3bgxHIBRe2lwk5xOmnN9CjQqth1lXX1iyYTS9Z++GOfq6SZ+B5FVxsSOzREA8V2xYPaZZPgAAA=="
+ },
+ "thruster-bench": {
+  "alt": "ROSIE's eight thrusters wired up for a bench test",
+  "widths": [
+   480,
+   960
+  ],
+  "w": 960,
+  "h": 720,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqYAAABXRUJQVlA4IJoAAADQBACdASoYABIAPu1oq08ppiOiMBgIATAdiWQAVbmDduzrfNz6djH1ljJTXc46AADibAhDrKjRMRlrDZpvQQtqjLaAdY9v8Rfj5R0NrzZT/nfckB+3xhPxUCEohy2WXX8QquA8t09l6LbDvAXuJ+fmcczFZLlGTxTUeJgbjAqbnNo6hztJKySKqIOXZt/4+IjJA5qoAknPCsAA"
+ },
+ "rosie-in-pool": {
+  "alt": "ROSIE in the Fresno State pool, seen from the deck",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAABQBACdASoYABAAPu1iqU2ppaQiMAgBMB2JaACdL175WAY2MYuOE057pgAAAP6hvsk104CY9EFwk0gBS97UV/q/7lAY2LMnDkL1uEwTjI9UNkQAAAA="
+ },
+ "rosie-poolside": {
+  "alt": "ROSIE on the pool deck at Fresno State, thrusters and claw facing the camera",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAABwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JbACdMoMYJn/Ac5BsfFYpKrtQoAD+7NGrDFlNczvZJ5VtGS9IVgcNzbAKcqd8b9GeLuPgDQuRwZtIs/OeaPJOsJz1Ugzz5Oy6nDLO0UGX0sb3EWd1fraNgLTGGUtfz+0R9r5RwXBpqaJcItJEAQAA"
+ },
+ "rosie-backyard": {
+  "alt": "ROSIE flying in a backyard pool during pilot selection, May 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAAAQBACdASoYABAAPu1iqk4ppaQiMAgBMB2JZgCdMoAB3kLDP5iOHHFQAADdcZnbSlsTAFGEaDab7g5fJ3IknsbxxfHKnvGTMwzutmTN+KtvCjYa6JDhke8AfxSVmoEgAAA="
+ },
+ "rosie-deep": {
+  "alt": "ROSIE under the surface of the Fresno State pool",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAACwAwCdASoYABAALrV2u12jqampiYC0S2AE6ZQjuAGU/BeEbmRrYAD+cuzXq7KdjuRgPK3beBs5sZhkxP+rpWKSqIv/KV+SnkpuqXCyd5/npQSpRwWgNTCrqI1CQq3cH2rPrLfGvV5aYzSoAAA="
+ },
+ "adam-water": {
+  "alt": "A member lowers ADAM, the profiling float, into the Fresno State pool",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 2448,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRsAAAABXRUJQVlA4ILQAAACwBQCdASoYABgAPu1eqE6ppKOiMBgMATAdiWgArDlAAFcSudW+U5WWk7DYUiCNMSkJIvsT4GAAzBHIiK+X/cuVpHLv9QzQzul4iUrRqbl4oTS6zjg7kCySo/TXbo+Nsc+A5FJwDD2JxDN5Ra5bhiU0TDuRevnVxtafxyE80LRs2gZpdc2cq7WKM8EutEari2fADTlwXf9dmcxAQp7zbcjhdiefvNQq+SbUMyMOyq5gyK05AAA="
+ },
+ "showcase-group": {
+  "alt": "SMS and Crush Depth together at the Fresno State pool after the joint showcase",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAABwBACdASoYABAAPu1iqk2ppaQiMAgBMB2JZACdMoADgoK21NN5BSeIy3hOAAD93gWtmC++TLwhm63J2j8VZ6k1QB+gKVXDebTMMnQgZuKZxnj0BZf9/EYLI5Urt1AoCctFT9NNx/F8b6c72SCMeCX8sRN7Va3RUaFS3/wcdQAAAA=="
+ },
+ "uhc-tent": {
+  "alt": "AVI's table under the Lyles College of Engineering tent at the UHC Foundation Fun Run",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqQAAABXRUJQVlA4IJgAAACwBACdASoYABAAPu1iqU2ppaQiMAgBMB2JbACsGvNAXy1bg/p94ovWHNvZFf6AAP7p7eoHmvLZxP2VHx+cfiZgjywo9In3iN2bxmsCa/bRGNk/dGCR8liJS34i2qMGwM05xIq7+IJnoglVprhA9UHQWMneLS0R7+f/YjHX7MuuZZV815B7A+kOKlQ3FgPwozC6lx/1yTxAAA=="
+ },
+ "uhc-crowd": {
+  "alt": "Runners and families crowding the AVI table at the UHC Fun Run",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAADwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JQBibBAvq22pGACUtma6AAPyxh8VNIybNDmAP47NuE+b+1spPaX8p3HJeAbtZjhSZuGrS6zHCmMR+eDHp+3VpWvoRsh8x8WJ5PWmRP3G1HN69A6O8al8Fm90TcE8rwHmXtvkGsfiK4AAA"
+ },
+ "uhc-kid": {
+  "alt": "A young visitor checks out an ROV at the UHC Fun Run",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqQAAABXRUJQVlA4IJgAAABwBACdASoYABAAPu1iqU2ppaQiMAgBMB2JbACdMoR4GCmJyydwpWl0bT2qUAD+5AZPsxGqcUwK/265oX5sjn3oT5W7On1AODbRkCaPbFzxOM8onVNzP+kY+Ykto5lE4AjEL7jtIxrM6Yh48ihZjbj722sdSblAqO/iyE8HN+YlWkTH2w63MYQcN2wCAJ/Wk//rk+jHvEbAAA=="
+ },
+ "uhc-kids": {
+  "alt": "Kids gathered around the robots at the UHC Fun Run",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqAAAABXRUJQVlA4IJQAAAAwBACdASoYABAAPu1iqU2ppaQiMAgBMB2JaACsIKnCVLNeVhy/ya7FGnAA/rq1ULL+J3/xBhr8dreOd3r0W48OsHBNaUG1GPrylfMluxH6Uol5Ui4Nm8ZA9WRbo1Pa1sAt76JJASF0+5NZaMOXT6dmlSqqkl8mxC+kw4Rbpc74ZkXyG3Tt9vvUG9gM4oN2so6QIAAA"
+ },
+ "uhc-table": {
+  "alt": "Visitors at the AVI table at the UHC Fun Run, ROSIE prototype on display",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqQAAABXRUJQVlA4IJgAAACwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JbACdMoMh1EtzIe8PfWpx0YsQApB8AP6mlbpRdL6aUaPac7p687D/cIxh3RDmEVjD++gP9DYf0PNo4LD2me6UWGdC6TRcCUcMcOd9dYsxkhDFPGpgdgnsup0p/VRUi3TK2litiaizW0er8/sp4wMX7dzy2FX0ye+KSGM9gHkAAA=="
+ },
+ "pi-day-demo": {
+  "alt": "Demonstrating a robot to runners at the Pi Day Run",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqQAAABXRUJQVlA4IJgAAABQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JbACdMoMjbEJUc4dG4cIgrXQAAP68j+9HbJ6OiBCik4392SqLVTHlPYspU/vgSvKUHVpEMYr9lHQeYcBwXmgQO40ukLb3Hr6xcyB9q1X+FEUgtUdx2ZXTC7oQhN875+ZAcYEvZZoNVQdXfTrLvfblAMseAsJ8Zeyia96OvOUAAA=="
+ },
+ "monterey-crew": {
+  "alt": "AVI volunteers together at the MATE Monterey regional",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRnYAAABXRUJQVlA4IGoAAAAQBACdASoYABAAPu1oqk6ppiQiMAgBMB2JYwC+SBo8vPLILBEzCjjwoAD+4V0XvlaNhIFg6rvaig9GQBmjyRPl1SUHeMU9QurhacaIgcmZULIqnOLdNb0PZ0tKD5p9Tr2xkb2osC71AAAA"
+ },
+ "monterey-pool": {
+  "alt": "AVI volunteers by the competition pool at the Monterey regional",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAADwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JYwC/OCFp09RqZ9YckSMAAP7XhadGU3C0ZqudGF/XnEXn26/n7zV25kQ9x697UbcnHoXvzShPH4LHXvrVkxjbIttnP0Gvp3D+6/BFL62qYRYKFckw7YarjoXnIgAA"
+ },
+ "mesa-feb-fun": {
+  "alt": "AVI volunteers goofing around after the February 2026 MESA event",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAADwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JQBbZA3Kk0W7LAj/gBo3AAP7UOMLmJaisBoiIlW9ZtGGR5zt7YNsWYXZMkZa1aCWbqpn10DECVl56f6O9S8rDx0M8hbDjd1ykzgHNakvXMjgVWESn7nI7jlOV3u1OsJZHjgAA"
+ },
+ "bcp-kit": {
+  "alt": "A Blank Check Project kit box",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRn4AAABXRUJQVlA4IHIAAAAwBACdASoYABAAPu1kqU4ppaOiMAgBMB2JZwALAALSrvwGh34z9kudAAAA/u9lD6v+iMbbTIK2gy3wVHDh2pGSqDACDrCTUhU92UilIGntDRRMmAbbSpKY//m2U6AZmL8Z7gEFPMV1RWfR4tI2GIM+FAA="
+ },
+ "bcp-intro": {
+  "alt": "Introducing Blank Check Projects to the club, October 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRn4AAABXRUJQVlA4IHIAAADwAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JYwCdAA2J8LUL2iWVi+MAAPO+WrmLMzk71JrLf1GbxyRSkp2CNpheFA3IpSWt6xUQySDI+RJ5cP/DqZtkmTF9E0J+LLETlZ/qy0k3lyh+1eTbUDHWBbyrjAA="
+ },
+ "bcp-build": {
+  "alt": "Members helping each other wire a Blank Check Project",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAAAwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JZwDG9CFmap5FsI2Y6sHdhsAA/mbaYFQHEGhP478bHenAb6b6XWVPEpGXwCMXmJJkWzhpVjCWuUpK0exs+7mYE/vHdd0zbDIuw2C8FfCo6Ohd2dK4vnpelWBw3F5n0xa2Kcj8WowAAA=="
+ },
+ "bcp-team": {
+  "alt": "A Blank Check Project team at work",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoQAAABXRUJQVlA4IHgAAAAQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JYwAAWj//j9HMnpFpEPdMAAD+3oxduzRhT2Lp/K4uxbKUREDz63t3eMTJvZMZDBFl6ghsivUopfDxYfAl0lzwLFrpvJAnMAMROc0ZiXscmB/jZoZ26v1pLuYOF2QAAAA="
+ },
+ "bcp-solder": {
+  "alt": "Members building circuits at a Blank Check Project session",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAACwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JYwDE2CIgjlKy9vURwAD94lqrATmH8m0x6/jOR/2eKhzxq6UfcgaXa0nJxpWv4nChgZ9YS0cRRT7VVolfQ7zVgda9ZbJDLvu4xWyWJSZ8CYyaDjzuVj4iT/GkvUYMAy9W2uuloAA="
+ },
+ "workshop-cad": {
+  "alt": "A design-for-manufacturing workshop in the computer lab, fall 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRnoAAABXRUJQVlA4IG4AAABQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JZwDLLCHZ+N1cL/3vwLRRzNqAAPIoNbxn2DZ06Ai+mU9prIMdvYfdj8+HhNlkpYdhF8jgALLqowDFDIMVUtm6QGWtHtBZIdP+waE3wAkCJcZjEOAAAA=="
+ },
+ "workshop-code": {
+  "alt": "Members working through a programming workshop",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqgAAABXRUJQVlA4IJwAAABQBACdASoYABAAPu1iqU2ppaQiMAgBMB2JYwCdAB05Pp+c/ohWobei9EwgAMtK5sPtJcaQgrlOnVZfFaoKBz68wl9o+r771QbnorbLDnhMtWN3gQFy2V14J6AnaXa+aWTu6vrMfv22j8Kdh4+IvPSWSmYu71z//Yj6+M09ESKkJzSGEgbROg33eZA1FoLK1XXhqfXahzVVAt08KAA="
+ },
+ "phantom-costumes": {
+  "alt": "Members in costume at the Phantom Bash meeting, October 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoYAAABXRUJQVlA4IHoAAADQAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZQAAM7+UDRTNEfZ7dAAA/q9ufP/NNldOQR4m7SvR2EXSbPXOrGT9pTD/Dnqx0bICN9z1q5hFrWLThz8UmxEtKbG84QZWxN4TybiQOFhSaIthW2Lx+7DN76wdKBlB3AAAAA=="
+ },
+ "worlds-rosie-hall": {
+  "alt": "ROSIE on the floor of a locker-lined hallway at Worlds",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqAAAABXRUJQVlA4IJQAAADwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZACsOUAANzW0RDFrZIigAP6IFj+PJ/fSUUAzG19ESzyQV3rNKEBMc9q8a0+rHyRZU0SX08qNbRhe0CSY0ldNTUd/IubClBZSgDetlonnFGeffg5om9lFFvI9YOffsk35H5vO57jR809UTuUQMueO1x0eNchy+xY+AAAA"
+ },
+ "worlds-jump": {
+  "alt": "A team member jumping for the camera outside the venue in St. John's",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAADQAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JQBWABHtP/YQjb5dfWFAA8oH/Dq6TbkLF+uz5oXgFwNeBaRm9PAKrdR5zwWCLv20mVa+XZ9w1QgPb91pMqtrKABI88nkvKu+dtyZwPxMYgizYvuEmhwpXKLbn3Qt8Wi0Y10xnKY7ogAAA"
+ },
+ "worlds-laugh": {
+  "alt": "Team members laughing while waiting to check in",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAABwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JbACdMoR4PoM4ABgyTTZJBIqJlADN6+bI0w7Wm6zHKSWKao7lwm7L0271Rl6a+e502xBOgbLFQ5lOLM08mOAvJcbrGzKmNcwvyIY0FGlsrkPyb4daLx0cySRsJPmHEhR+qbVlZBktxUhaQAA="
+ },
+ "worlds-rosie-red": {
+  "alt": "ROSIE on the Fresno State table at Worlds",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpIAAABXRUJQVlA4IIYAAADwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JbAC7ABnmP19r0q6T7t8AAP7ujFmc+k0uIKs0Nb3tYjLIKB/Ks5JYUmogV8nGmtgTWP102IuwVNg9v+XWys+3BlvUjNbinTWMm77Y0DqSt0okV6jGj7/cxds+DOf9EbxbV+g/aPm6RDbtX9wwAA=="
+ },
+ "worlds-fix": {
+  "alt": "A member working on electronics in the hallway before inspections",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAAAQBACdASoYABAAPu1kqU2ppaQiMAgBMB2JYwAAV8o7wl5WsIJfNc0YgADNdrGkJM6FEa+vfutoV4fzFXMv1+WlZy3nBphqXlj9KmsgroeGHcUgGzpbn3pQbfMc8gK3JXspZHvtWaVML4810Z57WwwejC+wO1/htB3/DKyNtOVtCpmcedQhaAAA"
+ },
+ "worlds-stjohns": {
+  "alt": "A stone building in downtown St. John's, Newfoundland",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRnoAAABXRUJQVlA4IG4AAADwAwCdASoQABgAPu1iqU2ppaOiMAgBMB2JZgC06A5/kd/FCOPdpM4AAP5V7rAMSvxSxmStNlyR03oP+ooXvTje2WVVtIcz3lZdgAhEiWwdnj8MTc81YtdDKL+KDjcCfzfhs0tDbnd8DiTB5mAAAA=="
+ },
+ "worlds-lifevest": {
+  "alt": "A member in a life vest on the wave tank deck",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAAAQBACdASoQABgAPu1iqU2ppaQiMAgBMB2JYgBTAAeYEBeuQkfGQe3NgAD3nz8fQvB+c5f/sJ/h8nsQrZGIbNH9wb1VZSmwxG8jMBg6l73VVM+mwlbGw3zZxP4wm9ZyU1mo5P2VeNwO2oN5WmIw3HrdL6XCspscQVbE3AAA"
+ },
+ "worlds-group-outside": {
+  "alt": "The SMS team together outside on the last competition day",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAABwBACdASoYABAAPu1iqk4ppaQiMAgBMB2JYgC+SBuo7JMxDaWmUJQJJ4CXwAD+p7PWvNdhmZIi/mXIVgHw67nZpQ6rCcNHuRKoeVJaatbxww3ej8Qp2reCuaLHfUL+CUNp9MVPfwX7yBoX1Y63GQGsjgOTEbFfTDm9kQAA"
  }
 }

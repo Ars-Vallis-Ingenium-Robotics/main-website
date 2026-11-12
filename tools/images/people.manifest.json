@@ -1,212 +1,212 @@
 [
-  {
-    "slug": "declan-doss",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00737.JPG",
-    "box": [
-      6088,
-      2151,
-      6864,
-      3041
-    ],
-    "note": "best match by face embedding (sim 0.64), Marketing Worthy"
-  },
-  {
-    "slug": "dottie-gunn",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-02-07 MESA Volunteering/DSC02279.JPG",
-    "box": [
-      1984,
-      1907,
-      2714,
-      2745
-    ],
-    "note": "best match by face embedding (sim 0.70), 2026-02-07 MESA Volunteering"
-  },
-  {
-    "slug": "sam-heinrichs",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00716.JPG",
-    "box": [
-      2940,
-      1952,
-      5243,
-      4753
-    ],
-    "note": "best match by face embedding (sim 0.68), Marketing Worthy"
-  },
-  {
-    "slug": "matthew-sedano",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-11-07 MESA - AVI and Sundog Collab/RAV04942.JPG",
-    "box": [
-      1459,
-      1598,
-      1881,
-      2078
-    ],
-    "note": "best match by face embedding (sim 0.70), 2026-11-07 MESA - AVI and Sundog Collab"
-  },
-  {
-    "slug": "sebastien-dupere",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-09 AVI Meeting 6/RAV04259.JPG",
-    "box": [
-      3423,
-      3103,
-      3694,
-      3402
-    ],
-    "note": "best match by face embedding (sim 0.96), 2026-10-09 AVI Meeting 6"
-  },
-  {
-    "slug": "robert-voss",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00780.JPG",
-    "box": [
-      956,
-      2105,
-      1799,
-      3018
-    ],
-    "note": "best match by face embedding (sim 0.77), Marketing Worthy"
-  },
-  {
-    "slug": "caleb-bahne",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01480.JPG",
-    "box": [
-      4497,
-      3989,
-      6004,
-      5808
-    ],
-    "note": "best match by face embedding (sim 0.79), Marketing Worthy"
-  },
-  {
-    "slug": "ansh-josan",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00639.JPG",
-    "box": [
-      5559,
-      2755,
-      7312,
-      4680
-    ],
-    "note": "best match by face embedding (sim 0.59), Marketing Worthy"
-  },
-  {
-    "slug": "timothy-cromwell",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-02-07 MESA Volunteering/DSC02293.JPG",
-    "box": [
-      3337,
-      1765,
-      4089,
-      2555
-    ],
-    "note": "best match by face embedding (sim 0.91), 2026-02-07 MESA Volunteering"
-  },
-  {
-    "slug": "jaime-jaurigue",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-02-07 MESA Volunteering/DSC02279.JPG",
-    "box": [
-      5341,
-      1644,
-      6159,
-      2530
-    ],
-    "note": "best match by face embedding (sim 0.73), 2026-02-07 MESA Volunteering"
-  },
-  {
-    "slug": "arshiro-vang",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-09 AVI Meeting 6/RAV04261.JPG",
-    "box": [
-      8756,
-      2469,
-      9017,
-      2767
-    ],
-    "note": "best match by face embedding (sim 0.82), 2026-10-09 AVI Meeting 6"
-  },
-  {
-    "slug": "maria-roceo-sy",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-25 Monterey Regional/RAV00024.JPG",
-    "box": [
-      5200,
-      3484,
-      5714,
-      4079
-    ],
-    "note": "best match by face embedding (sim 1.00), 2026-04-25 Monterey Regional"
-  },
-  {
-    "slug": "santiago-flores",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00669.JPG",
-    "box": [
-      2262,
-      233,
-      4758,
-      3008
-    ],
-    "note": "best match by face embedding (sim 0.61), Marketing Worthy"
-  },
-  {
-    "slug": "dalton-cowen",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-25 Monterey Regional/RAV00028.JPG",
-    "box": [
-      2479,
-      2350,
-      3004,
-      2900
-    ],
-    "note": "best match by face embedding (sim 0.88), 2026-04-25 Monterey Regional"
-  },
-  {
-    "slug": "cal-limdren",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00645.JPG",
-    "box": [
-      3077,
-      3183,
-      4247,
-      4603
-    ],
-    "note": "best match by face embedding (sim 0.84), Marketing Worthy"
-  },
-  {
-    "slug": "adam-garabedian",
-    "src": "tools/images/people-src/garabedian-linkedin.png",
-    "box": [
-      384,
-      226,
-      494,
-      336
-    ],
-    "note": "Screenshot of his LinkedIn photo, sent by Robert (low-res; replace with the original)"
-  },
-  {
-    "slug": "matthias-cockrum",
-    "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-06-04 Water Testing FS Pool/RAV00308.JPG",
-    "box": [
-      2230,
-      4330,
-      3030,
-      5130
-    ],
-    "note": "June 4, 2026 FS pool water test (Robert pointed him out)",
-    "rotate": -35
-  },
-  {
-    "slug": "alaeddin-bani-milhim",
-    "src": "tools/images/people-src/bani-milhim-linkedin.png",
-    "box": [
-      384,
-      233,
-      494,
-      343
-    ],
-    "note": "LinkedIn photo, sent by Robert"
-  },
-  {
-    "slug": "shuo-wu",
-    "src": "tools/images/people-src/wu-linkedin.png",
-    "box": [
-      402,
-      233,
-      512,
-      343
-    ],
-    "note": "LinkedIn photo, sent by Robert"
-  }
+ {
+  "slug": "declan-doss",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-28 Water Testing/RAV00011.JPG",
+  "box": [
+   4210,
+   2103,
+   6380,
+   4273
+  ],
+  "note": "best match by face embedding (sim 0.64), Marketing Worthy"
+ },
+ {
+  "slug": "dottie-gunn",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 2 - Opening Ceremonies/Marketing Worthy/Copy of RAV01045.JPG",
+  "box": [
+   1833,
+   2010,
+   3832,
+   4009
+  ],
+  "note": "best match by face embedding (sim 0.70), 2026-02-07 MESA Volunteering"
+ },
+ {
+  "slug": "sam-heinrichs",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00716.JPG",
+  "box": [
+   2940,
+   1952,
+   5243,
+   4753
+  ],
+  "note": "best match by face embedding (sim 0.68), Marketing Worthy"
+ },
+ {
+  "slug": "matthew-sedano",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-11-07 MESA - AVI and Sundog Collab/RAV04942.JPG",
+  "box": [
+   1459,
+   1598,
+   1881,
+   2078
+  ],
+  "note": "best match by face embedding (sim 0.70), 2026-11-07 MESA - AVI and Sundog Collab"
+ },
+ {
+  "slug": "sebastien-dupere",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-09 AVI Meeting 6/RAV04259.JPG",
+  "box": [
+   3423,
+   3103,
+   3694,
+   3402
+  ],
+  "note": "best match by face embedding (sim 0.96), 2026-10-09 AVI Meeting 6"
+ },
+ {
+  "slug": "robert-voss",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-02 Traditions Day/RAV03560.JPG",
+  "box": [
+   7230,
+   2930,
+   8150,
+   3850
+  ],
+  "note": "best match by face embedding (sim 0.77), Marketing Worthy"
+ },
+ {
+  "slug": "caleb-bahne",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01480.JPG",
+  "box": [
+   4497,
+   3989,
+   6004,
+   5808
+  ],
+  "note": "best match by face embedding (sim 0.79), Marketing Worthy"
+ },
+ {
+  "slug": "ansh-josan",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00639.JPG",
+  "box": [
+   5559,
+   2755,
+   7312,
+   4680
+  ],
+  "note": "best match by face embedding (sim 0.59), Marketing Worthy"
+ },
+ {
+  "slug": "timothy-cromwell",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-02-07 MESA Volunteering/DSC02293.JPG",
+  "box": [
+   3337,
+   1765,
+   4089,
+   2555
+  ],
+  "note": "best match by face embedding (sim 0.91), 2026-02-07 MESA Volunteering"
+ },
+ {
+  "slug": "jaime-jaurigue",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01751.JPG",
+  "box": [
+   499,
+   2806,
+   3619,
+   5927
+  ],
+  "note": "best match by face embedding (sim 0.73), 2026-02-07 MESA Volunteering"
+ },
+ {
+  "slug": "arshiro-vang",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-09 AVI Meeting 6/RAV04261.JPG",
+  "box": [
+   8756,
+   2469,
+   9017,
+   2767
+  ],
+  "note": "best match by face embedding (sim 0.82), 2026-10-09 AVI Meeting 6"
+ },
+ {
+  "slug": "maria-roceo-sy",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-25 Monterey Regional/RAV00024.JPG",
+  "box": [
+   5200,
+   3484,
+   5714,
+   4079
+  ],
+  "note": "best match by face embedding (sim 1.00), 2026-04-25 Monterey Regional"
+ },
+ {
+  "slug": "santiago-flores",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00669.JPG",
+  "box": [
+   2262,
+   233,
+   4758,
+   3008
+  ],
+  "note": "best match by face embedding (sim 0.61), Marketing Worthy"
+ },
+ {
+  "slug": "dalton-cowin",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-25 Monterey Regional/RAV00005.JPG",
+  "box": [
+   3563,
+   3123,
+   5170,
+   4730
+  ],
+  "note": "best match by face embedding (sim 0.88), 2026-04-25 Monterey Regional"
+ },
+ {
+  "slug": "cal-limdren",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00645.JPG",
+  "box": [
+   3077,
+   3183,
+   4247,
+   4603
+  ],
+  "note": "best match by face embedding (sim 0.84), Marketing Worthy"
+ },
+ {
+  "slug": "adam-garabedian",
+  "src": "tools/images/people-src/garabedian-linkedin.png",
+  "box": [
+   384,
+   226,
+   494,
+   336
+  ],
+  "note": "Screenshot of his LinkedIn photo, sent by Robert (low-res; replace with the original)"
+ },
+ {
+  "slug": "matthias-cockrum",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-06-04 Water Testing FS Pool/RAV00308.JPG",
+  "box": [
+   2230,
+   4330,
+   3030,
+   5130
+  ],
+  "note": "June 4, 2026 FS pool water test (Robert pointed him out)",
+  "rotate": -35
+ },
+ {
+  "slug": "alaeddin-bani-milhim",
+  "src": "tools/images/people-src/bani-milhim-linkedin.png",
+  "box": [
+   384,
+   233,
+   494,
+   343
+  ],
+  "note": "LinkedIn photo, sent by Robert"
+ },
+ {
+  "slug": "shuo-wu",
+  "src": "tools/images/people-src/wu-linkedin.png",
+  "box": [
+   402,
+   233,
+   512,
+   343
+  ],
+  "note": "LinkedIn photo, sent by Robert"
+ }
 ]

@@ -1,56 +1,130 @@
 @using AviSite.Web.Content
 @*
-    Vertical timeline. Each block can expand (<details>, no JS) into a curated row of the moments inside it.
-    It always ends on an open, dashed "to be continued" node: the story isn't finished.
+    Vertical timeline. A block with moments opens into its own secondary timeline:
+      - with JS (timeline.js) the clicked block morphs into the sub-timeline (View Transitions where supported);
+      - without JS the link jumps to #sub-…, which CSS shows via :target.
+    Every moment in a sub-timeline opens a pop-up (<dialog>, see dialogs.js) with the full photo and story.
+    The main timeline always ends on a dashed "to be continued" node: the story isn't finished.
 *@
-<ol class="timeline @Class">
-    @foreach (var m in Items)
-    {
-        <li class="timeline__item reveal">
-            <div class="timeline__when mono">@m.When</div>
+<div class="tl @Class" data-timeline>
+    <ol class="timeline" id="@($"{Id}-main")">
+        @for (var i = 0; i < Items.Count; i++)
+        {
+            var m = Items[i];
+            var sub = m.Moments is { Count: > 0 } ? $"{Id}-sub-{i}" : null;
+            <li class="timeline__item reveal @(sub is null ? "" : "timeline__item--more")" id="@($"{Id}-{i}")">
+                <div class="timeline__when mono">@m.When</div>
+                <div class="timeline__body">
+                    <h2 class="timeline__title">@m.Title</h2>
+                    <p>@m.Body</p>
+                    @if (sub is not null)
+                    {
+                        <a class="timeline__open" href="#@sub" data-sub="@sub">
+                            <span>Open this chapter</span><span class="timeline__count mono">@m.Moments!.Count moments</span>
+                        </a>
+                    }
+                </div>
+                @if (m.Photo is not null)
+                {
+                    @if (sub is not null)
+                    {
+                        <a class="timeline__photo-link" href="#@sub" data-sub="@sub" aria-label="Open @m.Title">
+                            <Photo Key="@m.Photo" Sizes="(min-width: 56rem) 34vw, 100vw" Class="timeline__photo photo--frame no-zoom" />
+                        </a>
+                    }
+                    else
+                    {
+                        <Photo Key="@m.Photo" Sizes="(min-width: 56rem) 34vw, 100vw" Class="timeline__photo photo--frame" />
+                    }
+                }
+            </li>
+        }
+        <li class="timeline__item timeline__item--next reveal">
+            <div class="timeline__when mono">@NextWhen</div>
             <div class="timeline__body">
-                <h2 class="timeline__title">@m.Title</h2>
-                <p>@m.Body</p>
+                <h2 class="timeline__title">@NextTitle</h2>
+                <p>@NextBody</p>
+                @if (NextHref is not null) { <a class="link-arrow" href="@NextHref">@NextLink</a> }
             </div>
-            @if (m.Photo is not null)
-            {
-                <Photo Key="@m.Photo" Sizes="(min-width: 56rem) 34vw, 100vw" Class="timeline__photo photo--frame" />
-            }
-            @if (m.Moments is { Count: > 0 })
-            {
-                <details class="timeline__more">
-                    <summary><span class="timeline__more-open">What happened (@m.Moments.Count)</span><span class="timeline__more-close">Close</span></summary>
-                    <ol class="moments" role="list">
-                        @foreach (var mo in m.Moments)
-                        {
-                            <li class="moment @(mo.Photo is null ? "moment--text" : "")">
-                                @if (mo.Photo is not null)
-                                {
-                                    <Photo Key="@mo.Photo" Sizes="(min-width: 56rem) 22vw, 80vw" Class="moment__photo" Ratio="4 / 3" Alt="@(mo.Caption)" />
-                                }
-                                <span class="moment__date mono">@mo.Date</span>
-                                <span class="moment__title">@mo.Title</span>
-                                @if (mo.Body is not null) { <span class="moment__body">@mo.Body</span> }
-                                @if (mo.Caption is not null) { <span class="moment__caption">@mo.Caption</span> }
-                            </li>
-                        }
-                    </ol>
-                </details>
-            }
         </li>
+    </ol>
+
+    @for (var i = 0; i < Items.Count; i++)
+    {
+        var m = Items[i];
+        if (m.Moments is not { Count: > 0 }) { continue; }
+        var sub = $"{Id}-sub-{i}";
+        <section class="subtl" id="@sub" aria-label="@m.Title, what happened">
+            <header class="subtl__head">
+                <a class="subtl__back" href="#@($"{Id}-{i}")" data-sub-close>
+                    <span aria-hidden="true">←</span> Back to the full timeline
+                </a>
+                <div class="subtl__headline">
+                    @if (m.Photo is not null)
+                    {
+                        <Photo Key="@m.Photo" Sizes="(min-width: 56rem) 18rem, 40vw" Class="subtl__cover no-zoom" Ratio="3 / 2" Alt="" />
+                    }
+                    <div>
+                        <p class="subtl__when mono">@m.When</p>
+                        <h2 class="subtl__title">@m.Title</h2>
+                        <p class="subtl__lede">@m.Body</p>
+                    </div>
+                </div>
+            </header>
+            <ol class="subtl__list" role="list">
+                @for (var k = 0; k < m.Moments.Count; k++)
+                {
+                    var mo = m.Moments[k];
+                    var dlg = $"{Id}-m-{i}-{k}";
+                    <li class="subtl__item" style="--i: @k">
+                        <a class="subtl__card @(mo.Photo is null ? "subtl__card--text" : "")" href="#@dlg" data-dialog id="@(dlg)-open">
+                            @if (mo.Photo is not null)
+                            {
+                                <Photo Key="@mo.Photo" Sizes="(min-width: 56rem) 14rem, 40vw" Class="subtl__thumb no-zoom" Ratio="4 / 3" Alt="" />
+                            }
+                            <span class="subtl__text">
+                                <span class="subtl__date mono">@mo.Date</span>
+                                <span class="subtl__name">@mo.Title</span>
+                                @if (mo.Body is not null) { <span class="subtl__body">@mo.Body</span> }
+                            </span>
+                            <span class="subtl__more" aria-hidden="true">+</span>
+                        </a>
+                    </li>
+                }
+            </ol>
+            @if (i + 1 < Items.Count && Items[i + 1].Moments is { Count: > 0 })
+            {
+                <p class="subtl__next"><span class="mono">Up next · @Items[i + 1].When</span> <a class="link-arrow" href="#@($"{Id}-sub-{i + 1}")" data-sub="@($"{Id}-sub-{i + 1}")">Next chapter</a></p>
+            }
+        </section>
+
+        @for (var k = 0; k < m.Moments.Count; k++)
+        {
+            var mo = m.Moments[k];
+            var dlg = $"{Id}-m-{i}-{k}";
+            <dialog class="sheet moment-sheet" id="@dlg" aria-labelledby="@(dlg)-title">
+                <div class="sheet__head">
+                    <div>
+                        <p class="moment-sheet__date mono">@mo.Date · @m.Title</p>
+                        <h3 class="sheet__title" id="@(dlg)-title">@mo.Title</h3>
+                    </div>
+                    <a class="sheet__close" href="#@sub" data-dialog-close aria-label="Close">×</a>
+                </div>
+                @if (mo.Photo is not null)
+                {
+                    <Photo Key="@mo.Photo" Sizes="(min-width: 48rem) 44rem, 100vw" Class="sheet__photo" Caption="@mo.Caption" />
+                }
+                @if (mo.Body is not null) { <p class="moment-sheet__body">@mo.Body</p> }
+                @if (mo.Photo is null && mo.Body is null) { <p class="moment-sheet__body">Part of “@m.Title”, @m.When.</p> }
+            </dialog>
+        }
     }
-    <li class="timeline__item timeline__item--next reveal">
-        <div class="timeline__when mono">@NextWhen</div>
-        <div class="timeline__body">
-            <h2 class="timeline__title">@NextTitle</h2>
-            <p>@NextBody</p>
-            @if (NextHref is not null) { <a class="link-arrow" href="@NextHref">@NextLink</a> }
-        </div>
-    </li>
-</ol>
+</div>
 
 @code {
     [Parameter, EditorRequired] public IReadOnlyList<ClubFacts.Milestone> Items { get; set; } = [];
+    /// <summary>Prefix for element ids, unique per page (e.g. "history", "sms26").</summary>
+    [Parameter] public string Id { get; set; } = "tl";
     [Parameter] public string? Class { get; set; }
     [Parameter] public string NextWhen { get; set; } = "Next";
     [Parameter] public string NextTitle { get; set; } = "To be continued…";

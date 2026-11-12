@@ -18,9 +18,10 @@ const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
 const page = await ctx.newPage();
 const consoleErrors = [];
 // 404s are expected: the not-found tests request missing pages on purpose.
-page.on("console", (m) => { if (m.type() === "error" && !/status of 404/.test(m.text())) consoleErrors.push(m.text()); });
+// YouTube thumbnails (i.ytimg.com) are blocked in the offline test sandbox; ignore only those.
+page.on("console", (m) => { if (m.type() === "error" && !/status of 404/.test(m.text()) && !/ytimg\.com|youtube/.test(m.location()?.url || "")) consoleErrors.push(m.text()); });
 
-const routes = ["/", "/about", "/history", "/leadership", "/teams", "/sponsors", "/join", "/shop", "/shop/sms-team-tee", "/shop/cart", "/shop/checkout", "/admin/login", "/sms", "/sms/rosie", "/sms/adam", "/sms/2026", "/sms/company", "/donate"];
+const routes = ["/", "/about", "/projects", "/history", "/leadership", "/teams", "/sponsors", "/join", "/shop", "/shop/sms-team-tee", "/shop/cart", "/shop/checkout", "/admin/login", "/sms", "/sms/rosie", "/sms/adam", "/sms/2026", "/sms/company", "/donate"];
 
 await test("every public route returns 200 with a single h1", async () => {
   for (const r of routes) {
@@ -167,7 +168,7 @@ await test("phone layout: no horizontal scroll, menu opens and Escape closes it"
     await p.goto(BASE + r);
     assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, r);
   }
-  await p.goto(BASE + "/");
+  await p.goto(BASE + "/about"); // the home page hides the nav until you scroll past the landing photo
   await p.locator(".nav__toggle").click();
   assert.equal(await p.locator(".nav--narrow").getAttribute("open"), "");
   await p.keyboard.press("Escape");
@@ -235,7 +236,7 @@ await test("EIN label and number never wrap apart", async () => {
 await test("consistent letter case", async () => {
   const proper = ["AVI", "SMS", "ROSIE", "ADAM", "MATE", "ROV", "MESA", "PayPal", "PDF", "Discord", "Instagram", "Fresno", "State", "Micromouse", "Robotics", "Sequoia", "Marine", "Solutions", "Explorer", "Worlds", "St.", "John's", "I"];
   const bad = [];
-  for (const r of ["/", "/about", "/history", "/leadership", "/teams", "/sponsors", "/join", "/shop", "/donate", "/sms", "/sms/rosie", "/sms/2026", "/sms/company"]) {
+  for (const r of ["/", "/about", "/projects", "/history", "/leadership", "/teams", "/sponsors", "/join", "/shop", "/donate", "/sms", "/sms/rosie", "/sms/2026", "/sms/company"]) {
     await page.goto(BASE + r);
     const found = await page.evaluate((proper) => {
       const out = [];
@@ -262,14 +263,40 @@ await test("consistent letter case", async () => {
   assert.deepEqual([...new Set(bad)], [], [...new Set(bad)].slice(0, 6).join(" | "));
 });
 
-await test("timelines expand and end unfinished", async () => {
+await test("timelines open into chapters, moments pop up, and the story ends unfinished", async () => {
   for (const r of ["/history", "/sms/2026"]) {
     await page.goto(BASE + r);
-    const details = page.locator(".timeline__more").first();
-    await details.locator("summary").click();
-    assert.equal(await details.evaluate((d) => d.open), true, `${r} details opens`);
     assert.equal(await page.locator(".timeline > li").last().evaluate((li) => li.classList.contains("timeline__item--next")), true, `${r} ends with a to-be-continued node`);
+    const open = page.locator(".timeline__open").first();
+    const subId = await open.getAttribute("data-sub");
+    await open.click();
+    const sub = page.locator("#" + subId);
+    await sub.waitFor({ state: "visible" });
+    assert.equal(await page.locator(".tl > .timeline").isVisible(), false, `${r} main timeline gives way to the chapter`);
+    await sub.locator(".subtl__card").first().click();
+    const dlg = page.locator("dialog.moment-sheet[open]");
+    await dlg.waitFor({ state: "visible" });
+    await page.keyboard.press("Escape");
+    await dlg.waitFor({ state: "detached" }).catch(() => {});
+    assert.equal(await page.locator("dialog.moment-sheet[open]").count(), 0, `${r} pop-up closes`);
+    await sub.locator("[data-sub-close]").click();
+    await page.locator(".tl > .timeline").waitFor({ state: "visible" });
   }
+  // without JS the chapter is still reachable through its #anchor
+  await page.goto(BASE + "/history#history-sub-1");
+  assert.equal(await page.locator("#history-sub-1").isVisible(), true, "deep link opens a chapter");
+});
+
+await test("photos open in a lightbox", async () => {
+  await page.goto(BASE + "/about");
+  const img = page.locator(".collage .photo__img").first();
+  await img.scrollIntoViewIfNeeded();
+  await img.click();
+  const box = page.locator("dialog.lightbox[open]");
+  await box.waitFor({ state: "visible" });
+  assert.match(await box.locator(".lightbox__img").getAttribute("src"), /-(1600|2400)\.webp$/);
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator("dialog.lightbox[open]").count(), 0);
 });
 
 await test("people photos, sponsor logos and SMS videos render", async () => {
@@ -280,7 +307,12 @@ await test("people photos, sponsor logos and SMS videos render", async () => {
   assert.ok(await logos.count() >= 15, "sponsor logos");
   for (const alt of await logos.evaluateAll((imgs) => imgs.map((i) => i.alt))) assert.ok(alt.length > 2, "logo alt text");
   await page.goto(BASE + "/sms");
-  assert.equal(await page.locator('iframe[src^="https://www.youtube-nocookie.com/embed/"]').count(), 3, "three SMS videos");
+  assert.equal(await page.locator('iframe[src^="https://www.youtube-nocookie.com/embed/"]').count(), 1, "one big video frame");
+  assert.equal(await page.locator("[data-video-tab]").count(), 3, "three SMS videos to cycle through");
+  await page.locator("[data-video-next]").click();
+  assert.match(await page.locator(".vcar iframe").getAttribute("src"), /THIZyHml-es/, "arrow moves to the next video");
+  await page.goto(BASE + "/sms/rosie");
+  assert.equal(await page.locator("model-viewer[src='/models/rosie.glb']").count(), 1, "ROSIE 3D model");
   const csp = (await page.goto(BASE + "/sms")).headers()["content-security-policy"];
   assert.match(csp, /frame-src[^;]*https:\/\/www\.youtube-nocookie\.com/);
 });

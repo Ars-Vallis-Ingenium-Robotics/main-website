@@ -27,15 +27,23 @@ human still needs to confirm or supply.
       Precision's owner attended, but photos are not captioned with their names. Add names?
 - [ ] **History "More" text**: short expansions written from the docs and photo folders. Read once.
 
-## Round 5 (please check)
-- [ ] **Dalton's last name**: the tech doc and marketing display both say "Cowen"; the site now uses Cowen.
-- [ ] **Video order**: assumed hype, presentation, qualification for the three YouTube links.
-- [ ] **SMS leadership bios** (pop-ups on /sms/company) are drawn from roles and credits in the
-      submission documents. Please read them; edit `Content/SmsCompany.cs`.
-- [ ] **Sponsor levels on the wall**: Anchor/Hull/Rudder/Propeller & Masthead come from the packet, but
-      which sponsor sits in which level is inferred from logo size on the shirt.
-- [ ] **Booth-building photos**: the Jan 10/11/17 folders are empty on the drive; only the Jan 19
-      installation photos exist. Drop any build/painting photos in and they'll go in the timeline.
+## Round 5 (answered Nov 12)
+- [x] Dalton's last name is **Cowin** (the docs' "Cowen" is a typo)
+- [x] Video order: hype, presentation, qualification
+- [x] Sponsor levels on the wall look right
+- [x] No booth-building photos exist; the timeline uses the Jan 19 installation
+- [ ] **SMS leadership bios** (pop-ups on /sms/company): need a content pass later; edit `Content/SmsCompany.cs`.
+
+## Round 6 (please check)
+- [ ] **Booth decorating contest**: the site says we won Fresno State's club booth decorating contest in fall 2026
+      (home page news card, History → Fall 2026). Exact date or the event's name? The photo is the lit booth from Phantom Bash.
+- [ ] **Crew rosters** (/sms/company) were rebuilt from the January "MATE Subsystem Selection" sheet plus the marketing
+      display roster. Float C&E is now Matthias, Andres Jimenez, Ekin Thao, Jonathan Anguiano, Luis Delgado, Wyatt Grogan;
+      ROV C&E is Dalton, Clarissa Morgan, Earl Orejola, Haroon Ahmad; GUI is Ansh, Guillermo Prado (pilot), Kyle Pham,
+      Nathaniel Garcia. Move anyone who switched crews later in the season.
+- [ ] **Contact addresses**: president@, vicepresident@, treasurer@, secretary@avirobotics.org, ceo@sms.avirobotics.org and
+      the founders' addresses now show on Leadership and History. Make sure each mailbox exists before launch.
+- [ ] **Projects page** (/projects): workshop track descriptions are written from meeting agendas and the DFM course notes.
 
 ## Still needed
 - [ ] **Faculty advisor headshots** (Dr. Bani Milhim, Dr. Wu): fresnostate.edu is blocked from

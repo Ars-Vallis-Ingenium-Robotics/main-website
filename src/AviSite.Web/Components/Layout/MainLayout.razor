@@ -1,3 +1,4 @@
+@using AviSite.Web.Content
 @inherits LayoutComponentBase
 @inject IOptions<SiteOptions> Site
 @inject IOptions<NonprofitOptions> Nonprofit
@@ -59,6 +60,7 @@
                 <li><a href="/history">History</a></li>
                 <li><a href="/leadership">Leadership</a></li>
                 <li><a href="/teams">Teams</a></li>
+                <li><a href="/projects">Projects &amp; workshops</a></li>
                 <li><a href="/join">Join</a></li>
             </ul>
         </nav>
@@ -67,6 +69,7 @@
             <ul>
                 <li><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></li>
                 <li><a href="/sponsors">Sponsor or donate</a></li>
+                <li><a href="@ClubFacts.MateUrl" target="_blank" rel="noopener">MATE ROV Competition</a></li>
                 <li><a href="/shop">Shop</a></li>
                 @if (Site.Value.DiscordInviteUrl is { } d) { <li><a href="@d" rel="noopener">Discord</a></li> }
                 @if (Site.Value.YouTubeUrl is { } yt) { <li><a href="@yt" rel="noopener">YouTube</a></li> }

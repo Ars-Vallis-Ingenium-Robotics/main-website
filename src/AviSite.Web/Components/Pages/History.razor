@@ -5,12 +5,25 @@
 <HeadContent><meta name="description" content="How AVI Robotics went from Crush Depth at Clovis Community College to a record-setting first season at the MATE ROV World Championship." /></HeadContent>
 
 <PageHero Kicker="History" Title="One year, two robots, a world record.">
-    <p>AVI is young. Here's how three founders got from an idea to Newfoundland. Open any block to see what happened inside it.</p>
+    <p>AVI is young. Here's how three founders got from an idea to Newfoundland. Click any chapter to open its own timeline, and any moment for the full story.</p>
 </PageHero>
+
+<section class="section section--paper-2" aria-labelledby="founders-title">
+    <div class="wrap split">
+        <div class="split__head">
+            <p class="eyebrow">The founders</p>
+            <h2 class="h2" id="founders-title">Started by three people in 2025.</h2>
+            <p class="lede">Robert Voss, Declan Doss and Timothy Cromwell first competed in the <a href="@ClubFacts.MateUrl" target="_blank" rel="noopener">MATE ROV Competition</a> with Engineering Renaissance's <a href="@ClubFacts.CrushDepthUrl" target="_blank" rel="noopener">Crush Depth</a> team at Clovis Community College. In September 2025 they started AVI at Fresno State.</p>
+        </div>
+        <ul class="people people--founders">
+            @foreach (var p in ClubFacts.Founders) { <li class="reveal"><PersonCard Person="p" /></li> }
+        </ul>
+    </div>
+</section>
 
 <section class="section">
     <div class="wrap">
-        <Timeline Items="ClubFacts.History" NextWhen="2027 and on" NextTitle="Still being written."
+        <Timeline Items="ClubFacts.History" Id="history" NextWhen="2027 and on" NextTitle="Still being written."
                   NextBody="SMS is building an Explorer-class robot, Micromouse is forming, and this timeline is nowhere near done. The next entry could have your name in it."
                   NextHref="/join" NextLink="Help write it" />
     </div>

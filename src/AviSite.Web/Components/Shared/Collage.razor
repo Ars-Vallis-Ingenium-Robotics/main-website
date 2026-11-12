@@ -1,0 +1,20 @@
+@*
+    Photo collage in soft, mixed shapes (big rounded square, circle, arch, pill, leaf), packed with
+    grid-auto-flow: dense. The band runs edge to edge and fades out on both sides.
+    Every photo opens in the lightbox (media.js).
+*@
+<div class="collage-band @Class" role="group" aria-label="@Label">
+    <div class="collage">
+        @for (var i = 0; i < Keys.Count; i++)
+        {
+            <Photo Key="@Keys[i]" Sizes="(min-width: 56rem) 30vw, 50vw" Class="@($"collage__item collage__item--{Shapes[i % Shapes.Length]}")" />
+        }
+    </div>
+</div>
+
+@code {
+    private static readonly string[] Shapes = ["big", "circle", "arch", "leaf", "wide", "soft", "drop", "circle", "wide", "leaf"];
+    [Parameter, EditorRequired] public IReadOnlyList<string> Keys { get; set; } = [];
+    [Parameter] public string Label { get; set; } = "Photos";
+    [Parameter] public string? Class { get; set; }
+}

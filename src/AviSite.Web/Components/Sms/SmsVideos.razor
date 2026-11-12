@@ -1,6 +1,43 @@
-@* The three 2026 videos. Order from Robert's message: hype, presentation, qualification. TODO(confirm) order. *@
-<div class="video-grid">
-    <VideoEmbed YouTubeId="3f_GGQt_6rs" Title="SMS 2026 hype video" Class="video--feature" />
-    <VideoEmbed YouTubeId="THIZyHml-es" Title="2026 engineering presentation" Note="The presentation that scored 102 out of 100 at Worlds." />
-    <VideoEmbed YouTubeId="xROInXXdaL8" Title="2026 MATE qualification video" />
+@*
+    The three 2026 videos in one big frame; arrows (and the list below) cycle which one is showing.
+    Order confirmed by Robert: hype, presentation, qualification. media.js does the swapping;
+    without JS the list items are plain links to YouTube.
+*@
+<div class="vcar" data-videos="@json">
+    <div class="vcar__stage">
+        <div class="video__frame">
+            <iframe src="https://www.youtube-nocookie.com/embed/@(Videos[0].Id)?rel=0" title="@Videos[0].Title" loading="lazy"
+                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen
+                    referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+        <button class="vcar__arrow vcar__arrow--prev" type="button" data-video-prev aria-label="Previous video">‹</button>
+        <button class="vcar__arrow vcar__arrow--next" type="button" data-video-next aria-label="Next video">›</button>
+    </div>
+    <div class="vcar__bar">
+        <p class="vcar__now"><span class="vcar__count mono" data-video-count>1 / @Videos.Count</span> <span class="video__title" data-video-title>@Videos[0].Title</span> <span class="video__note" data-video-note>@Videos[0].Note</span></p>
+        <ol class="vcar__list" role="list">
+            @for (var i = 0; i < Videos.Count; i++)
+            {
+                var v = Videos[i];
+                <li><a class="vcar__tab" href="https://youtu.be/@v.Id" data-video-tab aria-current="@(i == 0 ? "true" : "false")" target="_blank" rel="noopener">
+                    <img src="https://i.ytimg.com/vi/@(v.Id)/mqdefault.jpg" alt="" width="160" height="90" loading="lazy" />
+                    <span>@v.Title</span>
+                </a></li>
+            }
+        </ol>
+    </div>
 </div>
+
+@code {
+    private sealed record Video(string Id, string Title, string? Note = null);
+
+    private static readonly IReadOnlyList<Video> Videos =
+    [
+        new("3f_GGQt_6rs", "SMS 2026 hype video"),
+        new("THIZyHml-es", "2026 engineering presentation", "The presentation that scored 102 out of 100 at Worlds."),
+        new("xROInXXdaL8", "2026 MATE qualification video"),
+    ];
+
+    private static readonly string json = System.Text.Json.JsonSerializer.Serialize(
+        Videos.Select(v => new { id = v.Id, title = v.Title, note = v.Note }));
+}
