@@ -2,42 +2,59 @@
 @inject SmsUrls Links
 
 <PageTitle>Company · Sequoia Marine Solutions</PageTitle>
-<HeadContent><meta name="description" content="How Sequoia Marine Solutions is organized: a C-suite, seven subsystems and 51 students from every major." /></HeadContent>
+<HeadContent><meta name="description" content="How Sequoia Marine Solutions is organized: a C-suite, seven crews and 51 students from every major." /></HeadContent>
 
 <section class="sms-page-hero">
     <div class="wrap">
         <p class="sms-kicker">Company</p>
         <h1 class="sms-page-hero__title">Run like a real firm.</h1>
-        <p class="sms-page-hero__lede">51 students, a C-suite, seven subsystem leads and a purchase-request process that goes through design, operations and finance before anything gets ordered.</p>
+        <p class="sms-page-hero__lede">51 students, a C-suite, seven crews with a lead each, and a purchase-request process that goes through design, operations and finance before anything gets ordered.</p>
     </div>
 </section>
 
-<section class="sms-section" aria-labelledby="org-title">
+<section class="sms-section" aria-labelledby="leaders-title">
     <div class="wrap">
-        <p class="sms-kicker sms-kicker--dark">2026 org chart</p>
-        <h2 class="sms-h2" id="org-title">Who answered to whom.</h2>
-        <OrgChart Root="ClubFacts.SmsOrg2026" />
-
-        <div class="org__leads">
-            <p class="sms-kicker sms-kicker--dark">Subsystem leads · reporting to the CTO and CDO</p>
-            <ul class="people">
-                @foreach (var p in ClubFacts.SmsLeads2026) { <li class="reveal"><PersonCard Person="p" /></li> }
-            </ul>
-        </div>
+        <p class="sms-kicker sms-kicker--dark">2026 leadership</p>
+        <h2 class="sms-h2" id="leaders-title">The people in charge.</h2>
+        <p class="muted">Tap anyone to read what they did this season.</p>
+        <ul class="tiles tiles--people" role="list">
+            @foreach (var l in SmsCompany.Leadership)
+            {
+                <li class="reveal">
+                    <a class="tile" id="open-@SmsCompany.Slug(l.Name)" href="#person-@SmsCompany.Slug(l.Name)" data-dialog>
+                        <Avatar Name="@l.Name" Size="96" />
+                        <span class="tile__name">@l.Name</span>
+                        <span class="tile__role">@l.Role</span>
+                    </a>
+                </li>
+            }
+        </ul>
     </div>
 </section>
 
-<section class="sms-section sms-section--cream">
-    <div class="wrap split">
-        <div class="split__head">
-            <p class="sms-kicker sms-kicker--dark">Subsystems</p>
-            <h2 class="sms-h2">Seven crews, one robot.</h2>
-        </div>
-        <ul class="subsystems reveal">
-            <li>ROV Manipulators</li><li>ROV Chassis & Propulsion</li><li>ROV Controls & Electronics</li>
-            <li>Float Chassis & Buoyancy</li><li>Float Controls & Electronics</li><li>GUI & Communications</li>
-            <li>Deck Management</li><li>Marketing</li><li>Logistics</li>
+<section class="sms-section sms-section--cream" aria-labelledby="crews-title">
+    <div class="wrap">
+        <p class="sms-kicker sms-kicker--dark">Subsystems</p>
+        <h2 class="sms-h2" id="crews-title">Seven crews, one robot.</h2>
+        <p class="muted">Each crew owned one part of ROSIE or ADAM. Tap a crew for its lead, its members and what it built.</p>
+        <ul class="tiles tiles--crews" role="list">
+            @foreach (var c in SmsCompany.Crews)
+            {
+                <li class="reveal">
+                    <a class="tile tile--crew" id="open-crew-@c.Id" href="#crew-@c.Id" data-dialog>
+                        @if (c.Photo is not null) { <Photo Key="@c.Photo" Sizes="(min-width: 56rem) 25vw, 50vw" Class="tile__photo" Ratio="4 / 3" Alt="" /> }
+                        <span class="tile__name">@c.Name</span>
+                        <span class="tile__role">Lead: @c.Lead · @(c.Members.Count + 1) people</span>
+                    </a>
+                </li>
+            }
         </ul>
+        <p class="support-teams">
+            @foreach (var (team, members) in SmsCompany.Support)
+            {
+                <span><strong>@team:</strong> @string.Join(", ", members)</span>
+            }
+        </p>
     </div>
 </section>
 
@@ -53,3 +70,41 @@
         </div>
     </div>
 </section>
+
+@foreach (var l in SmsCompany.Leadership)
+{
+    <dialog class="sheet" id="person-@SmsCompany.Slug(l.Name)" aria-labelledby="person-@SmsCompany.Slug(l.Name)-name">
+        <div class="sheet__head">
+            <Avatar Name="@l.Name" Size="120" />
+            <div>
+                <p class="sms-kicker sms-kicker--dark">@l.Role</p>
+                <h3 class="sheet__title" id="person-@SmsCompany.Slug(l.Name)-name">@l.Name</h3>
+                <p class="muted">@l.Major</p>
+            </div>
+            <a class="sheet__close" href="#crews-title" data-dialog-close aria-label="Close">×</a>
+        </div>
+        <ul class="sheet__list">@foreach (var d in l.Did) { <li>@d</li> }</ul>
+    </dialog>
+}
+
+@foreach (var c in SmsCompany.Crews)
+{
+    <dialog class="sheet" id="crew-@c.Id" aria-labelledby="crew-@c.Id-name">
+        <div class="sheet__head">
+            <div>
+                <p class="sms-kicker sms-kicker--dark">Crew</p>
+                <h3 class="sheet__title" id="crew-@c.Id-name">@c.Name</h3>
+                <p>@c.Summary</p>
+            </div>
+            <a class="sheet__close" href="#crews-title" data-dialog-close aria-label="Close">×</a>
+        </div>
+        @if (c.Photo is not null) { <Photo Key="@c.Photo" Sizes="(min-width: 56rem) 40rem, 100vw" Class="sheet__photo" Ratio="16 / 9" /> }
+        <h4 class="sheet__h">What they built</h4>
+        <ul class="sheet__list">@foreach (var b in c.Built) { <li>@b</li> }</ul>
+        <h4 class="sheet__h">Who</h4>
+        <ul class="sheet__people" role="list">
+            <li class="sheet__lead"><Avatar Name="@c.Lead" Size="56" /><span><strong>@c.Lead</strong><br /><span class="muted">Lead</span></span></li>
+            @foreach (var m in c.Members) { <li>@m</li> }
+        </ul>
+    </dialog>
+}

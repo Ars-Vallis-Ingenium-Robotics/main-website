@@ -15,7 +15,7 @@
 
 <section class="sms-section">
     <div class="wrap">
-        <Timeline Items="steps" Class="timeline--sms" NextWhen="2027" NextTitle="Explorer class. In progress."
+        <Timeline Items="ClubFacts.SmsSeason2026" Class="timeline--sms" NextWhen="2027" NextTitle="Explorer class. In progress."
                   NextBody="A bigger class, harder missions and a new robot. The 2027 build is happening right now on Friday nights."
                   NextHref="@Links.Avi("/join")" NextLink="Join the build" />
     </div>
@@ -32,39 +32,58 @@
     </div>
 </section>
 
-<section class="sms-section sms-section--flush">
-    <p class="filmstrip-hint" aria-hidden="true">Scroll sideways →</p>
-    <div class="filmstrip" tabindex="0" aria-label="World Championship photos, scroll sideways">
-        <Photo Key="pool-tent" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="worlds-auditorium" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="worlds-wavetank" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="worlds-awards-crowd" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="worlds-rosie-feed" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="worlds-team-rosie" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+<section class="sms-section sms-section--cream" aria-labelledby="watch-title">
+    <div class="wrap">
+        <p class="sms-kicker sms-kicker--dark">Watch</p>
+        <h2 class="sms-h2" id="watch-title">The season on video.</h2>
+        <SmsVideos />
+    </div>
+</section>
+
+<section class="sms-section sms-section--flush" aria-label="Photos from St. John's">
+    <div class="wrap"><p class="sms-kicker sms-kicker--dark">St. John's, Newfoundland · June 2026</p></div>
+    <div class="canada-wall">
+        <Photo Key="worlds-backdrop" Sizes="(min-width: 56rem) 50vw, 100vw" Class="canada-wall__a" />
+        <Photo Key="worlds-institute" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__b" />
+        <Photo Key="worlds-display" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__c" />
+        <Photo Key="worlds-wavetank" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__d" />
+        <Photo Key="worlds-hallway" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__e" />
+        <Photo Key="worlds-auditorium" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__f" />
+        <Photo Key="worlds-awards-crowd" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__g" />
+        <Photo Key="worlds-checkin" Sizes="(min-width: 56rem) 25vw, 50vw" Class="canada-wall__h" />
+        <Photo Key="worlds-team-rosie" Sizes="(min-width: 56rem) 50vw, 100vw" Class="canada-wall__i" />
+    </div>
+</section>
+
+<section class="sms-section" aria-labelledby="docs-title">
+    <div class="wrap split">
+        <div class="split__head">
+            <p class="sms-kicker sms-kicker--dark">Submission documents</p>
+            <h2 class="sms-h2" id="docs-title">Read what we turned in.</h2>
+            <p>Everything SMS submitted to MATE for the 2026 World Championship. PDFs open in a new tab.</p>
+            <Photo Key="marketing-display" Sizes="(min-width: 56rem) 40vw, 100vw" Class="photo--frame docs__poster" />
+        </div>
+        <ul class="docs reveal" role="list">
+            @foreach (var (title, file, note) in docs)
+            {
+                <li><a class="docs__link" href="/files/sms-2026/@file" target="_blank" rel="noopener"><span class="docs__title">@title</span><span class="docs__note">@note</span></a></li>
+            }
+        </ul>
     </div>
 </section>
 
 @code {
-    private static readonly IReadOnlyList<ClubFacts.Milestone> steps =
+    private static readonly (string Title, string File, string Note)[] docs =
     [
-        new("Fall 2025", "Company formed",
-            "An open forum settles the structure: a C-suite and seven subsystems, each with a lead. Members try every subsystem before choosing.",
-            More: ["The structure came from the founders' September plan: CEO, COO and CTO at the top, then financing, marketing, deck management, and the ROV and float subsystems underneath."]),
-        new("Winter", "Research & design",
-            "Brainstorming workshops, a study of past MATE teams, and the first foamboard and PVC mockups.", "pool-proto",
-            More: ["The Chief Design Officer ran idea-generation workshops. One of them produced the harpoon manipulators."]),
-        new("Mar–Apr 2026", "Water testing",
-            "Leak hunting with sponges inside the pressure hull, a one-week saltwater corrosion test on the T-slot rail, then a successful April 4 water test.", "pool-jump",
-            More: ["Sponges inside the hull showed exactly where water got in. After the April 4 success, the team jumped in the pool too."]),
-        new("Apr 25", "Monterey regional", "SMS's first competition run.", "monterey-group"),
-        new("May", "Pilot selection & flight sticks",
-            "Pilots trained on ThrustMaster flight sticks with 44 programmable buttons.",
-            More: ["Two May water tests picked the pilots and tuned the flight-stick mapping."]),
-        new("June 4", "Pool test with guests",
-            "A full run of ROSIE and ADAM at the Fresno State pool, with Fresno State's president, the Lyles College dean and Precision Civil Engineering's owner watching from the deck.", "pool-adam-deploy",
-            More: ["It was one of the last full tests before the robots shipped to Newfoundland."], MorePhoto: "pool-rosie-dive"),
-        new("June", "World Championship, St. John's",
-            "Thirteen students and two robots fly LAX to St. John's for the MATE ROV World Championship.", "worlds-team-rosie",
-            More: ["The result: the Engineering Presentation award with 102 out of 100, a Pioneer-class record."], MorePhoto: "worlds-award-stage"),
+        ("Technical documentation", "sms-2026-technical-documentation.pdf", "The full engineering write-up. PDF, 2.9 MB"),
+        ("Marketing display", "sms-2026-marketing-display.pdf", "Our poster: ROSIE, ADAM and the company. PDF, 1.9 MB"),
+        ("Spec sheet", "sms-2026-spec-sheet.pdf", "ROSIE at a glance. PDF"),
+        ("Float (non-ROV device) documentation", "sms-2026-float-documentation.pdf", "ADAM. PDF"),
+        ("Electrical SID: ROV", "sms-2026-electrical-sid-rov.pdf", "System interconnection diagram. PDF"),
+        ("Electrical SID: float", "sms-2026-electrical-sid-float.pdf", "PDF"),
+        ("Company safety review", "sms-2026-company-safety-review.pdf", "PDF"),
+        ("Job safety analysis", "sms-2026-job-safety-analysis.pdf", "PDF"),
+        ("Corporate responsibility", "sms-2026-corporate-responsibility.pdf", "PDF"),
+        ("Press release", "sms-2026-press-release.pdf", "PDF"),
     ];
 }

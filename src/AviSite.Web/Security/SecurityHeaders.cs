@@ -11,7 +11,7 @@ public static class SecurityHeaders
         "img-src 'self' data: https://*.paypal.com https://*.paypalobjects.com; " +
         "font-src 'self'; " +
         "connect-src 'self' https://*.paypal.com https://*.paypalobjects.com; " +
-        "frame-src https://*.paypal.com https://*.paypalobjects.com https://drive.google.com; " + // SMS videos (Drive preview embeds)
+        "frame-src https://*.paypal.com https://*.paypalobjects.com https://www.youtube-nocookie.com; " + // SMS videos (YouTube)
         "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
 
     /// <summary>Baseline headers for every response, including legacy static pages.</summary>

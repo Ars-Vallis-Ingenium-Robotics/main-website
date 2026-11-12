@@ -92,6 +92,8 @@ links on /sms and absolute ones on the SMS host.
 ## Don'ts (the "AI website" tells)
 
 - No purple/blue gradients, glassmorphism, blobs, or emoji icons.
+- No blueprint/graph-paper grids behind heroes (Robert: "a lot of AI websites are using this").
+  Heroes use our own photography (toned) or plain ink with the antenna-red/blurple base stripe.
 - No centered hero + three identical feature cards.
 - Don't stack every drawing device at once (grid + crop marks + FIG numbers + ticker
   + numbered eyebrows). Pick two per page.

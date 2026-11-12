@@ -23,9 +23,10 @@
     [Parameter] public int MaxTier { get; set; } = 4;
     [Parameter] public bool ShowLabels { get; set; } = true;
 
-    // TODO(confirm): tier names are inferred from logo size on the shirt, not a published tier list.
+    // Level names from the 2025/26 sponsorship packet. Which sponsor sits in which level is inferred
+    // from logo size on the Worlds shirt: TODO(confirm) with the treasurer.
     private static readonly Dictionary<int, string> Labels = new()
     {
-        [1] = "Headline sponsor", [2] = "Major sponsors", [3] = "Partners", [4] = "Supporters",
+        [1] = "Anchor", [2] = "Hull", [3] = "Rudder", [4] = "Propeller & Masthead",
     };
 }

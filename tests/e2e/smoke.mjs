@@ -280,9 +280,30 @@ await test("people photos, sponsor logos and SMS videos render", async () => {
   assert.ok(await logos.count() >= 15, "sponsor logos");
   for (const alt of await logos.evaluateAll((imgs) => imgs.map((i) => i.alt))) assert.ok(alt.length > 2, "logo alt text");
   await page.goto(BASE + "/sms");
-  assert.equal(await page.locator('iframe[src^="https://drive.google.com/file/d/"]').count(), 3, "three SMS videos");
+  assert.equal(await page.locator('iframe[src^="https://www.youtube-nocookie.com/embed/"]').count(), 3, "three SMS videos");
   const csp = (await page.goto(BASE + "/sms")).headers()["content-security-policy"];
-  assert.match(csp, /frame-src[^;]*https:\/\/drive\.google\.com/);
+  assert.match(csp, /frame-src[^;]*https:\/\/www\.youtube-nocookie\.com/);
+});
+
+await test("SMS company: tapping a person or crew opens a detail pop-up", async () => {
+  await page.goto(BASE + "/sms/company");
+  await page.locator('.tiles--crews a[data-dialog]').first().click();
+  const d = page.locator("dialog[open]");
+  assert.equal(await d.count(), 1, "crew dialog open");
+  assert.match(await d.innerText(), /What they built/i);
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator("dialog[open]").count(), 0, "Escape closes it");
+  await page.locator('.tiles--people a[data-dialog]').first().click();
+  assert.equal(await page.locator("dialog[open]").count(), 1, "person dialog open");
+});
+
+await test("PDF links (sponsor packet, submission docs) open in a new tab", async () => {
+  for (const r of ["/", "/sponsors", "/sms/2026"]) {
+    await page.goto(BASE + r);
+    const bad = await page.locator('a[href$=".pdf"]:not([target="_blank"])').count();
+    assert.equal(bad, 0, `${r} has PDF links without target=_blank`);
+  }
+  assert.ok(await page.locator(".docs a").count() >= 8, "submission documents listed");
 });
 
 await test("no sideways scroll on any page at 360px", async () => {

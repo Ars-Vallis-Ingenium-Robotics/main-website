@@ -1,0 +1,19 @@
+@inject IWebHostEnvironment Env
+@* Round headshot from wwwroot/img/people/<slug>, or initials when there's no photo. *@
+@if (HasPhoto)
+{
+    <img class="avatar" src="/img/people/@(Slug)-@(Size > 120 ? 320 : 160).webp" srcset="/img/people/@(Slug)-160.webp 1x, /img/people/@(Slug)-320.webp 2x"
+         alt="" width="@Size" height="@Size" style="--size: @(Size)px" loading="lazy" decoding="async" />
+}
+else
+{
+    <span class="avatar avatar--initials" style="--size: @(Size)px" aria-hidden="true">@Initials</span>
+}
+
+@code {
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+    [Parameter] public int Size { get; set; } = 64;
+    private string Slug => string.Join('-', Name.Replace("Dr. ", "").ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    private string Initials => string.Concat(Name.Replace("Dr. ", "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => w[0]).Take(2));
+    private bool HasPhoto => Env.WebRootFileProvider.GetFileInfo($"img/people/{Slug}-160.webp").Exists;
+}

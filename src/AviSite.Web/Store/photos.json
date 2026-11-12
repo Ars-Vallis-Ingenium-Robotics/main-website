@@ -517,5 +517,255 @@
   "h": 1600,
   "focus": "50% 50%",
   "lqip": "data:image/webp;base64,UklGRpgAAABXRUJQVlA4IIwAAAAQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JbACsABKRbc6LHMoo72zHwADKOfzQvfXHSAL7KF+HZSJwoUaO+IpuwYJrQIY14P4QwHdVg3k635BC5Rn1zVbkLDNzgP0xLrMU2IQOXQOlQY8p1yaVP562W+vy+SyX40/1Pnft2BNw5mHe+F6OuLlVd6QAAA=="
+ },
+ "fall-2025-group": {
+  "alt": "AVI Robotics' first group photo, fall 2025, in front of the Lyles College of Engineering",
+  "widths": [
+   480
+  ],
+  "w": 480,
+  "h": 360,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoQAAABXRUJQVlA4IHgAAAAwBACdASoYABIAPu1kqU2ppaOmMAgBMB2JQBWHKASgAOz1GyBNqz+EQXwA+NqGBNfW8UtXhFxVFzuYoNT7aI9JWeCChbki/x9lEGyJ/OHPgpF3Qh48LEC7f72MwzwhHzARSuFt2RtAUJ6Tzw/WinY6ieLkCflIAAA="
+ },
+ "fall-2025-leads": {
+  "alt": "AVI's first team leads on a playground climbing frame, fall 2025",
+  "widths": [
+   480
+  ],
+  "w": 480,
+  "h": 360,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAAAQBQCdASoYABIAPu1irFAppSQisBgIATAdiWMAwNwQ3JBQAV5jwiNy537dyrc19OQAAMp2hzmD5CHJ2c3VU2hnZyATBINHKu6Vlsd24jFoyU/eGthmS5UxEcKp5BV9Cvv4TORjFlhICDzvUKiK0PTjGjxLfO0aNXBgAXJRgyUyNuhLX4wDoAAA"
+ },
+ "uhc-fun-run": {
+  "alt": "Showing an early ROV to visitors at the UHC Foundation's 2026 Fun Run",
+  "widths": [
+   480,
+   960
+  ],
+  "w": 960,
+  "h": 640,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpgAAABXRUJQVlA4IIwAAAAwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JZgCxDIjCA3npSLRqV2a4NgAA9jDqf6U67Rh1i0v4NX2kitRdG6l+HIs+mwEOwwGUas0oNI+LgKEioDo40cVkVJMp4K8PwE4E6mRPtKEjc/CFHbHMq7CCL+1SFPhGDss83gsDfJYJ9vBdqnhJVmuyOqAAAA=="
+ },
+ "water-test-assembly": {
+  "alt": "Members assembling ROSIE's chassis under string lights on a water test night",
+  "widths": [
+   480,
+   960
+  ],
+  "w": 960,
+  "h": 640,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAABQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JYgCdAB8xRNR40Ca8os58/ReAAPz91ATmJZ3vtsgf1i3I7NP7f0v+SfmO7u2ZnRC/Op+qGVuT5I8kHUWiVl8z+WsrTHIccMxMDmag7pQ/JOYkygnVNbTBhr79KK9dF6rQTW6Rd/+d4AbhAAA="
+ },
+ "pi-day-group": {
+  "alt": "AVI volunteers together at the Pi Day Run, March 14, 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 55%",
+  "lqip": "data:image/webp;base64,UklGRqIAAABXRUJQVlA4IJYAAADwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JZgCdABAsVrX/4ybbxRwAAP6p+qHWz53yOfo+zTpX/6lElv/4aXolcc9aSehlHTx54vCz4HwwlrSukd8KRq96TkGhF/MyfTr8S6oFHpuchJ2ZbhiEJp6Cn7k1HBSr8iGNEM8MCn3mDtP1McT8B9+5gZPkBN/oy+AK4Q3YAAA="
+ },
+ "pi-day-booth": {
+  "alt": "Visitors at AVI's table at the Pi Day Run",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqoAAABXRUJQVlA4IJ4AAABwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JaACdH8G6aAP4w2Vu4ZQDRnXyvAD3zyAji7s0/AA7ZRKWjVTobA1RYnTGpbA3yVk9rLzG+Pvz0tr+8Tx8NmNZyhXue7jlFm13UTP62dM/RjiTKmh9FxHieYILjQZtzlPXhAfeQqngKbZYO+9j/AaH8EoIJtByKG9ZzU04MOeDfczR04gAAA=="
+ },
+ "booth-installed": {
+  "alt": "The finished Ars Vallis Ingenium booth, installed January 19, 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAABQBACdASoYABAAPu1oqk6ppiQiMAgBMB2JaAC7AB59nqRzOgrAAsrpM35AAP7kHxvfJr+aV3IEUAe+j6sY1BmtGpWSnFSEgTUluyMKxPIM+e66zqizr+fJGq7ss1ccF7IAAA=="
+ },
+ "workshop-mar": {
+  "alt": "Members working through a programming session at a spring 2026 build day",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAAAQBACdASoYABAAPu1iqk4ppaQiMAgBMB2JYwDDNAyvI4+dbYR4z9oeAAD+r3jdZQ4iOQL5LjZLRhXMi3u7wpGnw08HYA9Fjj1WtrDANYq6I+QtlRTyVblIeauEexHp7aAJqBZ22/Xxjp+aGleZhlfZC7cvQ65c7+9sxpKGIUEppZAA"
+ },
+ "first-water": {
+  "alt": "Lowering the first ROV prototype into the water, March 21, 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRnwAAABXRUJQVlA4IHAAAAAwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JYgC7BagBfMI+xjmjDSZgaAAA/ZTy01xnELfrU3xwfkGZc50EDq4owXxXI4ah6crssebCERglyu+Y3fs7Jc0rgPxR1wdN3SeNywuPiwVncqEeGo9qAAAA"
+ },
+ "first-water-night": {
+  "alt": "A member in the pool at night guiding the prototype during a water test",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAADQAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JaACdAB4/RF4yBbBrTBAA/uRevlfUTrtY4FB/VkIrE0ZyWDgmQ91fw1xU3RTlE2gUdIouvaRlu79ENA+wwvDi9YrsvGHB9AAAAA=="
+ },
+ "pvc-frame": {
+  "alt": "Assembling the PVC test frame on the lawn before a water test",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoQAAABXRUJQVlA4IHgAAACwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JYgDCgBhTFDUAKeqyMAD+uUVvAXaZL9Q7UtGwGBOp5gLlSWmFp1sOZN7Dy6bSTzUg/tdyXSpMo52/bjy2mUEXuenYp613vRTRuxizqA0VT0QZZNHZDWP/lPj7EgkgAAA="
+ },
+ "monterey-volunteers": {
+  "alt": "AVI volunteers poolside at the MATE Monterey regional",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAADwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZwAOcAOXXyffXQsUNP4AAP7iF9daVZZaDGONlkKRTwf2kwsKvTrXXnN6Ke2KaoY9AUv8gS+kgw3e9iJZbauxLjbYKj49S6axZUemnDdITXNNuRcm97pQPQ3vfwAA"
+ },
+ "pool-day-crowd": {
+  "alt": "Guests and SMS members gathered around ROSIE under the tent at the June 4 pool test",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAAAwBACdASoYABAAPu1iqU2ppaQiMAgBMB2JQAAK+4PbZ7HEumUCHX62t0AA/I34gmZSBd6+i1RkuIB/zvS+L5EV6zdTdJRHJGCthUX7nT5vJ1laQoXyHWNAly4ntA8tEKBbaneoHAe2+V/UnOih1N8vpGVPafPm9pu3cZkxHuPdlszAAAA="
+ },
+ "worlds-backdrop": {
+  "alt": "The SMS team in front of the World Championship backdrop in St. John's",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAACwAwCdASoYABAAPu1mqk2ppaQiMAgBMB2JaAAAMbzMs/JawH1ykAD+vzx96icctX2KTmqOzN20rjIy7N7TkpAfkDAPZSzo4Ey6mmRdJHQLik4/XUWY5epac1xO/cymz5hCBrkGZ43/jmTLVB7fxVmoiOeVBjNAHo9cVfG6hk4AAA=="
+ },
+ "worlds-institute": {
+  "alt": "SMS outside the Fisheries and Marine Institute of Memorial University of Newfoundland",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRmAAAABXRUJQVlA4IFQAAACwAwCdASoQABgALrV2u12jqampiYC0SygFR6Ib8YtT6yYcTk0CAAD89VOXlu0OtufIP0C3hb1FpvKeMosDmvZ6zFMG50lzm7GHvcgeFoAU2HYAAAA="
+ },
+ "worlds-hallway": {
+  "alt": "Team members holding up ADAM in the hallway at Worlds",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAADQAwCdASoYABAAPu1kqU2ppaQiMAgBMB2JYwC06BAcNlOJhmZJ7gAA/jnVZXMj1b0ZU3rMw20ArC4eSGkX2Bl0GjGSBQf3rEFbFZ5XtVdnecj9IoPFYGyarh7vMewV/rO9rP0MsGxVHyNlKNL5Wmm8uIjx3AAA"
+ },
+ "worlds-display": {
+  "alt": "ROSIE and ADAM on the Fresno State display table at Worlds",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoAAAABXRUJQVlA4IHQAAAAwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JbACdABoeat/BElvVBeZN8fgA/tFX6lHHUPj1Wg2+TTRyBs892lCuYoGYcIAg+fyKB1/O8aerM1WB7XUwqTndlqNuqkQsNZIwwfIVM4PhRVaX2JCZQ/5/Z3EAAA=="
+ },
+ "adam-display": {
+  "alt": "ADAM, the clear-tube profiling float, standing next to ROSIE at Worlds",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3200,
+  "focus": "60% 50%",
+  "lqip": "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAAAQBACdASoSABgAPu1urlIppiQiqAgBMB2JagDNwA9NjXe3kN7OMQe6AAD+5dZ4LsWY0w/J4GC0ze5wSKesZbulVNRwI/KrlgaDeQxWEBTa+a7WG2QVnvO6LYZYHNThJWZK1CniUrShPyeQm5Q+PrBM/5by+g/nAoZH9qI5AAA="
+ },
+ "worlds-checkin": {
+  "alt": "SMS checking in at the 2026 World Championship",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRp4AAABXRUJQVlA4IJIAAAAwBACdASoYABAAPu1krU6ppaSiMAgBMB2JZAAAW+wKcTqGyazBqV7ZpgAA/oQah0kooMlCwjbURISPraURwksx77QBiJpqSJKM4gBOjhzz5e/y0eYAwvfAqzjsm7DNNQQSpNfkxnptDO12FnxxTjZkZKyVhfjFR9Ly+lxGs/frLvAaLpMrY3D95ZgBCJSKtEeQAA=="
+ },
+ "marketing-display": {
+  "alt": "SMS's 2026 marketing display poster: ROSIE, ADAM, design rationale and the company roster",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1800,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqIAAABXRUJQVlA4IJYAAADQBACdASoYABIAPu1qr1CppaQiqAqpMB2JZACdMswBqa9a7D9zkg5VGi7u3pX+AAD+31n5PeSYCfFaTn30Wgl45T6y1N9z0A+mArVZNlHiPRjp5FXoaFdOGw7CRXuEE5KQtUk/chxc2wDZ3pmQ40pD9UEokFRA1jwokdU+h9ZBXbyJDNPobeMEoDmMzzR5K7BntUhQoAA="
  }
 }

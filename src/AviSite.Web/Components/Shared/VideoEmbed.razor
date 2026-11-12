@@ -1,11 +1,12 @@
 @*
-    Google Drive video embed. The file must be shared "Anyone with the link can view",
-    otherwise Drive shows a sign-in wall inside the frame. CSP allows frame-src drive.google.com.
+    YouTube embed (privacy-enhanced youtube-nocookie.com). The iframe loads lazily.
+    CSP allows frame-src https://www.youtube-nocookie.com.
 *@
 <figure class="video @Class">
     <div class="video__frame">
-        <iframe src="https://drive.google.com/file/d/@(DriveId)/preview" title="@Title" loading="lazy"
-                allow="autoplay; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <iframe src="https://www.youtube-nocookie.com/embed/@(YouTubeId)?rel=0" title="@Title" loading="lazy"
+                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen
+                referrerpolicy="strict-origin-when-cross-origin"></iframe>
     </div>
     <figcaption class="video__caption">
         <span class="video__title">@Title</span>
@@ -14,7 +15,7 @@
 </figure>
 
 @code {
-    [Parameter, EditorRequired] public string DriveId { get; set; } = "";
+    [Parameter, EditorRequired] public string YouTubeId { get; set; } = "";
     [Parameter, EditorRequired] public string Title { get; set; } = "";
     [Parameter] public string? Note { get; set; }
     [Parameter] public string? Class { get; set; }

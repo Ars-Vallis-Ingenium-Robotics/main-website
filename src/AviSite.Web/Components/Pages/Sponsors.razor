@@ -10,7 +10,7 @@
     <p>Every dollar goes into parts, pool time and getting students to competition. AVI is a registered @Nonprofit.Value.Status, so your gift is tax-deductible.</p>
     <div class="actions">
         <a class="btn btn--accent btn--lg" href="/donate">Donate now</a>
-        <a class="btn btn--ghost-on-ink" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
+        <a class="btn btn--ghost-on-ink" href="@Site.Value.SponsorPacketPath" target="_blank" rel="noopener">Sponsorship packet (PDF)</a>
     </div>
 </PageHero>
 
@@ -45,6 +45,29 @@
     </div>
 </section>
 
+<section class="section" aria-labelledby="levels-title">
+    <div class="wrap">
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Sponsorship levels · 2025–26 packet</p>
+                <h2 class="h2" id="levels-title">Pick a level.</h2>
+            </div>
+            <a class="link-arrow" href="@Site.Value.SponsorPacketPath" target="_blank" rel="noopener">Full packet (PDF)</a>
+        </div>
+        <ol class="levels" role="list">
+            @foreach (var (name, amount, perks) in levels)
+            {
+                <li class="level reveal">
+                    <span class="level__name">@name</span>
+                    <span class="level__amount mono">@amount</span>
+                    <ul class="level__perks">@foreach (var p in perks) { <li>@p</li> }</ul>
+                </li>
+            }
+        </ol>
+        <p class="muted small">Every level includes the rewards of the levels below it. All sponsors are essential: we couldn't do this without any of you.</p>
+    </div>
+</section>
+
 <section class="section section--ink">
     <div class="wrap split">
         <div class="split__head">
@@ -56,7 +79,7 @@
             <SpecSheet Class="spec--on-ink" Rows="@nonprofitRows" />
             <div class="actions">
                 <a class="btn btn--accent" href="/donate">Donate</a>
-                <a class="btn btn--ghost-on-ink" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
+                <a class="btn btn--ghost-on-ink" href="@Site.Value.SponsorPacketPath" target="_blank" rel="noopener">Sponsorship packet (PDF)</a>
                 @if (Site.Value.ContactEmail is { } email) { <a class="btn btn--ghost-on-ink" href="mailto:@email?subject=Supporting%20AVI%20Robotics">Email @email</a> }
             </div>
         </div>
@@ -71,6 +94,15 @@
         ("Fundraising operations", "$2,405 · Vintage Days booth supplies"),
         ("Team operations", "$1,327 · shirts, booth, materials"),
         ("Admin & registration", "$877 · 501(c)(3) filing, CA DOJ, MATE registration"),
+    ];
+
+    private static readonly (string, string, string[])[] levels =
+    [
+        ("Anchor", "$5,000", ["Your logo printed directly on the ROV we take to the World Championship", "A custom wooden plaque thanking your business", "A framed photo of the team from competition"]),
+        ("Hull", "$2,500", ["Large logo on team shirts and merchandise", "A verbal shoutout at the World Championship", "Logo on flyers and digital marketing"]),
+        ("Rudder", "$1,000", ["Medium logo on team shirts and merchandise", "A shoutout at the start and end of every AVI meeting"]),
+        ("Propeller", "$500", ["Small logo on team shirts and merchandise", "A printed photo of the team from competition"]),
+        ("Masthead", "$250", ["Company name on team shirts and merchandise", "Your logo shown at every AVI meeting", "Social media shoutouts"]),
     ];
 
     private IReadOnlyList<(string, string)> nonprofitRows => [

@@ -1,6 +1,6 @@
 @using AviSite.Web.Content
 @*
-    Vertical timeline. Entries with More expand in place (<details>, no JS).
+    Vertical timeline. Each block can expand (<details>, no JS) into a curated row of the moments inside it.
     It always ends on an open, dashed "to be continued" node: the story isn't finished.
 *@
 <ol class="timeline @Class">
@@ -11,23 +11,31 @@
             <div class="timeline__body">
                 <h2 class="timeline__title">@m.Title</h2>
                 <p>@m.Body</p>
-                @if (m.More is { Count: > 0 })
-                {
-                    <details class="timeline__more">
-                        <summary><span class="timeline__more-open">More</span><span class="timeline__more-close">Less</span></summary>
-                        <div class="timeline__more-body">
-                            @foreach (var para in m.More) { <p>@para</p> }
-                            @if (m.MorePhoto is not null)
-                            {
-                                <Photo Key="@m.MorePhoto" Sizes="(min-width: 56rem) 30vw, 100vw" Class="photo--frame timeline__more-photo" Ratio="3 / 2" />
-                            }
-                        </div>
-                    </details>
-                }
             </div>
             @if (m.Photo is not null)
             {
                 <Photo Key="@m.Photo" Sizes="(min-width: 56rem) 34vw, 100vw" Class="timeline__photo photo--frame" />
+            }
+            @if (m.Moments is { Count: > 0 })
+            {
+                <details class="timeline__more">
+                    <summary><span class="timeline__more-open">What happened (@m.Moments.Count)</span><span class="timeline__more-close">Close</span></summary>
+                    <ol class="moments" role="list">
+                        @foreach (var mo in m.Moments)
+                        {
+                            <li class="moment @(mo.Photo is null ? "moment--text" : "")">
+                                @if (mo.Photo is not null)
+                                {
+                                    <Photo Key="@mo.Photo" Sizes="(min-width: 56rem) 22vw, 80vw" Class="moment__photo" Ratio="4 / 3" Alt="@(mo.Caption)" />
+                                }
+                                <span class="moment__date mono">@mo.Date</span>
+                                <span class="moment__title">@mo.Title</span>
+                                @if (mo.Body is not null) { <span class="moment__body">@mo.Body</span> }
+                                @if (mo.Caption is not null) { <span class="moment__caption">@mo.Caption</span> }
+                            </li>
+                        }
+                    </ol>
+                </details>
             }
         </li>
     }

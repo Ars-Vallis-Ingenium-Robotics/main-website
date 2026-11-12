@@ -10,7 +10,7 @@ human still needs to confirm or supply.
 - [x] Officer names can be public for the private demo
 - [x] Contact email: contact@avirobotics.org
 - [x] Member count: 51 (2026 tech doc title page)
-- [x] Mentors: Dalton Cowan (2027 season), Adam Garabedian (renewed for 2027)
+- [x] Mentors: Dalton Cowen (2027 season), Adam Garabedian (renewed for 2027)
 - [x] Treasurer spelling: Jaime Jaurigue (his own forms; the minutes say "Jaurique")
 
 ## Please confirm
@@ -27,13 +27,21 @@ human still needs to confirm or supply.
       Precision's owner attended, but photos are not captioned with their names. Add names?
 - [ ] **History "More" text**: short expansions written from the docs and photo folders. Read once.
 
+## Round 5 (please check)
+- [ ] **Dalton's last name**: the tech doc and marketing display both say "Cowen"; the site now uses Cowen.
+- [ ] **Video order**: assumed hype, presentation, qualification for the three YouTube links.
+- [ ] **SMS leadership bios** (pop-ups on /sms/company) are drawn from roles and credits in the
+      submission documents. Please read them; edit `Content/SmsCompany.cs`.
+- [ ] **Sponsor levels on the wall**: Anchor/Hull/Rudder/Propeller & Masthead come from the packet, but
+      which sponsor sits in which level is inferred from logo size on the shirt.
+- [ ] **Booth-building photos**: the Jan 10/11/17 folders are empty on the drive; only the Jan 19
+      installation photos exist. Drop any build/painting photos in and they'll go in the timeline.
+
 ## Still needed
 - [ ] **Faculty advisor headshots** (Dr. Bani Milhim, Dr. Wu): fresnostate.edu is blocked from
       the build sandbox. Save the two photos into `tools/images/` and add them to
       `people.manifest.json`.
 - [ ] **Adam Garabedian**: current photo is a small LinkedIn screenshot; the original file would be sharper.
-- [ ] **SMS videos**: the three Drive files must be shared "Anyone with the link can view", or the
-      embeds show a sign-in wall. Alternative: upload to YouTube (unlisted) and swap the IDs.
 - [ ] **AVI Club Tee**: no photo of anyone wearing it found yet. Hidden (`active: false`) until
       there's a photo + price.
 

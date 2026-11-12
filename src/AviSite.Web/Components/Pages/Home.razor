@@ -10,36 +10,22 @@
     <meta name="description" content="AVI Robotics is a student-led 501(c)(3) engineering club at Fresno State. Our MATE ROV company, Sequoia Marine Solutions, won the 2026 World Championship Engineering Presentation award." />
 </HeadContent>
 
-<section class="hero">
-    <div class="wrap hero__grid">
-        <div class="hero__copy">
+<section class="hero" aria-labelledby="hero-title">
+    <div class="hero__stage">
+        <Photo Key="fall-group-2026" Sizes="100vw" Eager="true" Class="hero__photo" Focus="50% 55%" Alt="About fifty AVI Robotics members in front of the Lyles College of Engineering, fall 2026" />
+        <div class="hero__veil" aria-hidden="true"></div>
+        <div class="wrap hero__copy">
             <p class="eyebrow eyebrow--on-ink">Fresno State · Student-led · 501(c)(3)</p>
-            <h1 class="hero__title">The craft of <em>Valley</em> ingenuity.</h1>
-            <p class="hero__lede">
-                We're Fresno State students from every major who design, build and pilot underwater robots.
-                In our first year our MATE ROV company took a robot to the World Championship in Newfoundland
-                and set a record doing it.
-            </p>
+            <h1 class="hero__title" id="hero-title" aria-label="Ars Vallis Ingenium: the Valley of Artistic Ingenuity">
+                <span class="scramble" aria-hidden="true" data-scramble="Ars Vallis Ingenium|Valley of Artistic Ingenuity">Ars Vallis Ingenium</span>
+            </h1>
+            <p class="hero__lede">Fresno State students from every major who design, build and pilot robots, run hands-on projects, and bring engineering to the Central Valley. In our first year our MATE ROV company won a world-championship award.</p>
             <div class="hero__actions">
                 <a class="btn btn--accent" href="/join">Join the club</a>
                 <a class="btn btn--ghost-on-ink" href="/history">Our story</a>
             </div>
         </div>
-        <div class="hero__dog">
-            <img src="/img/brand/avi-dog.webp" alt="The AVI robot dog mascot" width="1200" height="1506" fetchpriority="high" />
-        </div>
-    </div>
-</section>
-
-<section class="crew" aria-labelledby="crew-title">
-    <div class="wrap crew__head">
-        <p class="eyebrow">Fall 2026 · Lyles College of Engineering</p>
-        <h2 class="h2" id="crew-title">This is AVI.</h2>
-    </div>
-    <Photo Key="fall-group-2026" Sizes="100vw" Class="crew__photo" Caption="The 2026–27 club, October 9, 2026. Every major, one robot at a time." />
-    <div class="wrap crew__foot">
-        <a class="btn btn--accent" href="/join">Get in the next one</a>
-        <a class="link-arrow" href="/leadership">Meet the leadership</a>
+        <p class="hero__caption mono" aria-hidden="true">AVI Robotics · fall 2026 · scroll</p>
     </div>
 </section>
 
@@ -54,7 +40,6 @@
         }
     </div>
 </section>
-
 <section class="section">
     <div class="wrap feature">
         <div class="feature__media reveal">
@@ -69,31 +54,47 @@
     </div>
 </section>
 
-<section class="section section--ink">
-    <div class="wrap split">
-        <div class="split__head">
-            <p class="eyebrow eyebrow--on-ink">What we do</p>
-            <h2 class="h2">From a whiteboard sketch to a robot in the water.</h2>
-            <p class="lede-on-ink">AVI runs like an engineering firm: a C-suite, subsystem leads, purchase requests, design reviews and safety checklists. Members learn by doing the real thing.</p>
+<section class="section section--ink" aria-labelledby="what-title">
+    <div class="wrap">
+        <div class="section__head">
+            <div>
+                <p class="eyebrow eyebrow--on-ink">What we do</p>
+                <h2 class="h2" id="what-title">Build things. Learn by doing. Give back.</h2>
+            </div>
+            <p class="lede-on-ink what__lede">AVI started with underwater robots, but it's here for any member who wants to make something real: robots, projects, workshops and outreach.</p>
         </div>
-        <ol class="steps steps--on-ink">
-            <li class="steps__item reveal">
-                <h3 class="steps__title">Design</h3>
-                <p>Members model every part in SolidWorks and review it with their subsystem before anything gets printed or cut.</p>
+        <ul class="what" role="list">
+            <li class="what__card what__card--wide reveal">
+                <Photo Key="worlds-display" Sizes="(min-width: 56rem) 50vw, 100vw" Class="what__photo" Ratio="16 / 9" Alt="" />
+                <div class="what__body">
+                    <h3 class="what__title">Robots and teams</h3>
+                    <p>Our teams compete and build year-round. Sequoia Marine Solutions builds underwater robots for MATE ROV, and a Micromouse team is forming.</p>
+                    <a class="link-arrow link-arrow--on-ink" href="/teams">Our teams</a>
+                </div>
             </li>
-            <li class="steps__item reveal">
-                <h3 class="steps__title">Build</h3>
-                <p>3D-printed PETG frames, T-slot rail, custom PCBs, a 48 V power system and our own control software.</p>
+            <li class="what__card reveal">
+                <Photo Key="bcp-workshop" Sizes="(min-width: 56rem) 25vw, 100vw" Class="what__photo" Ratio="4 / 3" Alt="" />
+                <div class="what__body">
+                    <h3 class="what__title">Blank Check Projects</h3>
+                    <p>Four weeks, a small team and a theme: design and build an interactive display with moving parts, electronics and code. Blank check, because we're broke.</p>
+                </div>
             </li>
-            <li class="steps__item reveal">
-                <h3 class="steps__title">Compete</h3>
-                <p>Every June we take a robot, a technical document and an engineering presentation to MATE ROV.</p>
+            <li class="what__card reveal">
+                <Photo Key="workshop-mar" Sizes="(min-width: 56rem) 25vw, 100vw" Class="what__photo" Ratio="4 / 3" Alt="" />
+                <div class="what__body">
+                    <h3 class="what__title">Workshops</h3>
+                    <p>Friday nights in EE 389: programming, electronics, CAD and design, taught by members who learned it the same way.</p>
+                </div>
             </li>
-            <li class="steps__item reveal">
-                <h3 class="steps__title">Give back</h3>
-                <p>We bring robots to MESA Saturday Academy, open houses and classrooms across the Central Valley.</p>
+            <li class="what__card what__card--wide reveal">
+                <Photo Key="pi-day-group" Sizes="(min-width: 56rem) 50vw, 100vw" Class="what__photo" Ratio="16 / 9" Alt="" />
+                <div class="what__body">
+                    <h3 class="what__title">Outreach</h3>
+                    <p>MESA events, runs, regional competitions and open houses. Robots are a great way to start a conversation about engineering.</p>
+                    <a class="link-arrow link-arrow--on-ink" href="#outreach-title">Where we've been</a>
+                </div>
             </li>
-        </ol>
+        </ul>
     </div>
 </section>
 
@@ -112,24 +113,29 @@
     </div>
 </section>
 
-<section class="section section--paper-2" aria-labelledby="mesa-title">
-    <div class="wrap mesa">
-        <div class="mesa__copy reveal">
-            <p class="eyebrow">Outreach · MESA</p>
-            <h2 class="h2" id="mesa-title">We keep showing up for MESA.</h2>
-            <p class="lede">MESA (Mathematics, Engineering, Science Achievement) supports students on their way into STEM. AVI members volunteer at MESA events on campus all year, and this fall we brought robots to MESA Saturday Academy.</p>
-            <ul class="mesa__dates mono" role="list">
+<section class="section section--paper-2" aria-labelledby="outreach-title">
+    <div class="wrap outreach">
+        <div class="outreach__copy reveal">
+            <p class="eyebrow">Outreach</p>
+            <h2 class="h2" id="outreach-title">Out in the Valley.</h2>
+            <p class="lede">We volunteer wherever students and families are learning about science and engineering: MESA events on campus, community runs, and the MATE regional, where our members judged and helped run the day.</p>
+            <ul class="outreach__dates mono" role="list">
                 <li>Feb 7, 2026 · MESA volunteering</li>
+                <li>Mar 14, 2026 · Pi Day Run</li>
+                <li>Mar 28, 2026 · UHC Foundation Fun Run</li>
                 <li>Apr 11, 2026 · MESA volunteering</li>
+                <li>Apr 25, 2026 · MATE Monterey regional (judges and volunteers)</li>
                 <li>Oct 3, 2026 · MESA Saturday Academy</li>
                 <li>Nov 7, 2026 · MESA, with Sundog</li>
             </ul>
         </div>
-        <div class="mesa__grid">
-            <Photo Key="mesa-feb" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame mesa__a reveal" />
-            <Photo Key="mesa-apr" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame mesa__b reveal" />
-            <Photo Key="mesa-outreach" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame mesa__c reveal" />
-            <Photo Key="mesa-nov" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame mesa__d reveal" />
+        <div class="outreach__grid">
+            <Photo Key="pi-day-group" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame outreach__a reveal" />
+            <Photo Key="uhc-fun-run" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame outreach__b reveal" />
+            <Photo Key="monterey-volunteers" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame outreach__c reveal" />
+            <Photo Key="mesa-feb" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame outreach__d reveal" />
+            <Photo Key="mesa-outreach" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame outreach__e reveal" />
+            <Photo Key="mesa-nov" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame outreach__f reveal" />
         </div>
     </div>
 </section>
@@ -193,7 +199,7 @@
             </div>
             <a class="link-arrow link-arrow--on-ink" href="/sponsors">All sponsors</a>
         </div>
-        <SponsorWall MaxTier="3" ShowLabels="false" Class="sponsor-wall--compact" />
+        <SponsorWall Class="sponsor-wall--compact" />
     </div>
 </section>
 
@@ -208,7 +214,7 @@
             <div class="support__actions">
                 <a class="btn btn--ink" href="/donate">Donate</a>
                 <a class="btn btn--ghost-on-accent" href="/sponsors">Become a sponsor</a>
-                <a class="link-arrow link-arrow--on-accent" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
+                <a class="link-arrow link-arrow--on-accent" href="@Site.Value.SponsorPacketPath" target="_blank" rel="noopener">Sponsorship packet (PDF)</a>
             </div>
         </div>
     </div>

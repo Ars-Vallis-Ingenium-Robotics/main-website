@@ -215,5 +215,113 @@
   "key": "pool-tent",
   "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-06-04 Water Testing FS Pool/RAV00169.JPG",
   "alt": "The Fresno State tent and SMS's control station on the pool deck"
+ },
+ {
+  "key": "fall-2025-group",
+  "src": "tools/images/packet/fall-2025-group.png",
+  "alt": "AVI Robotics' first group photo, fall 2025, in front of the Lyles College of Engineering"
+ },
+ {
+  "key": "fall-2025-leads",
+  "src": "tools/images/packet/fall-2025-leads.png",
+  "alt": "AVI's first team leads on a playground climbing frame, fall 2025"
+ },
+ {
+  "key": "uhc-fun-run",
+  "src": "tools/images/packet/uhc-fun-run.png",
+  "alt": "Showing an early ROV to visitors at the UHC Foundation's 2026 Fun Run"
+ },
+ {
+  "key": "water-test-assembly",
+  "src": "tools/images/packet/water-test-assembly.png",
+  "alt": "Members assembling ROSIE's chassis under string lights on a water test night"
+ },
+ {
+  "key": "pi-day-group",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-14 Pi Day Run/Pictures/RAV00064.JPG",
+  "alt": "AVI volunteers together at the Pi Day Run, March 14, 2026",
+  "focus": "50% 55%"
+ },
+ {
+  "key": "pi-day-booth",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-14 Pi Day Run/Pictures/RAV00040.JPG",
+  "alt": "Visitors at AVI's table at the Pi Day Run"
+ },
+ {
+  "key": "booth-installed",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-01-19 Booth Installment/DSC01811.JPG",
+  "alt": "The finished Ars Vallis Ingenium booth, installed January 19, 2026"
+ },
+ {
+  "key": "workshop-mar",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-28 Water Testing/RAV00026.JPG",
+  "alt": "Members working through a programming session at a spring 2026 build day"
+ },
+ {
+  "key": "first-water",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-21 AVI Water Testing/Pictures/RAV00045.JPG",
+  "alt": "Lowering the first ROV prototype into the water, March 21, 2026"
+ },
+ {
+  "key": "first-water-night",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-21 AVI Water Testing/Pictures/RAV00089.JPG",
+  "alt": "A member in the pool at night guiding the prototype during a water test"
+ },
+ {
+  "key": "pvc-frame",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-21 AVI Water Testing/Pictures/RAV00062.JPG",
+  "alt": "Assembling the PVC test frame on the lawn before a water test"
+ },
+ {
+  "key": "monterey-volunteers",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-25 Monterey Regional/RAV00005.JPG",
+  "alt": "AVI volunteers poolside at the MATE Monterey regional"
+ },
+ {
+  "key": "pool-day-crowd",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-06-04 Water Testing FS Pool/RAV00306.JPG",
+  "alt": "Guests and SMS members gathered around ROSIE under the tent at the June 4 pool test"
+ },
+ {
+  "key": "worlds-backdrop",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00747.JPG",
+  "alt": "The SMS team in front of the World Championship backdrop in St. John's"
+ },
+ {
+  "key": "worlds-institute",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00678.JPG",
+  "alt": "SMS outside the Fisheries and Marine Institute of Memorial University of Newfoundland"
+ },
+ {
+  "key": "worlds-hallway",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00740.JPG",
+  "alt": "Team members holding up ADAM in the hallway at Worlds"
+ },
+ {
+  "key": "worlds-display",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00786.JPG",
+  "alt": "ROSIE and ADAM on the Fresno State display table at Worlds"
+ },
+ {
+  "key": "adam-display",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00786.JPG",
+  "alt": "ADAM, the clear-tube profiling float, standing next to ROSIE at Worlds",
+  "crop": [
+   0.5,
+   0.0,
+   1.0,
+   1.0
+  ],
+  "focus": "60% 50%"
+ },
+ {
+  "key": "worlds-checkin",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00637.JPG",
+  "alt": "SMS checking in at the 2026 World Championship"
+ },
+ {
+  "key": "marketing-display",
+  "src": "tools/images/packet/marketing-display.jpg",
+  "alt": "SMS's 2026 marketing display poster: ROSIE, ADAM, design rationale and the company roster"
  }
 ]

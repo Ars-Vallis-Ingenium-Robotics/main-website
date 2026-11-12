@@ -5,7 +5,7 @@
 <PageTitle>About · AVI Robotics</PageTitle>
 <HeadContent><meta name="description" content="AVI Robotics (Ars Vallis Ingenium) is a student-led 501(c)(3) engineering club at Fresno State for students of every major." /></HeadContent>
 
-<PageHero Kicker="About" Title="The Valley of Artistic Ingenuity">
+<PageHero Kicker="About" Title="The Valley of Artistic Ingenuity" Tone="blurple">
     <p><em>Ars Vallis Ingenium</em> is Latin for the art, or craft, of the Valley's ingenuity. We're students from STEAM, the humanities and the social sciences building industry-level solutions together.</p>
 </PageHero>
 
@@ -17,17 +17,50 @@
         </div>
         <div class="prose reveal">
             <p>From our constitution: AVI exists to provide a space where students can develop hands-on and professional skills, and to find opportunities that enrich their academic and professional lives.</p>
-            <p>In practice that means training members in new tools, small-group projects, competing internationally, and showing up for our community. Most of us are doing something for the first time. That's the point.</p>
-            <p>Underwater robotics is our main focus through <a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a>, our MATE ROV company, but we support all kinds of ventures, robotics or not. A Micromouse team is forming now.</p>
+            <p>Underwater robotics is where we started, but AVI is here to support whatever our members want to build, robotics or otherwise. Teams compete, projects teach, and outreach brings it all back to the Central Valley.</p>
         </div>
     </div>
 </section>
 
-<section class="section section--flush">
-    <div class="wrap mosaic">
-        <Photo Key="monterey-group" Sizes="(min-width: 56rem) 60vw, 100vw" Class="mosaic__a reveal" />
-        <Photo Key="traditions-demo" Sizes="(min-width: 56rem) 30vw, 50vw" Class="mosaic__b reveal" />
-        <Photo Key="worlds-float-electronics" Sizes="(min-width: 56rem) 30vw, 50vw" Class="mosaic__c reveal" />
+<section class="section section--blurple" aria-labelledby="pillars-title">
+    <div class="wrap">
+        <p class="eyebrow eyebrow--on-accent">How AVI works</p>
+        <h2 class="h2" id="pillars-title">Four ways in.</h2>
+        <ul class="pillars" role="list">
+            <li class="pillar reveal"><span class="pillar__num mono">01</span><h3 class="pillar__title">Teams</h3><p>Competition teams run like small companies. <a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a> builds underwater robots for MATE ROV; a Micromouse team is forming.</p></li>
+            <li class="pillar reveal"><span class="pillar__num mono">02</span><h3 class="pillar__title">Blank Check Projects</h3><p>Four-week team builds where new members design and finish something real.</p></li>
+            <li class="pillar reveal"><span class="pillar__num mono">03</span><h3 class="pillar__title">Workshops</h3><p>Programming, electronics, CAD and design, every Friday night.</p></li>
+            <li class="pillar reveal"><span class="pillar__num mono">04</span><h3 class="pillar__title">Outreach</h3><p>MESA, community runs, regional competitions and open houses.</p></li>
+        </ul>
+    </div>
+</section>
+
+<section class="section" aria-labelledby="bcp-title">
+    <div class="wrap split">
+        <div class="split__head">
+            <p class="eyebrow">Blank Check Projects</p>
+            <h2 class="h2" id="bcp-title">Blank check. (Because we're broke.)</h2>
+            <p class="lede">Every fall, new members split into teams and get four weeks to design and build a themed, interactive display that combines mechanical motion, embedded electronics, programming and promotion.</p>
+            <Photo Key="bcp-workshop" Sizes="(min-width: 56rem) 40vw, 100vw" Class="photo--frame" />
+        </div>
+        <div class="reveal">
+            <SpecSheet Rows="@bcp" />
+            <p class="muted small">Run in fall 2025 (Oct 10 to Nov 7) and fall 2026 (Oct 16 to Nov 13).</p>
+        </div>
+    </div>
+</section>
+
+<section class="section section--flush" aria-label="Photos of AVI">
+    <div class="wrap collage">
+        <Photo Key="fall-group-2026" Sizes="(min-width: 56rem) 50vw, 100vw" Class="collage__a reveal" />
+        <Photo Key="pi-day-booth" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__b reveal" />
+        <Photo Key="traditions-demo" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__c reveal" />
+        <Photo Key="phantom-booth" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__d reveal" />
+        <Photo Key="worlds-backdrop" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__e reveal" />
+        <Photo Key="uhc-fun-run" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__f reveal" />
+        <Photo Key="first-water" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__g reveal" />
+        <Photo Key="booth-installed" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__h reveal" />
+        <Photo Key="mesa-nov" Sizes="(min-width: 56rem) 25vw, 50vw" Class="collage__i reveal" />
     </div>
 </section>
 
@@ -38,8 +71,15 @@
             <h2 class="h2">You and your talents have value here.</h2>
         </div>
         <div class="prose reveal">
-            <p>MATE ROV is scored like a real engineering company: the robot, a technical document, an engineering presentation, a marketing display and safety. That takes engineers and programmers, and it also takes writers, designers, business majors and people who keep 51 students organized.</p>
+            <p>Our competitions are scored like real engineering companies: the robot, technical documents, presentations, marketing and safety. Our teams take engineers and programmers, and they also take writers, designers, business majors and people who keep 51 students organized.</p>
             <SpecSheet Rows="@departments" />
+            <figure class="majors" aria-labelledby="majors-cap">
+                <figcaption id="majors-cap" class="eyebrow">Club majors, fall 2025</figcaption>
+                @foreach (var (major, pct) in majors)
+                {
+                    <div class="majors__row"><span>@major</span><span class="majors__bar" style="--pct: @pct.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span><span class="mono">@pct.ToString("0.#")%</span></div>
+                }
+            </figure>
         </div>
     </div>
 </section>
@@ -65,6 +105,21 @@
         ("Programming & electronics", "Control software, GUI, PCBs, power, sensors"),
         ("Marketing & logistics", "Branding, social, sponsorships, travel, finance"),
         ("Safety", "Checklists, JSEA, lab policy, deck management"),
+    ];
+
+    // Source: 2025/26 sponsorship packet, "Breakdown of Club Majors".
+    private static readonly (string, double)[] majors =
+        [("Computer Science", 33.0), ("Mechanical Engineering", 32.4), ("Electrical Engineering", 19.0), ("Computer Engineering", 8.4), ("Other", 7.3)];
+
+    // Source: "AVI Robotics - Blank Check Project Rules & Guidelines".
+    private static readonly IReadOnlyList<(string, string)> bcp =
+    [
+        ("Length", "Four weeks"),
+        ("Brief", "A themed, interactive display"),
+        ("Must combine", "Mechanical motion, embedded electronics, programming, promotion"),
+        ("Each team", "Writes its own timeline and has a technical lead"),
+        ("Every week", "A progress summary to the technical lead"),
+        ("At the end", "A presentation and a documentation report"),
     ];
 
     private IReadOnlyList<(string, string)> nonprofitRows => [
