@@ -1,0 +1,12 @@
+@* Two-column definition list styled like a drawing's title block. *@
+<dl class="spec @Class">
+    @foreach (var (term, value) in Rows)
+    {
+        <div class="spec__row"><dt>@term</dt><dd>@value</dd></div>
+    }
+</dl>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<(string Term, string Value)> Rows { get; set; } = [];
+    [Parameter] public string? Class { get; set; }
+}

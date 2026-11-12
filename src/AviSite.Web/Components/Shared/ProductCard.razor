@@ -1,0 +1,25 @@
+@inject ICatalog Catalog
+
+<article class="product-card @(Product.Team is null ? "" : "product-card--" + Product.Team)">
+    <a class="product-card__link" href="/shop/@Product.Slug">
+        <div class="product-card__media">
+            @if (Product.Image is not null)
+            {
+                <img src="@Product.Image" alt="@Product.ImageAlt" loading="lazy" decoding="async" width="480" height="480" />
+            }
+        </div>
+        <div class="product-card__body">
+            @if (HeadingLevel == 2) { <h2 class="product-card__name">@Product.Name</h2> } else { <h3 class="product-card__name">@Product.Name</h3> }
+            <p class="product-card__meta">
+                <Price Cents="Product.PriceCents" />
+                @if (!Catalog.IsOrderable(Product)) { <span class="tag">Closed</span> }
+                else if (Product.OrdersClose is { } close) { <span class="tag tag--signal">Order by @close.ToString("MMM d")</span> }
+            </p>
+        </div>
+    </a>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public Product Product { get; set; } = default!;
+    [Parameter] public int HeadingLevel { get; set; } = 3;
+}

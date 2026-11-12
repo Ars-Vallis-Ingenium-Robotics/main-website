@@ -1,0 +1,55 @@
+@page "/sponsors"
+@inject IOptions<SiteOptions> Site
+
+<PageTitle>Sponsor us · AVI Robotics</PageTitle>
+<HeadContent><meta name="description" content="Sponsor AVI Robotics: fund parts, pool time and travel for Fresno State's student robotics club." /></HeadContent>
+
+<PageHero Kicker="Sponsors" Title="Put your name on the robot.">
+    <p>Every dollar goes into parts, pool time and getting students to competition.</p>
+</PageHero>
+
+<section class="section">
+    <div class="wrap split">
+        <div class="split__head">
+            <Eyebrow>Where it goes</Eyebrow>
+            <h2 class="h2">What a sponsorship pays for.</h2>
+        </div>
+        <SpecSheet Rows="@uses" />
+    </div>
+</section>
+
+<section class="section section--paper-2">
+    <div class="wrap split">
+        <div class="split__head">
+            <Eyebrow>What you get</Eyebrow>
+            <h2 class="h2">Recognition that travels.</h2>
+        </div>
+        <div class="prose">
+            <p>Logo placement on the vehicle, team shirts and this site, mentions in our technical documentation and competition presentation, and a team that remembers who got them there.</p>
+            <p class="note">TODO(confirm): tier names, amounts and benefits from the sponsorship packet.</p>
+            <div class="actions">
+                <a class="btn btn--ink" href="@Site.Value.SponsorPacketPath">Download the packet (PDF)</a>
+                @if (Site.Value.ContactEmail is { } email) { <a class="link-arrow" href="mailto:@email?subject=Sponsoring%20AVI%20Robotics">Email us</a> }
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="wrap">
+        <Eyebrow>Current sponsors</Eyebrow>
+        <h2 class="h2">Thank you.</h2>
+        <p class="note">TODO(confirm): sponsor logos (SVG preferred) and permission to display them.</p>
+    </div>
+</section>
+
+@code {
+    private readonly IReadOnlyList<(string, string)> uses =
+    [
+        ("Parts", "Thrusters, cameras, electronics, stock"),
+        ("Pool time", "Testing before competition"),
+        ("Travel", "Getting the team and ROV to MATE events"),
+        ("Tools", "Shared shop equipment members learn on"),
+        ("Outreach", "Demos for local schools"),
+    ];
+}

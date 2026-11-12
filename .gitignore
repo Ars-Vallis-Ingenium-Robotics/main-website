@@ -1,0 +1,14 @@
+bin/
+obj/
+.vs/
+*.user
+publish/
+**/App_Data/
+appsettings.Production.json
+*.env
+.env
+node_modules/
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+.DS_Store
+Thumbs.db

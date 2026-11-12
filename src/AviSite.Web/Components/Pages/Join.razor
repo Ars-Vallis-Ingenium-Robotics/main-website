@@ -1,0 +1,40 @@
+@page "/join"
+@inject IOptions<SiteOptions> Site
+
+<PageTitle>Join · AVI Robotics</PageTitle>
+<HeadContent><meta name="description" content="Join AVI Robotics at Fresno State. No experience needed." /></HeadContent>
+
+<PageHero Kicker="Join" Title="No experience required.">
+    <p>Come to a meeting, hop in the Discord, pick something to build.</p>
+</PageHero>
+
+<section class="section">
+    <div class="wrap">
+        <ol class="join-steps">
+            <li>
+                <span class="join-steps__num mono" aria-hidden="true">01</span>
+                <h2 class="h3">Join the Discord</h2>
+                <p>Announcements, meeting times and every sub-team channel live there.</p>
+                @if (Site.Value.DiscordInviteUrl is { } d)
+                {
+                    <a class="btn btn--signal" href="@d" rel="noopener">Open Discord invite</a>
+                }
+                else
+                {
+                    <p class="note">TODO(confirm): Discord invite link (Site:DiscordInviteUrl).</p>
+                }
+            </li>
+            <li>
+                <span class="join-steps__num mono" aria-hidden="true">02</span>
+                <h2 class="h3">Come to a meeting</h2>
+                <p>TODO(confirm): day, time and room. Bring a laptop if you have one.</p>
+            </li>
+            <li>
+                <span class="join-steps__num mono" aria-hidden="true">03</span>
+                <h2 class="h3">Get a portal account</h2>
+                <p>Officers send an invite to the member portal, where we track projects, meetings and hours.</p>
+                @if (Site.Value.PortalUrl is { } p) { <a class="link-arrow" href="@p">Member portal</a> }
+            </li>
+        </ol>
+    </div>
+</section>

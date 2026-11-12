@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet build src/AviSite.Web -c Release
+      - name: Start app (Development, fake PayPal)
+        run: |
+          ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://127.0.0.1:5080 \
+            nohup dotnet run --project src/AviSite.Web -c Release --no-build --no-launch-profile > app.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:5080/healthz && break; sleep 2; done
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: E2E smoke tests
+        working-directory: tests/e2e
+        run: |
+          npm install --no-save playwright@1
+          npx playwright install --with-deps chromium
+          node smoke.mjs
+      - if: failure()
+        run: cat app.log

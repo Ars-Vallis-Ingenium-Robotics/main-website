@@ -1,0 +1,116 @@
+@page "/shop/checkout"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.RateLimiting
+@attribute [EnableRateLimiting(Program.StoreRateLimit)]
+@inject CartCookie Cart
+@inject Pricing Pricing
+@inject IOrderStore Orders
+@inject IOptions<StoreOptions> Store
+@inject IOptions<PayPalOptions> PayPal
+@inject NavigationManager Nav
+
+<PageTitle>@(hasErrors ? "Error: " : "")Checkout · AVI Robotics shop</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section">
+    <div class="wrap checkout">
+        <div class="checkout__form">
+            <p class="eyebrow"><a href="/shop/cart">Cart</a> / Details</p>
+            <h1 class="h1">Checkout</h1>
+            <p class="muted">Step 1 of 2. Next you'll pay with PayPal (card works too, no account needed).</p>
+
+            @if (error is not null) { <p class="alert" role="alert">@error</p> }
+            @foreach (var problem in quote.Problems) { <p class="alert" role="alert">@problem</p> }
+
+            @if (!quote.IsEmpty && Store.Value.OrdersOpen)
+            {
+                <EditForm Model="Model!" FormName="checkout" OnValidSubmit="SubmitAsync" OnInvalidSubmit="() => hasErrors = true" method="post" class="form" novalidate>
+                    <DataAnnotationsValidator />
+                    <div role="alert" class="validation-wrap"><ValidationSummary class="alert" /></div>
+
+                    <div class="field">
+                        <label class="label" for="name">Full name</label>
+                        <InputText id="name" @bind-Value="Model!.Name" autocomplete="name" aria-describedby="name-error" />
+                        <span id="name-error"><ValidationMessage For="() => Model!.Name" class="field__error" /></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="email">Email</label>
+                        <InputText id="email" @bind-Value="Model!.Email" type="email" autocomplete="email" inputmode="email" aria-describedby="email-hint email-error" />
+                        <span id="email-hint" class="field__hint">Receipt and pickup notice go here.</span>
+                        <span id="email-error"><ValidationMessage For="() => Model!.Email" class="field__error" /></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="phone">Phone <span class="muted">(optional)</span></label>
+                        <InputText id="phone" @bind-Value="Model!.Phone" type="tel" autocomplete="tel" aria-describedby="phone-error" />
+                        <span id="phone-error"><ValidationMessage For="() => Model!.Phone" class="field__error" /></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="note">Note <span class="muted">(optional)</span></label>
+                        <InputTextArea id="note" @bind-Value="Model!.Note" rows="3" placeholder="e.g. picking up for a friend" aria-describedby="note-error" />
+                        <span id="note-error"><ValidationMessage For="() => Model!.Note" class="field__error" /></span>
+                    </div>
+
+                    <button class="btn btn--signal btn--lg" type="submit">Continue to payment</button>
+                </EditForm>
+            }
+            else if (quote.IsEmpty)
+            {
+                <p class="lede">Your cart is empty.</p>
+                <a class="btn btn--signal" href="/shop">Browse gear</a>
+            }
+        </div>
+
+        @if (!quote.IsEmpty)
+        {
+            <aside class="checkout__summary" aria-label="Order summary">
+                <OrderSummary Lines="@quote.Lines.Select(l => new OrderLine(l.Product.Slug, l.Product.Name, l.Size, l.Qty, l.UnitCents)).ToList()" TotalCents="quote.TotalCents" />
+                <p class="muted">@Store.Value.PickupNote</p>
+            </aside>
+        }
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromForm(FormName = "checkout")] public CheckoutModel? Model { get; set; }
+
+    private Quote quote = new([], 0, []);
+    private string? error;
+    private bool hasErrors;
+
+    protected override void OnInitialized()
+    {
+        Model ??= new();
+        quote = Pricing.Price(Cart.Read());
+        if (!Store.Value.OrdersOpen) error = "Ordering is closed right now.";
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (quote.IsEmpty || !Store.Value.OrdersOpen) { error = "Your cart is empty or ordering is closed."; return; }
+        var buyer = new Buyer
+        {
+            Name = Model!.Name!.Trim(),
+            Email = Model!.Email!.Trim(),
+            Phone = string.IsNullOrWhiteSpace(Model!.Phone) ? null : Model!.Phone.Trim(),
+            Note = string.IsNullOrWhiteSpace(Model!.Note) ? null : Model!.Note.Trim(),
+        };
+        var order = await Orders.CreateAsync(buyer, quote, PayPal.Value.Currency);
+        Nav.NavigateTo($"/shop/pay/{order.Id}");
+    }
+
+    public sealed class CheckoutModel
+    {
+        [Required(ErrorMessage = "Enter your name."), StringLength(100)]
+        public string? Name { get; set; }
+
+        [Required(ErrorMessage = "Enter your email."), EmailAddress(ErrorMessage = "That email doesn't look right."), StringLength(200)]
+        public string? Email { get; set; }
+
+        // [Phone] rejects "" (what an empty input posts), so use a regex: RegularExpression treats empty as valid.
+        [RegularExpression(@"^[0-9+()\-.\s]{7,30}$", ErrorMessage = "That phone number doesn't look right."), StringLength(30)]
+        public string? Phone { get; set; }
+
+        [StringLength(500)]
+        public string? Note { get; set; }
+    }
+}

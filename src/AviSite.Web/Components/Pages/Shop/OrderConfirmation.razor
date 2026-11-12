@@ -1,0 +1,59 @@
+@page "/shop/orders/{OrderId}"
+@inject IOrderStore Orders
+@inject IOptions<StoreOptions> Store
+@inject IOptions<SiteOptions> Site
+@inject NavigationManager Nav
+
+<PageTitle>Order @(order?.Code) · AVI Robotics shop</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /><meta name="referrer" content="no-referrer" /></HeadContent>
+
+@if (order is not null)
+{
+    <section class="section">
+        <div class="wrap checkout">
+            <div class="checkout__form">
+                @switch (order.Status)
+                {
+                    case OrderStatus.Paid:
+                        <p class="eyebrow">Order confirmed</p>
+                        <h1 class="h1">Thanks, @FirstName!</h1>
+                        <p class="lede">Your order code is <strong class="mono code-chip">@order.Code</strong>. Show it at pickup.</p>
+                        <p>@Store.Value.PickupNote</p>
+                        break;
+                    case OrderStatus.Pending:
+                        <p class="eyebrow">Waiting on payment</p>
+                        <h1 class="h1">Not paid yet.</h1>
+                        <p class="lede">If you just paid, PayPal may take a minute to confirm. Refresh this page shortly. Don't pay twice.</p>
+                        <a class="btn btn--signal" href="/shop/pay/@order.Id">Go to payment</a>
+                        break;
+                    case OrderStatus.NeedsReview:
+                        <p class="eyebrow">Payment received</p>
+                        <h1 class="h1">We're double-checking this one.</h1>
+                        <p class="lede">Something about the payment didn't match the order, so an officer will review it and email you.</p>
+                        break;
+                    default:
+                        <p class="eyebrow">Order @order.Status.ToString().ToLowerInvariant()</p>
+                        <h1 class="h1">This order is @order.Status.ToString().ToLowerInvariant().</h1>
+                        <p class="lede">Questions? Contact us@(Site.Value.ContactEmail is { } e ? $" at {e}" : "").</p>
+                        break;
+                }
+                <p class="muted">Keep this page's link. It's your receipt.</p>
+            </div>
+            <aside class="checkout__summary" aria-label="Order summary">
+                <OrderSummary Lines="order.Lines" TotalCents="order.TotalCents" />
+            </aside>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public string OrderId { get; set; } = "";
+    private Order? order;
+    private string FirstName => order?.Buyer.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        order = await Orders.GetAsync(OrderId);
+        if (order is null) Nav.NotFound();
+    }
+}

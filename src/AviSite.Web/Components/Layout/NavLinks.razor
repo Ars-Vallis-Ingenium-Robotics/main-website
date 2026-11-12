@@ -1,0 +1,19 @@
+<ul class="nav__list">
+    <li><NavLink class="nav__link" href="/about">About</NavLink></li>
+    <li><NavLink class="nav__link" href="/teams">Teams</NavLink></li>
+    <li><NavLink class="nav__link" href="/sponsors">Sponsors</NavLink></li>
+    <li>
+        <NavLink class="nav__link" href="/shop">
+            <span>Shop</span>
+            @if (CartCount > 0)
+            {
+                <span class="badge" aria-hidden="true">@CartCount</span><span class="visually-hidden">, @CartCount @(CartCount == 1 ? "item" : "items") in cart</span>
+            }
+        </NavLink>
+    </li>
+    <li><a class="btn btn--signal btn--sm" href="/join">Join the club</a></li>
+</ul>
+
+@code {
+    [Parameter] public int CartCount { get; set; }
+}

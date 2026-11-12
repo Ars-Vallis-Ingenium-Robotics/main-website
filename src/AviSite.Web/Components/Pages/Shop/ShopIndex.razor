@@ -1,0 +1,24 @@
+@page "/shop"
+@inject ICatalog Catalog
+@inject IOptions<StoreOptions> Store
+
+<PageTitle>Shop · AVI Robotics</PageTitle>
+<HeadContent><meta name="description" content="AVI Robotics team shirts and gear. Every purchase funds the club." /></HeadContent>
+
+<PageHero Kicker="Shop" Title="Team gear.">
+    <p>Every shirt funds parts and pool time. @Store.Value.PickupNote</p>
+</PageHero>
+
+<section class="section">
+    <div class="wrap">
+        @if (Error == "unavailable") { <p class="alert" role="alert">That item isn't available right now.</p> }
+        @if (!Store.Value.OrdersOpen) { <p class="alert" role="status">Ordering is closed right now. Check back for the next run.</p> }
+        <ul class="product-grid">
+            @foreach (var p in Catalog.Active) { <li><ProductCard Product="p" HeadingLevel="2" /></li> }
+        </ul>
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+}

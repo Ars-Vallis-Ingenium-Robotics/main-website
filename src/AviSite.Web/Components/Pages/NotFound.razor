@@ -1,0 +1,15 @@
+@page "/not-found"
+
+<PageTitle>Not found · AVI Robotics</PageTitle>
+
+<PageHero Kicker="404" Title="Lost signal.">
+    <p>That page doesn't exist (or it sank). Try the <a class="on-ink-link" href="/">home page</a> or the <a class="on-ink-link" href="/shop">shop</a>.</p>
+</PageHero>
+
+@code {
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+    protected override void OnInitialized()
+    {
+        if (HttpContext is { Response.HasStarted: false }) HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+    }
+}

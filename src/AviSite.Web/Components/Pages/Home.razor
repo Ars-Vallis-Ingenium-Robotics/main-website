@@ -1,0 +1,114 @@
+﻿@page "/"
+@inject ICatalog Catalog
+@inject IOptions<SiteOptions> Site
+
+<PageTitle>AVI Robotics · Fresno State robotics club</PageTitle>
+<HeadContent>
+    <meta name="description" content="AVI Robotics is a student engineering club at Fresno State. We design, build and compete with robots, including underwater ROVs for the MATE ROV Competition." />
+</HeadContent>
+
+<section class="hero">
+    <div class="wrap hero__grid">
+        <div class="hero__copy">
+            <p class="eyebrow eyebrow--on-ink">Fresno State · Student robotics</p>
+            <h1 class="hero__title">The craft of <em>Valley</em> ingenuity.</h1>
+            <p class="hero__lede">
+                We're Fresno State students who design, build and pilot underwater robots for the MATE ROV Competition,
+                and teach each other everything along the way. No experience needed to start.
+            </p>
+            <div class="hero__actions">
+                <a class="btn btn--signal" href="/join">Join the club</a>
+                <a class="btn btn--ghost-on-ink" href="/sponsors">Sponsor a season</a>
+            </div>
+        </div>
+        @* TODO(photo): when a strong team/ROV photo exists, add it back here:
+           <Figure Number="01" Src="/img/..." Alt="..." Caption="..." Ratio="4 / 5" Tone="ink" Class="hero__figure" Eager="true" /> *@
+    </div>
+</section>
+
+<section class="section">
+    <div class="wrap split">
+        <div class="split__head">
+            <Eyebrow>What we do</Eyebrow>
+            <h2 class="h2">From a sketch on a whiteboard to a robot in the water.</h2>
+        </div>
+        <ol class="steps">
+            <li class="steps__item">
+                <h3 class="steps__title">Design</h3>
+                <p>Members spec, model and simulate subsystems together. New members pair with someone who has built it before.</p>
+            </li>
+            <li class="steps__item">
+                <h3 class="steps__title">Build</h3>
+                <p>Machining, wiring, waterproofing, control software. Everything on our robots is made and maintained by students.</p>
+            </li>
+            <li class="steps__item">
+                <h3 class="steps__title">Compete</h3>
+                <p>Our MATE ROV team runs like a small company: engineering, documentation, a technical presentation and pool missions.</p>
+            </li>
+            <li class="steps__item">
+                <h3 class="steps__title">Teach</h3>
+                <p>We bring robots to schools and community events across the Central Valley so younger students can drive one.</p>
+            </li>
+        </ol>
+    </div>
+</section>
+
+<section class="section section--ink team-feature">
+    <div class="wrap team-feature__grid">
+        <Figure Number="02" Caption="SMS ROV during a mission run" Ratio="16 / 10" Tone="sea" />
+        <div>
+            <Eyebrow Class="eyebrow--on-ink">Our competition team</Eyebrow>
+            <h2 class="h2">Sequoia Marine Solutions</h2>
+            <p class="lede-on-ink">
+                SMS is AVI's MATE ROV company. Every season the team designs a remotely operated vehicle for a new set of
+                underwater missions, writes the technical documentation and pitches it to judges like a real engineering firm.
+            </p>
+            <SpecSheet Class="spec--on-ink" Rows="@smsSpec" />
+            <a class="btn btn--sea" href="/teams/sms">Meet the SMS team</a>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="wrap">
+        <div class="section__head">
+            <div>
+                <Eyebrow>Shop</Eyebrow>
+                <h2 class="h2">Wear the club.</h2>
+            </div>
+            <a class="link-arrow" href="/shop">All gear</a>
+        </div>
+        <ul class="product-row">
+            @foreach (var p in Catalog.Active.Take(3))
+            {
+                <li><ProductCard Product="p" /></li>
+            }
+        </ul>
+    </div>
+</section>
+
+<section class="section section--signal">
+    <div class="wrap support">
+        <div>
+            <Eyebrow Class="eyebrow--on-signal">Support</Eyebrow>
+            <h2 class="h2">Help us get in the water.</h2>
+        </div>
+        <div class="support__body">
+            <p>Sponsors cover parts, pool time and travel to competition. In return your logo goes on our vehicle, shirts and this site.</p>
+            <div class="support__actions">
+                <a class="btn btn--ink" href="/sponsors">Become a sponsor</a>
+                <a class="link-arrow link-arrow--ink" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private readonly IReadOnlyList<(string, string)> smsSpec =
+    [
+        ("Competition", "MATE ROV"),
+        ("Format", "Company-style team"),
+        ("Deliverables", "ROV, tech docs, presentation"),
+        ("Home pool", "TODO: confirm"),
+    ];
+}

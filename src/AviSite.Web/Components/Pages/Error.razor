@@ -1,0 +1,15 @@
+@page "/error"
+@using System.Diagnostics
+
+<PageTitle>Something broke · AVI Robotics</PageTitle>
+
+<PageHero Kicker="Error" Title="Something broke on our end.">
+    <p>Please try again in a minute. If you were checking out, don't pay twice. Your order page will show the real status.</p>
+    @if (!string.IsNullOrEmpty(requestId)) { <p class="mono">Ref: @requestId</p> }
+</PageHero>
+
+@code {
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+    private string? requestId;
+    protected override void OnInitialized() => requestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}

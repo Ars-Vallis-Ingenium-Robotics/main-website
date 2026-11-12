@@ -1,0 +1,99 @@
+@page "/admin"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.Policy)]
+@inject IOrderStore Store
+@inject ICatalog Catalog
+
+<PageTitle>Orders · AVI Robotics admin</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin">
+    <div class="wrap">
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Shop admin</p>
+                <h1 class="h1">Orders</h1>
+            </div>
+            <div class="actions">
+                <a class="btn btn--ghost" href="/admin/orders.csv">Export CSV</a>
+                <form method="post" action="/admin/logout"><AntiforgeryToken /><button class="link-button" type="submit">Sign out</button></form>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat"><span class="stat__num">@paid.Count</span><span class="stat__label">Paid orders</span></div>
+            <div class="stat"><span class="stat__num">@Money.Format(paid.Sum(o => o.TotalCents))</span><span class="stat__label">Collected</span></div>
+            <div class="stat"><span class="stat__num">@paid.Count(o => o.PickedUpUtc is null)</span><span class="stat__label">Awaiting pickup</span></div>
+            <div class="stat @(review > 0 ? "stat--alert" : "")"><span class="stat__num">@review</span><span class="stat__label">Needs review</span></div>
+        </div>
+
+        <h2 class="h3">What to order from the printer</h2>
+        <p class="muted">Paid orders only.</p>
+        <div class="table-scroll">
+            <table class="table">
+                <thead>
+                    <tr><th scope="col">Product</th>@foreach (var size in sizeColumns) { <th scope="col" class="num">@size</th> }<th scope="col" class="num">Total</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Catalog.All)
+                    {
+                        <tr>
+                            <th scope="row">@p.Name</th>
+                            @foreach (var size in sizeColumns) { <td class="num">@Count(p.Slug, size)</td> }
+                            <td class="num"><strong>@paid.SelectMany(o => o.Lines).Where(l => l.Slug == p.Slug).Sum(l => l.Qty)</strong></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="h3">All orders</h2>
+        <div class="table-scroll">
+            <table class="table">
+                <thead>
+                    <tr><th scope="col">Code</th><th scope="col">Placed</th><th scope="col">Buyer</th><th scope="col">Items</th><th scope="col" class="num">Total</th><th scope="col">Status</th><th scope="col">Pickup</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in orders)
+                    {
+                        <tr id="order-@o.Id">
+                            <td class="mono">@o.Code</td>
+                            <td>@o.CreatedUtc.ToPacific().ToString("MMM d, h:mm tt")</td>
+                            <td>@o.Buyer.Name<br /><a class="muted" href="mailto:@o.Buyer.Email">@o.Buyer.Email</a></td>
+                            <td>@foreach (var l in o.Lines) { <div>@l.Qty × @l.Name (@l.Size)</div> }</td>
+                            <td class="num">@Money.Format(o.TotalCents)</td>
+                            <td><span class="tag tag--@o.Status.ToString().ToLowerInvariant()">@o.Status</span></td>
+                            <td>
+                                @if (o.Status == OrderStatus.Paid)
+                                {
+                                    <form method="post" action="/admin/orders/@o.Id/pickup">
+                                        <AntiforgeryToken />
+                                        <input type="hidden" name="pickedUp" value="@((o.PickedUpUtc is null).ToString().ToLowerInvariant())" />
+                                        <button class="btn btn--sm @(o.PickedUpUtc is null ? "btn--ghost" : "btn--ok")" type="submit">@(o.PickedUpUtc is null ? "Mark picked up" : "Picked up ✓")</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyList<Order> orders = [];
+    private List<Order> paid = [];
+    private int review;
+    private List<string> sizeColumns = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        orders = await Store.ListAsync();
+        paid = orders.Where(o => o.Status == OrderStatus.Paid).ToList();
+        review = orders.Count(o => o.Status == OrderStatus.NeedsReview);
+        sizeColumns = Catalog.All.SelectMany(p => p.Sizes.Select(s => s.Code)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private int Count(string slug, string size) =>
+        paid.SelectMany(o => o.Lines).Where(l => l.Slug == slug && string.Equals(l.Size, size, StringComparison.OrdinalIgnoreCase)).Sum(l => l.Qty);
+}

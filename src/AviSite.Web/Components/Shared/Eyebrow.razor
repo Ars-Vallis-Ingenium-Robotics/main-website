@@ -1,0 +1,8 @@
+@* Mono section label, e.g. "01 / What we do". Visual index only; the heading carries the meaning. *@
+<p class="eyebrow @Class">@if (Number is not null) {<span class="eyebrow__num" aria-hidden="true">@Number</span>}@ChildContent</p>
+
+@code {
+    [Parameter] public string? Number { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

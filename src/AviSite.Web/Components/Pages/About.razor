@@ -1,0 +1,53 @@
+@page "/about"
+
+<PageTitle>About · AVI Robotics</PageTitle>
+<HeadContent><meta name="description" content="Who AVI Robotics is, what our name means, and how the club runs." /></HeadContent>
+
+<PageHero Kicker="About" Title="Ars Vallis Ingenium">
+    <p>Latin, roughly <em>“the craft of Valley ingenuity.”</em> We picked it because the Central Valley builds things, and so do we.</p>
+</PageHero>
+
+<section class="section">
+    <div class="wrap split">
+        <div class="split__head">
+            <Eyebrow>The club</Eyebrow>
+            <h2 class="h2">Student-run, build-first.</h2>
+        </div>
+        <div class="prose">
+            <p>AVI Robotics is a student engineering club at Fresno State. Members come from mechanical, electrical and computer engineering, computer science, and plenty of majors that have nothing to do with any of those.</p>
+            <p>The club is the umbrella. Competition teams live inside it. Our first is <a href="/teams/sms">Sequoia Marine Solutions</a>, which builds an underwater ROV for the MATE ROV Competition every season.</p>
+            <p>You don't need experience to join. You need to show up, ask questions and be willing to get your hands dirty (or wet).</p>
+        </div>
+    </div>
+</section>
+
+<section class="section section--paper-2">
+    <div class="wrap split">
+        <div class="split__head">
+            <Eyebrow>How we run</Eyebrow>
+            <h2 class="h2">Organized like an engineering firm.</h2>
+        </div>
+        <SpecSheet Rows="@howWeRun" />
+    </div>
+</section>
+
+<section class="section">
+    <div class="wrap split">
+        <div class="split__head">
+            <Eyebrow>Leadership</Eyebrow>
+            <h2 class="h2">Officers</h2>
+        </div>
+        <p class="note">TODO(confirm): officer names, roles and photos. Only with each person's OK.</p>
+    </div>
+</section>
+
+@code {
+    private readonly IReadOnlyList<(string, string)> howWeRun =
+    [
+        ("Meetings", "Weekly. TODO: day, time, room"),
+        ("Sub-teams", "Mechanical, electrical, software, media"),
+        ("Project tracking", "Our member portal (projects, meetings, hours)"),
+        ("Communication", "Discord"),
+        ("Who can join", "TODO: Fresno State students only, or open?"),
+    ];
+}

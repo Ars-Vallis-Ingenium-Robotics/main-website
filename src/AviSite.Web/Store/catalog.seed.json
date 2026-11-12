@@ -1,0 +1,34 @@
+[
+  {
+    "slug": "avi-team-tee",
+    "name": "AVI Team Tee",
+    "tagline": "The everyday club shirt.",
+    "description": "Heavyweight cotton tee with the AVI dog on the front and the club wordmark across the back. DRAFT: confirm blank, colors and print with the design team.",
+    "priceCents": 2500,
+    "sizes": [
+      { "code": "XS" }, { "code": "S" }, { "code": "M" }, { "code": "L" }, { "code": "XL" },
+      { "code": "2XL", "upchargeCents": 300 },
+      { "code": "3XL", "upchargeCents": 300 }
+    ],
+    "image": "/img/shirt-placeholder-ink.svg",
+    "imageAlt": "Placeholder outline of a dark t-shirt",
+    "active": true,
+    "ordersClose": null
+  },
+  {
+    "slug": "sms-crew-tee",
+    "name": "SMS Crew Tee",
+    "tagline": "For the Sequoia Marine Solutions pit crew.",
+    "description": "Sequoia Marine Solutions crew shirt for competition days. DRAFT: confirm design and whether it's members-only.",
+    "priceCents": 2500,
+    "sizes": [
+      { "code": "S" }, { "code": "M" }, { "code": "L" }, { "code": "XL" },
+      { "code": "2XL", "upchargeCents": 300 }
+    ],
+    "image": "/img/shirt-placeholder-sea.svg",
+    "imageAlt": "Placeholder outline of a sea-green t-shirt",
+    "team": "sms",
+    "active": true,
+    "ordersClose": null
+  }
+]

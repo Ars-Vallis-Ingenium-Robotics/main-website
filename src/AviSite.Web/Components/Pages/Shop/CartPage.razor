@@ -1,0 +1,71 @@
+@page "/shop/cart"
+@inject CartCookie Cart
+@inject Pricing Pricing
+@inject IOptions<StoreOptions> Store
+
+<PageTitle>Cart · AVI Robotics shop</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section">
+    <div class="wrap narrow">
+        <p class="eyebrow"><a href="/shop">Shop</a> / Cart</p>
+        <h1 class="h1">Your cart</h1>
+
+        @if (Added is not null) { <p class="alert alert--ok" role="status">Added to your cart.</p> }
+        @foreach (var problem in quote.Problems) { <p class="alert" role="alert">@problem</p> }
+
+        @if (quote.IsEmpty)
+        {
+            <p class="lede">Nothing here yet.</p>
+            <a class="btn btn--signal" href="/shop">Browse gear</a>
+        }
+        else
+        {
+            <ul class="cart">
+                @for (var i = 0; i < quote.Lines.Count; i++)
+                {
+                    var line = quote.Lines[i];
+                    var index = i;
+                    <li class="cart__line">
+                        <div class="cart__item">
+                            <a class="cart__name" href="/shop/@line.Product.Slug">@line.Product.Name</a>
+                            <span class="mono cart__size">Size @line.Size · @Money.Format(line.UnitCents) each</span>
+                        </div>
+                        <form method="post" action="/cart/update" class="cart__qty">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="index" value="@index" />
+                            <label class="visually-hidden" for="qty-@index">Quantity for @line.Product.Name, size @line.Size</label>
+                            <input id="qty-@index" type="number" name="qty" value="@line.Qty" min="0" max="@Store.Value.MaxQuantityPerLine" inputmode="numeric" />
+                            <button class="btn btn--ghost btn--sm" type="submit">Update</button>
+                        </form>
+                        <span class="cart__total"><Price Cents="line.LineCents" /></span>
+                        <form method="post" action="/cart/remove" class="cart__remove">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="index" value="@index" />
+                            <button class="link-button" type="submit" aria-label="Remove @line.Product.Name, size @line.Size">Remove</button>
+                        </form>
+                    </li>
+                }
+            </ul>
+            <div class="cart__summary">
+                <p class="cart__subtotal"><span>Total</span> <Price Cents="quote.TotalCents" /></p>
+                <p class="muted">@Store.Value.PickupNote</p>
+                @if (Store.Value.OrdersOpen)
+                {
+                    <a class="btn btn--signal btn--lg" href="/shop/checkout">Check out</a>
+                }
+                else
+                {
+                    <p class="alert" role="status">Ordering is closed right now.</p>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromQuery] public string? Added { get; set; }
+    private Quote quote = new([], 0, []);
+
+    protected override void OnInitialized() => quote = Pricing.Price(Cart.Read());
+}

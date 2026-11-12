@@ -1,0 +1,18 @@
+<div class="summary">
+    <p class="eyebrow eyebrow--plain">Order summary</p>
+    <ul class="summary__lines">
+        @foreach (var l in Lines)
+        {
+            <li class="summary__line">
+                <span>@l.Name <span class="mono muted">@l.Size × @l.Qty</span></span>
+                <Price Cents="l.LineCents" />
+            </li>
+        }
+    </ul>
+    <p class="summary__total"><span>Total</span> <Price Cents="TotalCents" /></p>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<OrderLine> Lines { get; set; } = [];
+    [Parameter] public int TotalCents { get; set; }
+}

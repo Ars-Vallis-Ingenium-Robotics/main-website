@@ -1,0 +1,84 @@
+@page "/shop/{Slug}"
+@inject ICatalog Catalog
+@inject IOptions<StoreOptions> Store
+@inject NavigationManager Nav
+
+@if (product is not null)
+{
+    <PageTitle>@product.Name · AVI Robotics shop</PageTitle>
+    <HeadContent><meta name="description" content="@product.Tagline" /></HeadContent>
+
+    <section class="section product @(product.Team is null ? "" : "product--" + product.Team)">
+        <div class="wrap product__grid">
+            <div class="product__media">
+                @if (product.Image is not null) { <img src="@product.Image" alt="@product.ImageAlt" width="720" height="720" /> }
+            </div>
+            <div class="product__info">
+                <p class="eyebrow"><a href="/shop">Shop</a> / @product.Name</p>
+                <h1 class="h1">@product.Name</h1>
+                <p class="product__price"><Price Cents="product.PriceCents" /></p>
+                <p class="lede">@product.Tagline</p>
+
+                @if (Error == "size") { <p class="alert" role="alert">Pick a size first.</p> }
+
+                @if (orderable)
+                {
+                    <form method="post" action="/cart/add" class="buy">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="slug" value="@product.Slug" />
+                        <fieldset class="sizes">
+                            <legend class="label">Size</legend>
+                            <div class="sizes__options">
+                                @foreach (var s in product.Sizes)
+                                {
+                                    var id = $"size-{s.Code}";
+                                    <input class="sizes__input" type="radio" name="size" id="@id" value="@s.Code" required />
+                                    <label class="sizes__chip" for="@id">
+                                        @s.Code
+                                        @if (s.UpchargeCents > 0) { <span class="sizes__up">+@Money.Format(s.UpchargeCents)</span> }
+                                    </label>
+                                }
+                            </div>
+                        </fieldset>
+                        <div class="buy__row">
+                            <label class="field field--qty">
+                                <span class="label">Qty</span>
+                                <input type="number" name="qty" value="1" min="1" max="@Store.Value.MaxQuantityPerLine" inputmode="numeric" />
+                            </label>
+                            <button class="btn btn--signal btn--lg" type="submit">Add to cart</button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <p class="alert" role="status">This item isn't taking orders right now.</p>
+                }
+
+                <div class="prose product__desc"><p>@product.Description</p></div>
+                <SpecSheet Rows="@details" />
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+
+    private Product? product;
+    private bool orderable;
+    private IReadOnlyList<(string, string)> details = [];
+
+    protected override void OnInitialized()
+    {
+        product = Catalog.Find(Slug);
+        if (product is null || !product.Active) { product = null; Nav.NotFound(); return; }
+        orderable = Store.Value.OrdersOpen && Catalog.IsOrderable(product);
+        details =
+        [
+            ("Sizes", string.Join(" · ", product.Sizes.Select(s => s.Code))),
+            ("Fulfillment", "Pickup at a club meeting"),
+            ("Order deadline", product.OrdersClose?.ToString("MMMM d, yyyy") ?? "Open"),
+        ];
+    }
+}

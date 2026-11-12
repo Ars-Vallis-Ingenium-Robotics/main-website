@@ -1,0 +1,70 @@
+@inherits LayoutComponentBase
+@inject IOptions<SiteOptions> Site
+@inject CartCookie Cart
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+    <div class="wrap site-header__bar">
+        <a class="brand" href="/" aria-label="@Site.Value.Name home">
+            <img class="brand__mark" src="/img/mark-placeholder.svg" alt="" width="36" height="36" />
+            <span class="brand__word">AVI<span class="brand__word-sub">Robotics</span></span>
+        </a>
+
+        <nav class="nav nav--wide" aria-label="Main">
+            <NavLinks CartCount="cartCount" />
+        </nav>
+
+        <details class="nav nav--narrow">
+            <summary class="nav__toggle">
+                <span>Menu</span>
+                @if (cartCount > 0) { <span class="badge" aria-hidden="true">@cartCount</span><span class="visually-hidden">, @cartCount @(cartCount == 1 ? "item" : "items") in cart</span> }
+            </summary>
+            <nav class="nav__sheet" aria-label="Main (menu)">
+                <NavLinks CartCount="cartCount" />
+            </nav>
+        </details>
+    </div>
+</header>
+
+<main id="main" tabindex="-1">
+    @Body
+</main>
+
+<footer class="site-footer">
+    <div class="wrap site-footer__grid">
+        <div class="site-footer__about">
+            <p class="site-footer__name">@Site.Value.LongName</p>
+            <p class="muted">A student engineering club at Fresno State, home of the Sequoia Marine Solutions ROV team.</p>
+        </div>
+        <nav class="site-footer__links" aria-label="Footer">
+            <p class="eyebrow eyebrow--plain">Site</p>
+            <ul>
+                <li><a href="/about">About</a></li>
+                <li><a href="/teams">Teams</a></li>
+                <li><a href="/sponsors">Sponsors</a></li>
+                <li><a href="/shop">Shop</a></li>
+                <li><a href="/join">Join</a></li>
+            </ul>
+        </nav>
+        <nav class="site-footer__links" aria-label="Elsewhere">
+            <p class="eyebrow eyebrow--plain">Elsewhere</p>
+            <ul>
+                @if (Site.Value.DiscordInviteUrl is { } d) { <li><a href="@d" rel="noopener">Discord</a></li> }
+                @if (Site.Value.InstagramUrl is { } ig) { <li><a href="@ig" rel="noopener">Instagram</a></li> }
+                @if (Site.Value.YouTubeUrl is { } yt) { <li><a href="@yt" rel="noopener">YouTube</a></li> }
+                @if (Site.Value.LinktreeUrl is { } lt) { <li><a href="@lt" rel="noopener">Linktree</a></li> }
+                @if (Site.Value.PortalUrl is { } p) { <li><a href="@p">Member portal</a></li> }
+            </ul>
+        </nav>
+    </div>
+    <div class="wrap site-footer__base">
+        <p class="mono">© @DateTime.UtcNow.Year @Site.Value.Name</p>
+        @if (Site.Value.ContactEmail is { } email) { <p class="mono"><a href="mailto:@email">@email</a></p> }
+    </div>
+</footer>
+
+@code {
+    private int cartCount;
+    protected override void OnInitialized() => cartCount = Cart.Count();
+}

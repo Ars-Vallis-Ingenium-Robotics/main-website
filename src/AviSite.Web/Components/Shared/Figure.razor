@@ -1,0 +1,35 @@
+@*
+    Framed image with crop marks and a FIG. caption.
+    Without Src it renders an honest placeholder slot describing the photo we still need.
+*@
+<figure class="figure @(Tone is null ? "" : "figure--" + Tone) @Class" style="--ratio: @Ratio">
+    <div class="figure__frame">
+        <span class="figure__crop figure__crop--tl" aria-hidden="true"></span>
+        <span class="figure__crop figure__crop--tr" aria-hidden="true"></span>
+        <span class="figure__crop figure__crop--bl" aria-hidden="true"></span>
+        <span class="figure__crop figure__crop--br" aria-hidden="true"></span>
+        @if (Src is not null)
+        {
+            <img src="@Src" alt="@Alt" loading="@(Eager ? "eager" : "lazy")" decoding="async" />
+        }
+        else
+        {
+            <div class="figure__slot" role="img" aria-label="Photo coming soon: @Caption">
+                <span class="mono">PHOTO NEEDED</span>
+                <span class="figure__slot-note">@Caption</span>
+            </div>
+        }
+    </div>
+    <figcaption class="figure__caption mono"><span>FIG. @Number</span> @Caption</figcaption>
+</figure>
+
+@code {
+    [Parameter, EditorRequired] public string Number { get; set; } = "01";
+    [Parameter, EditorRequired] public string Caption { get; set; } = "";
+    [Parameter] public string? Src { get; set; }
+    [Parameter] public string? Alt { get; set; }
+    [Parameter] public string Ratio { get; set; } = "4 / 3";
+    [Parameter] public string? Tone { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public bool Eager { get; set; }
+}

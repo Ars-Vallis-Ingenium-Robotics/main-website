@@ -1,0 +1,59 @@
+@page "/shop/pay/{OrderId}"
+@inject IOrderStore Orders
+@inject IOptions<PayPalOptions> PayPal
+@inject NavigationManager Nav
+
+<PageTitle>Pay · AVI Robotics shop</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+@if (order is not null)
+{
+    <section class="section">
+        <div class="wrap checkout">
+            <div class="checkout__form">
+                <p class="eyebrow"><a href="/shop/checkout">Details</a> / Payment</p>
+                <h1 class="h1">Pay for order <span class="mono">@order.Code</span></h1>
+                <p class="muted">Step 2 of 2. Paying as @order.Buyer.Name (@order.Buyer.Email).</p>
+
+                <div id="pay" class="pay"
+                     data-order-id="@order.Id"
+                     data-mode="@PayPal.Value.Mode.ToString().ToLowerInvariant()">
+                    <AntiforgeryToken />
+                    <p id="pay-status" class="pay__status" role="status" aria-live="polite"></p>
+                    @if (PayPal.Value.Mode == PayPalMode.Fake)
+                    {
+                        <p class="note">Development mode: PayPal is simulated. No money moves.</p>
+                        <button id="fake-pay" class="btn btn--signal btn--lg" type="button">Simulate PayPal payment</button>
+                    }
+                    else
+                    {
+                        @if (PayPal.Value.Mode == PayPalMode.Sandbox) { <p class="note">SANDBOX: test payments only. Use a PayPal sandbox buyer account.</p> }
+                        <div id="paypal-buttons" class="pay__buttons"></div>
+                        <noscript><p class="alert">PayPal checkout needs JavaScript turned on.</p></noscript>
+                    }
+                </div>
+            </div>
+            <aside class="checkout__summary" aria-label="Order summary">
+                <OrderSummary Lines="order.Lines" TotalCents="order.TotalCents" />
+            </aside>
+        </div>
+    </section>
+
+    @if (PayPal.Value.Mode != PayPalMode.Fake)
+    {
+        <script src="https://www.paypal.com/sdk/js?client-id=@Uri.EscapeDataString(PayPal.Value.ClientId ?? "")&currency=@PayPal.Value.Currency&intent=capture&components=buttons" data-namespace="paypal"></script>
+    }
+    <script src="/js/checkout.js" defer></script>
+}
+
+@code {
+    [Parameter] public string OrderId { get; set; } = "";
+    private Order? order;
+
+    protected override async Task OnInitializedAsync()
+    {
+        order = await Orders.GetAsync(OrderId);
+        if (order is null) { Nav.NotFound(); return; }
+        if (order.Status != OrderStatus.Pending) { Nav.NavigateTo($"/shop/orders/{order.Id}"); order = null; }
+    }
+}

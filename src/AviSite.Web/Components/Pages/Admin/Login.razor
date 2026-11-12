@@ -1,0 +1,34 @@
+@page "/admin/login"
+@inject IOptions<AdminOptions> Admin
+
+<PageTitle>Admin sign in · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section">
+    <div class="wrap narrow narrow--form">
+        <p class="eyebrow">Officers only</p>
+        <h1 class="h1">Shop admin</h1>
+        @if (string.IsNullOrEmpty(Admin.Value.PasswordHash))
+        {
+            <p class="alert" role="alert">Admin login is disabled. Set <code>Admin:PasswordHash</code> (see README).</p>
+        }
+        else
+        {
+            @if (Error is not null) { <p class="alert" role="alert">Wrong password.</p> }
+            <form method="post" action="/admin/login" class="form">
+                <AntiforgeryToken />
+                <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+                <label class="field">
+                    <span class="label">Password</span>
+                    <input type="password" name="password" autocomplete="current-password" required />
+                </label>
+                <button class="btn btn--ink btn--lg" type="submit">Sign in</button>
+            </form>
+        }
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+}

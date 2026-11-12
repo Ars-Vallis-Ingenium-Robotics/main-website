@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480">
+  <!-- PLACEHOLDER product image: replace with a real mockup or photo -->
+  <rect width="480" height="480" fill="#e6e8e3"/>
+  <g fill="none" stroke="#ffb000" stroke-opacity=".18" stroke-width="1">
+    <path d="M24 0V480M0 24H480"/><path d="M48 0V480M0 48H480"/><path d="M72 0V480M0 72H480"/><path d="M96 0V480M0 96H480"/><path d="M120 0V480M0 120H480"/><path d="M144 0V480M0 144H480"/><path d="M168 0V480M0 168H480"/><path d="M192 0V480M0 192H480"/><path d="M216 0V480M0 216H480"/><path d="M240 0V480M0 240H480"/><path d="M264 0V480M0 264H480"/><path d="M288 0V480M0 288H480"/><path d="M312 0V480M0 312H480"/><path d="M336 0V480M0 336H480"/><path d="M360 0V480M0 360H480"/><path d="M384 0V480M0 384H480"/><path d="M408 0V480M0 408H480"/><path d="M432 0V480M0 432H480"/><path d="M456 0V480M0 456H480"/>
+  </g>
+  <path d="M170 92 L120 112 L72 170 L112 204 L140 182 L140 392 L340 392 L340 182 L368 204 L408 170 L360 112 L310 92 C300 118 272 132 240 132 C208 132 180 118 170 92 Z" fill="#0b1220" stroke="#ffb000" stroke-width="3" stroke-linejoin="round"/>
+  <text x="240" y="262" text-anchor="middle" font-family="monospace" font-size="20" letter-spacing="3" fill="#ffb000">AVI</text>
+  <text x="24" y="456" font-family="monospace" font-size="13" letter-spacing="2" fill="#ffb000" fill-opacity=".7">MOCKUP NEEDED</text>
+</svg>
