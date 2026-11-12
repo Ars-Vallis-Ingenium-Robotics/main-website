@@ -847,7 +847,7 @@
   .sponsor-wall--sms .sponsor-wall__tier { background: rgb(44 192 182 / 0.25); border-color: rgb(44 192 182 / 0.25); }
   .sponsor-wall--sms .sponsor-wall__item:hover { background: #0a333a; }
   .sponsor-wall--sms .sponsor-wall__label { color: var(--sms-teal); }
-  .sponsors-hall__shirt { max-width: 22rem; margin: var(--s-7) auto 0; }
+  .sponsors-hall__photos { display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); max-width: 46rem; margin: var(--s-7) auto 0; }
   .link-arrow--on-ink { color: var(--on-ink); }
 
   /* Timeline: expandable entries and an unfinished ending */

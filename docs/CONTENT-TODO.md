@@ -23,10 +23,11 @@ human still needs to confirm or supply.
       logo "AC Electrical Construction"?
 - [ ] **Discord invite**: discord.com/invite/xerHCd25XR (8/28/26 agenda)
 - [ ] **Meetings**: Fridays 5:30–7:30 PM, EE 389
+- [ ] **June 4 pool test guests**: the copy says the university president, the LCOE dean and
+      Precision's owner attended, but photos are not captioned with their names. Add names?
 - [ ] **History "More" text**: short expansions written from the docs and photo folders. Read once.
 
 ## Still needed
-- [ ] **Matthias Cockrum** headshot: Robert is finding the file (water test, from behind)
 - [ ] **Faculty advisor headshots** (Dr. Bani Milhim, Dr. Wu): fresnostate.edu is blocked from
       the build sandbox. Save the two photos into `tools/images/` and add them to
       `people.manifest.json`.

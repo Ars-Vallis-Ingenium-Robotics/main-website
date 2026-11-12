@@ -452,5 +452,70 @@
   "h": 1600,
   "focus": "50% 50%",
   "lqip": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAAAQBACdASoYABAAPu1iqk4ppaQiMAgBMB2JZwDGfB6M23Bw+CGTINScQAD90kf8wsq+uldXMrSujkLyWBq0CxOVPHRVPR5LqB5Hkrd+mCIjxdlw+cU+pojaLSjTG97sHAHGPX18AowpruCwQO5/BXYEg3Ch/EAA"
+ },
+ "pool-guests": {
+  "alt": "Robert Voss with guests at the SMS tent at the Fresno State pool, June 4, 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 45%",
+  "lqip": "data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAAAQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JYwAAXFToSUlCF1WUdzJOgAD+VWMqcqd9LwUzmPZIdaTxVymtQbabMaVnP/UlLSCZKrV7i+K5jXbPuMYP3L7swDjHys6EtWkW4zVLlJgC8160KGi7YYOvTOhdtGLAQubel4fA5TGUAAAA"
+ },
+ "pool-guest-visit": {
+  "alt": "A guest in a suit laughing with an SMS member at the June 4 pool test",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "60% 40%",
+  "lqip": "data:image/webp;base64,UklGRpoAAABXRUJQVlA4II4AAAAwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JQBahBshhEQRMQXPODCNSK/AA/mAjmfy28wfuGM36Ys6he2RR2Cbkokc6Acg3ayvz/T3yHudC8xINNsN1PxMoAQEWwE8Fd5Ovne0P4H/og6x/+zFgAQHtQEAV9JH+C8Zpo8Mf/cTShEnc8WTtvVw8cPwQ4AAA"
+ },
+ "pool-rosie-dive": {
+  "alt": "ROSIE diving in the Fresno State pool, seen from the deck above",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoQAAABXRUJQVlA4IHgAAACQBACdASoQABgAPu1iqk2ppaQiMAgBMB2JbACdMoGoAZYABYzillA1jTFPqjgA/nDp8+5ryVy88pRfm884WMar+RM1JMdwgh/yqStZWGDwshBXinLibbFd9kARHJqs9MZ9zgubC/JrNFLR7KNtlh3TVBBfIY2gAAA="
+ },
+ "pool-adam-deploy": {
+  "alt": "SMS members lying on the pool deck to lower ADAM, the profiling float, into the water while a guest watches",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3600,
+  "focus": "40% 55%",
+  "lqip": "data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAABQBACdASoQABgAPu1iqU2ppaOiMAgBMB2JbACdMoADVPX4GXUKhAWYlzhsAP7axmqTuwE+veoF2yunxvcxa68Gv3F17vfYuLEkltvdK3NmXpXilOkZoNpg+3f57dWNg44l9M9COZAod+Vp2scXdJCdgbmH6baKi+SZJNLwBdfcAAAA"
+ },
+ "pool-tent": {
+  "alt": "The Fresno State tent and SMS's control station on the pool deck",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpgAAABXRUJQVlA4IIwAAAAQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JbACsABKRbc6LHMoo72zHwADKOfzQvfXHSAL7KF+HZSJwoUaO+IpuwYJrQIY14P4QwHdVg3k635BC5Rn1zVbkLDNzgP0xLrMU2IQOXQOlQY8p1yaVP562W+vy+SyX40/1Pnft2BNw5mHe+F6OuLlVd6QAAA=="
  }
 }
