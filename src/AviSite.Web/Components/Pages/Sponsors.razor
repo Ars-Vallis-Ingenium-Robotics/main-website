@@ -8,6 +8,10 @@
 
 <PageHero Kicker="@($"Support · {Nonprofit.Value.Status}")" Title="Put your name on the robot.">
     <p>Every dollar goes into parts, pool time and getting students to competition. AVI is a registered @Nonprofit.Value.Status, so your gift is tax-deductible.</p>
+    <div class="actions">
+        <a class="btn btn--accent btn--lg" href="/donate">Donate now</a>
+        <a class="btn btn--ghost-on-ink" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
+    </div>
 </PageHero>
 
 <section class="section">
@@ -24,18 +28,18 @@
     </div>
 </section>
 
-<section class="section section--paper-2">
-    <div class="wrap split">
-        <div class="split__head">
-            <p class="eyebrow">2026 sponsors</p>
-            <h2 class="h2">Thank you.</h2>
-            <p class="lede">These partners were printed on the back of every shirt we wore at Worlds.</p>
+<section class="section section--ink sponsors-hall" aria-labelledby="thanks-title">
+    <div class="wrap">
+        <div class="section__head">
+            <div>
+                <p class="eyebrow eyebrow--on-ink">2026 sponsors</p>
+                <h2 class="h2" id="thanks-title">Thank you.</h2>
+                <p class="lede-on-ink">These are the companies and organizations that got a first-year club to the World Championship. Their logos were on the back of every shirt we wore in St. John's.</p>
+            </div>
         </div>
-        <div class="reveal">
-            <ul class="sponsor-list">
-                @foreach (var s in ClubFacts.Sponsors2026) { <li>@s</li> }
-            </ul>
-            <Photo Key="worlds-shirt-back" Sizes="(min-width: 56rem) 30vw, 70vw" Class="sponsor-shirt photo--frame" Ratio="4 / 5" />
+        <SponsorWall />
+        <div class="sponsors-hall__shirt">
+            <Photo Key="worlds-shirt-back" Sizes="(min-width: 56rem) 30vw, 70vw" Class="photo--frame" Ratio="4 / 5" Caption="The sponsor shirt at Worlds, June 2026." />
         </div>
     </div>
 </section>
@@ -44,13 +48,14 @@
     <div class="wrap split">
         <div class="split__head">
             <p class="eyebrow eyebrow--on-ink">How to give</p>
-            <h2 class="h2">Sponsor a season, or give once.</h2>
+            <h2 class="h2">Sponsor a season, or just send us money.</h2>
         </div>
         <div class="reveal">
             <p class="lede-on-ink">Sponsors get their logo on the robot, the team shirt and this site, plus mentions in our technical documentation and presentation. Download the packet for tiers, or email us.</p>
             <SpecSheet Class="spec--on-ink" Rows="@nonprofitRows" />
             <div class="actions">
-                <a class="btn btn--accent" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
+                <a class="btn btn--accent" href="/donate">Donate</a>
+                <a class="btn btn--ghost-on-ink" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
                 @if (Site.Value.ContactEmail is { } email) { <a class="btn btn--ghost-on-ink" href="mailto:@email?subject=Supporting%20AVI%20Robotics">Email @email</a> }
             </div>
         </div>
@@ -70,6 +75,6 @@
     private IReadOnlyList<(string, string)> nonprofitRows => [
         ("Organization", Nonprofit.Value.LegalName),
         ("Status", $"{Nonprofit.Value.Status} · contributions tax-deductible"),
-        ("EIN", Nonprofit.Value.Ein),
+        ("Tax ID", $"EIN {Nonprofit.Value.Ein}"),
     ];
 }

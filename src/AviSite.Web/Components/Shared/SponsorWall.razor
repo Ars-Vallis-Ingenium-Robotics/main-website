@@ -1,0 +1,31 @@
+@using AviSite.Web.Content
+@*
+    Sponsor logo wall, sized by how big each logo was on the 2026 team shirt.
+    Logos are white-on-transparent, so this always sits on a dark background.
+*@
+<div class="sponsor-wall @Class">
+    @foreach (var tier in ClubFacts.Sponsors2026.Where(s => s.Tier <= MaxTier).GroupBy(s => s.Tier).OrderBy(g => g.Key))
+    {
+        @if (ShowLabels) { <p class="sponsor-wall__label">@Labels[tier.Key]</p> }
+        <ul class="sponsor-wall__tier sponsor-wall__tier--@tier.Key" role="list">
+            @foreach (var s in tier)
+            {
+                <li class="sponsor-wall__item reveal">
+                    <img src="/img/sponsors/@(s.Logo).webp" alt="@s.Name" width="@s.W" height="@s.H" loading="lazy" decoding="async" />
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public int MaxTier { get; set; } = 4;
+    [Parameter] public bool ShowLabels { get; set; } = true;
+
+    // TODO(confirm): tier names are inferred from logo size on the shirt, not a published tier list.
+    private static readonly Dictionary<int, string> Labels = new()
+    {
+        [1] = "Headline sponsor", [2] = "Major sponsors", [3] = "Partners", [4] = "Supporters",
+    };
+}

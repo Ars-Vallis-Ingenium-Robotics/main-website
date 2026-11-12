@@ -38,7 +38,7 @@
             <h2 class="h2">You and your talents have value here.</h2>
         </div>
         <div class="prose reveal">
-            <p>MATE ROV is scored like a real engineering company: the robot, a technical document, an engineering presentation, a marketing display and safety. That takes engineers and programmers, and it also takes writers, designers, business majors and people who keep 40 students organized.</p>
+            <p>MATE ROV is scored like a real engineering company: the robot, a technical document, an engineering presentation, a marketing display and safety. That takes engineers and programmers, and it also takes writers, designers, business majors and people who keep 51 students organized.</p>
             <SpecSheet Rows="@departments" />
         </div>
     </div>
@@ -70,7 +70,7 @@
     private IReadOnlyList<(string, string)> nonprofitRows => [
         ("Legal name", Nonprofit.Value.LegalName),
         ("Status", $"{Nonprofit.Value.Status} public charity"),
-        ("EIN", Nonprofit.Value.Ein),
+        ("Tax ID", $"EIN {Nonprofit.Value.Ein}"),
         ("Exempt since", Nonprofit.Value.EffectiveDate?.ToString("MMMM d, yyyy") ?? "2025"),
         ("Home", "California State University, Fresno · Lyles College of Engineering"),
     ];

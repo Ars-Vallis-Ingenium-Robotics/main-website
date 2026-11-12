@@ -2,6 +2,7 @@
 @inject IOrderStore Orders
 @inject IOptions<StoreOptions> Store
 @inject IOptions<SiteOptions> Site
+@inject IOptions<NonprofitOptions> Nonprofit
 @inject NavigationManager Nav
 
 <PageTitle>Order @(order?.Code) · AVI Robotics shop</PageTitle>
@@ -14,6 +15,17 @@
             <div class="checkout__form">
                 @switch (order.Status)
                 {
+                    case OrderStatus.Paid when order.IsDonation:
+                        <p class="eyebrow">Donation received</p>
+                        <h1 class="h1">Thank you, @FirstName!</h1>
+                        <p class="lede">Your gift of <Price Cents="order.TotalCents" /> goes straight into parts, pool time and getting students to competition.</p>
+                        <div class="receipt">
+                            <p class="eyebrow eyebrow--plain">Donation receipt</p>
+                            <p><strong>@Nonprofit.Value.LegalName</strong> is a tax-exempt @Nonprofit.Value.Status organization, <Ein />.</p>
+                            <p>Receipt <span class="mono">@order.Code</span> · @((order.PaidUtc ?? order.CreatedUtc).ToPacific().ToString("MMMM d, yyyy")) · <Price Cents="order.TotalCents" /> from @order.Buyer.Name.</p>
+                            <p>No goods or services were provided in exchange for this contribution.</p>
+                        </div>
+                        break;
                     case OrderStatus.Paid:
                         <p class="eyebrow">Order confirmed</p>
                         <h1 class="h1">Thanks, @FirstName!</h1>

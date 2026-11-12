@@ -1,10 +1,5 @@
 [
  {
-  "key": "worlds-rosie-closeup",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00715.JPG",
-  "alt": "ROSIE, SMS's teal-and-black ROV, on a stand at the 2026 MATE ROV World Championship"
- },
- {
   "key": "worlds-rosie-table",
   "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01659.JPG",
   "alt": "ROSIE on the team table, thrusters and rotating claw visible",
@@ -130,5 +125,67 @@
   "key": "poster-club",
   "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/avi_print.png",
   "alt": "AVI Robotics recruiting poster: Fridays in EE 389, 5:30 to 7:30 PM, calling all majors"
+ },
+ {
+  "key": "fall-group-2026",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-09 AVI Meeting 6/RAV04267.JPG",
+  "alt": "About fifty AVI Robotics members gathered around the Lyles College of Engineering sign at Fresno State, fall 2026",
+  "crop": [
+   0.02,
+   0.25,
+   0.98,
+   0.8
+  ],
+  "focus": "50% 55%"
+ },
+ {
+  "key": "projects-day-rosie",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-29 LCOE Project's Day/RAV00001.JPG",
+  "alt": "Robert Voss smiling behind an early ROSIE prototype at the Lyles College of Engineering Projects Day",
+  "focus": "40% 45%"
+ },
+ {
+  "key": "worlds-rosie-feed",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/RAV01666.JPG",
+  "alt": "ROSIE's four camera feeds on the pilot screen during a Worlds run"
+ },
+ {
+  "key": "mesa-feb",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-02-07 MESA Volunteering/DSC02265.JPG",
+  "alt": "AVI volunteers posing together at the February 2026 MESA event at Fresno State",
+  "focus": "50% 55%"
+ },
+ {
+  "key": "mesa-apr",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-11 MESA Volunteering/RAV00003.JPG",
+  "alt": "AVI members in MESA volunteer shirts giving a thumbs up, April 2026",
+  "focus": "50% 40%"
+ },
+ {
+  "key": "mesa-nov",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-11-07 MESA - AVI and Sundog Collab/RAV04942.JPG",
+  "alt": "AVI and Sundog volunteers lined up on campus after a MESA event, November 2026",
+  "focus": "50% 60%"
+ },
+ {
+  "key": "dec-meeting",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2025-12-05 AVI Meeting/DSC00159.JPG",
+  "alt": "A member presenting to the club at a December 2025 AVI meeting",
+  "focus": "45% 50%"
+ },
+ {
+  "key": "jan-meeting",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-01-30 AVI Meeting/DSC01862.JPG",
+  "alt": "Thanking our first sponsors on screen at the January 30, 2026 general meeting"
+ },
+ {
+  "key": "phantom-booth",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-30 AVI Meeting 9 - BCP and Phantom Bash/RAV04740.JPG",
+  "alt": "AVI's Ars Vallis Ingenium booth lit up at night for the Phantom Bash, October 2026"
+ },
+ {
+  "key": "bcp-workshop",
+  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-16 AVI Meeting 7 - BCP Intro/RAV04441.JPG",
+  "alt": "New members wiring their first circuits at a fall 2026 build workshop"
  }
 ]

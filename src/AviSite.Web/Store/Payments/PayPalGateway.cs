@@ -28,11 +28,11 @@ public sealed class PayPalGateway(HttpClient http, IOptions<PayPalOptions> optio
         {
             items.Add(new JsonObject
             {
-                ["name"] = Truncate($"{l.Name} ({l.Size})", 127),
-                ["sku"] = Truncate($"{l.Slug}-{l.Size}", 127),
+                ["name"] = Truncate(l.Slug == Donations.Slug ? l.Name : $"{l.Name} ({l.Size})", 127),
+                ["sku"] = Truncate(l.Slug == Donations.Slug ? l.Slug : $"{l.Slug}-{l.Size}", 127),
                 ["quantity"] = l.Qty.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 ["unit_amount"] = Amount(l.UnitCents, order.Currency),
-                ["category"] = "PHYSICAL_GOODS",
+                ["category"] = l.Slug == Donations.Slug ? "DONATION" : "PHYSICAL_GOODS",
             });
         }
 
@@ -46,7 +46,7 @@ public sealed class PayPalGateway(HttpClient http, IOptions<PayPalOptions> optio
                     ["reference_id"] = order.Id,
                     ["custom_id"] = order.Id,      // echoed back on captures/webhooks
                     ["invoice_id"] = order.Code,   // must be unique per PayPal account
-                    ["description"] = Truncate($"{_opt.BrandName} order {order.Code}", 127),
+                    ["description"] = Truncate(order.IsDonation ? $"Donation to {_opt.BrandName} ({order.Code})" : $"{_opt.BrandName} order {order.Code}", 127),
                     ["amount"] = new JsonObject
                     {
                         ["currency_code"] = order.Currency,

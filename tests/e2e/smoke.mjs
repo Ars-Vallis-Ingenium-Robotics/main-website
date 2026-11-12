@@ -20,7 +20,7 @@ const consoleErrors = [];
 // 404s are expected: the not-found tests request missing pages on purpose.
 page.on("console", (m) => { if (m.type() === "error" && !/status of 404/.test(m.text())) consoleErrors.push(m.text()); });
 
-const routes = ["/", "/about", "/history", "/leadership", "/teams", "/sponsors", "/join", "/shop", "/shop/sms-team-tee", "/shop/cart", "/shop/checkout", "/admin/login", "/sms", "/sms/rosie", "/sms/adam", "/sms/2026", "/sms/company"];
+const routes = ["/", "/about", "/history", "/leadership", "/teams", "/sponsors", "/join", "/shop", "/shop/sms-team-tee", "/shop/cart", "/shop/checkout", "/admin/login", "/sms", "/sms/rosie", "/sms/adam", "/sms/2026", "/sms/company", "/donate"];
 
 await test("every public route returns 200 with a single h1", async () => {
   for (const r of routes) {
@@ -125,7 +125,7 @@ await test("buy flow: size required → cart → checkout validation → fake Pa
   await page.waitForURL(/\/shop\/pay\//);
   await page.getByRole("button", { name: "Simulate PayPal payment" }).click();
   await page.waitForURL(/\/shop\/orders\//);
-  assert.match(await page.locator("h1").innerText(), /Thanks, Test/);
+  assert.match(await page.locator("h1").innerText(), /Thanks, Test/i);
   orderUrl = page.url();
 
   await page.goto(BASE + "/shop/cart");
@@ -173,6 +173,128 @@ await test("phone layout: no horizontal scroll, menu opens and Escape closes it"
   await p.keyboard.press("Escape");
   assert.equal(await p.locator(".nav--narrow").getAttribute("open"), null);
   await phone.close();
+});
+
+await test("donate: pick an amount → fake PayPal → receipt with IRS language", async () => {
+  await page.goto(BASE + "/donate");
+  await page.locator('label.chip:has-text("$100")').click();
+  await page.fill("#name", "Test Donor");
+  await page.fill("#email", "donor@example.com");
+  await page.click('button[type="submit"]');
+  await page.waitForURL(/\/shop\/pay\//);
+  assert.match(await page.locator("h1").innerText(), /donation/i);
+  await page.click("#fake-pay");
+  await page.waitForURL(/\/shop\/orders\//);
+  const text = await page.locator("main").innerText();
+  assert.match(text, /Donation received/i);
+  assert.match(text, /\$100\.00/);
+  assert.match(text, /No goods or services/);
+});
+
+await test("donate: amount outside $5–$10,000 is refused", async () => {
+  await page.goto(BASE + "/donate");
+  await page.locator('label.chip:has-text("Other")').click();
+  await page.fill("#custom", "2");
+  await page.fill("#name", "Test Donor");
+  await page.fill("#email", "donor@example.com");
+  await page.click('button[type="submit"]');
+  assert.match(page.url(), /\/donate/);
+  assert.ok(await page.locator(".alert, .field__error").count() > 0);
+});
+
+// "EIN" and the number must sit on one line, everywhere, at phone and desktop widths.
+await test("EIN label and number never wrap apart", async () => {
+  const pages = ["/", "/about", "/sponsors", "/donate", "/sms"];
+  for (const width of [360, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const r of pages) {
+      await page.goto(BASE + r);
+      const bad = await page.evaluate(() => {
+        const out = [];
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) {
+          const n = walker.currentNode;
+          if (!/\bEIN\b/.test(n.textContent) || n.parentElement.closest("script,style,head")) continue;
+          const holder = n.parentElement.closest(".ein");
+          if (!holder) { out.push("EIN outside .ein: " + n.textContent.trim().slice(0, 60)); continue; }
+          if (!/\d{2}-\d{7}/.test(holder.textContent)) out.push("no number next to EIN");
+          const range = document.createRange(); range.selectNodeContents(holder);
+          const tops = [...range.getClientRects()].filter((q) => q.width > 0).map((q) => q.top + q.height / 2);
+          if (Math.max(...tops) - Math.min(...tops) > 4) out.push("EIN wraps: " + holder.textContent);
+        }
+        return out;
+      });
+      assert.deepEqual(bad, [], `${r} @${width}px: ${bad.join("; ")}`);
+    }
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+});
+
+// Case rule: Porcine (display) text is always capitals; buttons/nav use sentence case
+// (first word capitalized, the rest lowercase unless it's a proper noun or acronym).
+await test("consistent letter case", async () => {
+  const proper = ["AVI", "SMS", "ROSIE", "ADAM", "MATE", "ROV", "MESA", "PayPal", "PDF", "Discord", "Instagram", "Fresno", "State", "Micromouse", "Robotics", "Sequoia", "Marine", "Solutions", "Explorer", "Worlds", "St.", "John's", "I"];
+  const bad = [];
+  for (const r of ["/", "/about", "/history", "/leadership", "/teams", "/sponsors", "/join", "/shop", "/donate", "/sms", "/sms/rosie", "/sms/2026", "/sms/company"]) {
+    await page.goto(BASE + r);
+    const found = await page.evaluate((proper) => {
+      const out = [];
+      for (const el of document.querySelectorAll("body *")) {
+        const cs = getComputedStyle(el);
+        if (!/Porcine/i.test(cs.fontFamily.split(",")[0])) continue;
+        if (![...el.childNodes].some((c) => c.nodeType === 3 && /[a-z]/i.test(c.textContent))) continue;
+        if (cs.textTransform !== "uppercase") out.push(`display type not uppercase: <${el.tagName.toLowerCase()} class="${el.className}"> ${el.textContent.trim().slice(0, 40)}`);
+      }
+      for (const el of document.querySelectorAll(".btn, .nav a, .link-arrow, summary")) {
+        if (getComputedStyle(el).textTransform === "uppercase") continue;
+        const t = el.innerText.replace(/[^\p{L}\p{N}'.\s()-]/gu, " ").trim();
+        if (!t) continue;
+        const words = t.split(/\s+/);
+        if (words[0][0] !== words[0][0].toUpperCase()) out.push(`label starts lowercase: "${t}"`);
+        for (const w of words.slice(1)) {
+          if (/^[A-Z]/.test(w) && !proper.includes(w) && !/^[A-Z0-9.'()-]+$/.test(w)) out.push(`Title Case word "${w}" in "${t}"`);
+        }
+      }
+      return out;
+    }, proper);
+    for (const f of found) bad.push(`${r}: ${f}`);
+  }
+  assert.deepEqual([...new Set(bad)], [], [...new Set(bad)].slice(0, 6).join(" | "));
+});
+
+await test("timelines expand and end unfinished", async () => {
+  for (const r of ["/history", "/sms/2026"]) {
+    await page.goto(BASE + r);
+    const details = page.locator(".timeline__more").first();
+    await details.locator("summary").click();
+    assert.equal(await details.evaluate((d) => d.open), true, `${r} details opens`);
+    assert.equal(await page.locator(".timeline > li").last().evaluate((li) => li.classList.contains("timeline__item--next")), true, `${r} ends with a to-be-continued node`);
+  }
+});
+
+await test("people photos, sponsor logos and SMS videos render", async () => {
+  await page.goto(BASE + "/leadership");
+  assert.ok(await page.locator(".person__photo").count() >= 8, "headshots on leadership");
+  await page.goto(BASE + "/sponsors");
+  const logos = page.locator(".sponsor-wall img");
+  assert.ok(await logos.count() >= 15, "sponsor logos");
+  for (const alt of await logos.evaluateAll((imgs) => imgs.map((i) => i.alt))) assert.ok(alt.length > 2, "logo alt text");
+  await page.goto(BASE + "/sms");
+  assert.equal(await page.locator('iframe[src^="https://drive.google.com/file/d/"]').count(), 3, "three SMS videos");
+  const csp = (await page.goto(BASE + "/sms")).headers()["content-security-policy"];
+  assert.match(csp, /frame-src[^;]*https:\/\/drive\.google\.com/);
+});
+
+await test("no sideways scroll on any page at 360px", async () => {
+  const phone = await browser.newPage({ viewport: { width: 360, height: 800 } });
+  const wide = [];
+  for (const r of routes) {
+    await phone.goto(BASE + r);
+    const sw = await phone.evaluate(() => document.documentElement.scrollWidth);
+    if (sw > 360) wide.push(`${r} (${sw}px)`);
+  }
+  await phone.close();
+  assert.deepEqual(wide, [], wide.join(", "));
 });
 
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });

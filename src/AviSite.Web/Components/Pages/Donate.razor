@@ -1,0 +1,125 @@
+@page "/donate"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.RateLimiting
+@attribute [EnableRateLimiting(Program.StoreRateLimit)]
+@inject IOrderStore Orders
+@inject IOptions<PayPalOptions> PayPal
+@inject IOptions<NonprofitOptions> Nonprofit
+@inject NavigationManager Nav
+
+<PageTitle>@(hasErrors ? "Error: " : "")Donate · AVI Robotics</PageTitle>
+<HeadContent><meta name="description" content="Make a tax-deductible donation to AVI Robotics, a 501(c)(3) student robotics club at Fresno State. EIN 39-4775163." /></HeadContent>
+
+<section class="section">
+    <div class="wrap checkout">
+        <div class="checkout__form">
+            <p class="eyebrow"><a href="/sponsors">Support</a> / Donate</p>
+            <h1 class="h1">Send us money.</h1>
+            <p class="lede">Any amount helps. Gifts are tax-deductible: AVI is a @Nonprofit.Value.Status, <Ein />.</p>
+
+            <EditForm Model="Model!" FormName="donate" OnValidSubmit="SubmitAsync" OnInvalidSubmit="() => hasErrors = true" method="post" class="form" novalidate>
+                <DataAnnotationsValidator />
+                <div role="alert" class="validation-wrap"><ValidationSummary class="alert" /></div>
+
+                <fieldset class="field amount-picker">
+                    <legend class="label">Amount</legend>
+                    <div class="amount-picker__chips">
+                        @foreach (var d in Donations.PresetDollars)
+                        {
+                            <label class="chip">
+                                <input type="radio" name="Model.Preset" value="@d" checked="@(Model!.Preset == d)" />
+                                <span>$@d</span>
+                            </label>
+                        }
+                        <label class="chip">
+                            <input type="radio" name="Model.Preset" value="0" checked="@(Model!.Preset == 0)" />
+                            <span>Other</span>
+                        </label>
+                    </div>
+                    <label class="label label--sub" for="custom">Other amount (USD)</label>
+                    <div class="amount-picker__custom">
+                        <span aria-hidden="true">$</span>
+                        <InputNumber id="custom" @bind-Value="Model!.Custom" min="5" max="10000" step="1" inputmode="numeric" aria-describedby="custom-hint custom-error" />
+                    </div>
+                    <span id="custom-hint" class="field__hint">Used when "Other" is selected. $5 minimum.</span>
+                    <span id="custom-error"><ValidationMessage For="() => Model!.Custom" class="field__error" /></span>
+                </fieldset>
+
+                <div class="field">
+                    <label class="label" for="name">Full name</label>
+                    <InputText id="name" @bind-Value="Model!.Name" autocomplete="name" aria-describedby="name-error" />
+                    <span id="name-error"><ValidationMessage For="() => Model!.Name" class="field__error" /></span>
+                </div>
+                <div class="field">
+                    <label class="label" for="email">Email</label>
+                    <InputText id="email" @bind-Value="Model!.Email" type="email" autocomplete="email" inputmode="email" aria-describedby="email-hint email-error" />
+                    <span id="email-hint" class="field__hint">Your receipt goes here.</span>
+                    <span id="email-error"><ValidationMessage For="() => Model!.Email" class="field__error" /></span>
+                </div>
+                <div class="field">
+                    <label class="label" for="note">Note <span class="muted">(optional)</span></label>
+                    <InputTextArea id="note" @bind-Value="Model!.Note" rows="2" placeholder="In honor of…, or just say hi" aria-describedby="note-error" />
+                    <span id="note-error"><ValidationMessage For="() => Model!.Note" class="field__error" /></span>
+                </div>
+
+                @if (error is not null) { <p class="alert" role="alert">@error</p> }
+                <button class="btn btn--accent btn--lg" type="submit">Continue to PayPal</button>
+                <p class="muted small">Card works too, no PayPal account needed.</p>
+            </EditForm>
+        </div>
+
+        <aside class="checkout__summary donate-aside" aria-label="Where your gift goes">
+            <Photo Key="pool-jump" Sizes="(min-width: 56rem) 30vw, 100vw" Class="photo--frame" Ratio="4 / 3" />
+            <ul class="donate-aside__list">
+                <li><strong>$18,869</strong> got 13 students and two robots to the 2026 World Championship in Newfoundland.</li>
+                <li><strong>About $34,000</strong> was the total value of the 2026 season, counting donated and reused parts.</li>
+                <li><strong>Every dollar</strong> goes through a student purchase-request process: design, operations, then finance.</li>
+            </ul>
+        </aside>
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromForm(FormName = "donate")] public DonateModel? Model { get; set; }
+    private string? error;
+    private bool hasErrors;
+
+    protected override void OnInitialized() => Model ??= new();
+
+    private async Task SubmitAsync()
+    {
+        var dollars = Model!.Preset is > 0 ? Model.Preset.Value : Model.Custom ?? 0;
+        var cents = dollars * 100;
+        if (cents < Donations.MinCents || cents > Donations.MaxCents)
+        {
+            error = "Pick an amount, or enter one between $5 and $10,000.";
+            hasErrors = true;
+            return;
+        }
+        var buyer = new Buyer
+        {
+            Name = Model.Name!.Trim(),
+            Email = Model.Email!.Trim(),
+            Note = string.IsNullOrWhiteSpace(Model.Note) ? null : Model.Note.Trim(),
+        };
+        var order = await Orders.CreateAsync(buyer, Donations.Quote(cents), PayPal.Value.Currency);
+        Nav.NavigateTo($"/shop/pay/{order.Id}");
+    }
+
+    public sealed class DonateModel
+    {
+        public int? Preset { get; set; } = 50;
+
+        [Range(5, 10000, ErrorMessage = "Enter an amount between $5 and $10,000.")]
+        public int? Custom { get; set; }
+
+        [Required(ErrorMessage = "Enter your name."), StringLength(100)]
+        public string? Name { get; set; }
+
+        [Required(ErrorMessage = "Enter your email."), EmailAddress(ErrorMessage = "That email doesn't look right."), StringLength(200)]
+        public string? Email { get; set; }
+
+        [StringLength(500)]
+        public string? Note { get; set; }
+    }
+}

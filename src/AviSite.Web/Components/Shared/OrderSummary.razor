@@ -1,10 +1,10 @@
 <div class="summary">
-    <p class="eyebrow eyebrow--plain">Order summary</p>
+    <p class="eyebrow eyebrow--plain">@(Lines.All(l => l.Slug == Donations.Slug) ? "Your gift" : "Order summary")</p>
     <ul class="summary__lines">
         @foreach (var l in Lines)
         {
             <li class="summary__line">
-                <span>@l.Name <span class="mono muted">@l.Size × @l.Qty</span></span>
+                <span>@l.Name @if (l.Slug != Donations.Slug) { <span class="mono muted">@l.Size × @l.Qty</span> }</span>
                 <Price Cents="l.LineCents" />
             </li>
         }

@@ -2,22 +2,28 @@
 @inject SmsUrls Links
 
 <PageTitle>Company · Sequoia Marine Solutions</PageTitle>
-<HeadContent><meta name="description" content="How Sequoia Marine Solutions is organized: a C-suite, seven subsystems and more than 40 students from every major." /></HeadContent>
+<HeadContent><meta name="description" content="How Sequoia Marine Solutions is organized: a C-suite, seven subsystems and 51 students from every major." /></HeadContent>
 
 <section class="sms-page-hero">
     <div class="wrap">
         <p class="sms-kicker">Company</p>
         <h1 class="sms-page-hero__title">Run like a real firm.</h1>
-        <p class="sms-page-hero__lede">More than 40 students, a C-suite, seven subsystem leads and a purchase-request process that goes through design, operations and finance before anything gets ordered.</p>
+        <p class="sms-page-hero__lede">51 students, a C-suite, seven subsystem leads and a purchase-request process that goes through design, operations and finance before anything gets ordered.</p>
     </div>
 </section>
 
-<section class="sms-section">
+<section class="sms-section" aria-labelledby="org-title">
     <div class="wrap">
-        <p class="sms-kicker sms-kicker--dark">2026 C-suite</p>
-        <ul class="people">
-            @foreach (var p in ClubFacts.SmsCSuite2026) { <li class="reveal"><PersonCard Person="p" /></li> }
-        </ul>
+        <p class="sms-kicker sms-kicker--dark">2026 org chart</p>
+        <h2 class="sms-h2" id="org-title">Who answered to whom.</h2>
+        <OrgChart Root="ClubFacts.SmsOrg2026" />
+
+        <div class="org__leads">
+            <p class="sms-kicker sms-kicker--dark">Subsystem leads · reporting to the CTO and CDO</p>
+            <ul class="people">
+                @foreach (var p in ClubFacts.SmsLeads2026) { <li class="reveal"><PersonCard Person="p" /></li> }
+            </ul>
+        </div>
     </div>
 </section>
 

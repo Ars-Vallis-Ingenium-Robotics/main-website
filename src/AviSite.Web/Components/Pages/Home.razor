@@ -31,6 +31,18 @@
     </div>
 </section>
 
+<section class="crew" aria-labelledby="crew-title">
+    <div class="wrap crew__head">
+        <p class="eyebrow">Fall 2026 · Lyles College of Engineering</p>
+        <h2 class="h2" id="crew-title">This is AVI.</h2>
+    </div>
+    <Photo Key="fall-group-2026" Sizes="100vw" Class="crew__photo" Caption="The 2026–27 club, October 9, 2026. Every major, one robot at a time." />
+    <div class="wrap crew__foot">
+        <a class="btn btn--accent" href="/join">Get in the next one</a>
+        <a class="link-arrow" href="/leadership">Meet the leadership</a>
+    </div>
+</section>
+
 <section class="stats-band" aria-label="2026 season in numbers">
     <div class="wrap stats-band__grid">
         @foreach (var s in ClubFacts.Season2026)
@@ -88,13 +100,36 @@
 <section class="section section--flush" aria-label="Photos">
     <p class="filmstrip-hint" aria-hidden="true">Scroll sideways →</p>
     <div class="filmstrip" tabindex="0" aria-label="Photo highlights, scroll sideways">
-        <Photo Key="worlds-rosie-closeup" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="worlds-rosie-table" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
         <Photo Key="monterey-group" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
         <Photo Key="pool-jump" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
         <Photo Key="traditions-booth" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
         <Photo Key="worlds-shirt-front" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
         <Photo Key="mesa-outreach" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="worlds-captains" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="bcp-workshop" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="phantom-booth" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+    </div>
+</section>
+
+<section class="section section--paper-2" aria-labelledby="mesa-title">
+    <div class="wrap mesa">
+        <div class="mesa__copy reveal">
+            <p class="eyebrow">Outreach · MESA</p>
+            <h2 class="h2" id="mesa-title">We keep showing up for MESA.</h2>
+            <p class="lede">MESA (Mathematics, Engineering, Science Achievement) supports students on their way into STEM. AVI members volunteer at MESA events on campus all year, and this fall we brought robots to MESA Saturday Academy.</p>
+            <ul class="mesa__dates mono" role="list">
+                <li>Feb 7, 2026 · MESA volunteering</li>
+                <li>Apr 11, 2026 · MESA volunteering</li>
+                <li>Oct 3, 2026 · MESA Saturday Academy</li>
+                <li>Nov 7, 2026 · MESA, with Sundog</li>
+            </ul>
+        </div>
+        <div class="mesa__grid">
+            <Photo Key="mesa-feb" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame mesa__a reveal" />
+            <Photo Key="mesa-apr" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame mesa__b reveal" />
+            <Photo Key="mesa-outreach" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame mesa__c reveal" />
+            <Photo Key="mesa-nov" Sizes="(min-width: 56rem) 28vw, 50vw" Class="photo--frame mesa__d reveal" />
+        </div>
     </div>
 </section>
 
@@ -148,6 +183,19 @@
     </div>
 </section>
 
+<section class="section section--ink sponsors-band" aria-labelledby="sponsors-title">
+    <div class="wrap">
+        <div class="section__head">
+            <div>
+                <p class="eyebrow eyebrow--on-ink">2026 sponsors</p>
+                <h2 class="h2" id="sponsors-title">They got us to Worlds.</h2>
+            </div>
+            <a class="link-arrow link-arrow--on-ink" href="/sponsors">All sponsors</a>
+        </div>
+        <SponsorWall MaxTier="3" ShowLabels="false" Class="sponsor-wall--compact" />
+    </div>
+</section>
+
 <section class="section section--accent">
     <div class="wrap support">
         <div>
@@ -155,9 +203,10 @@
             <h2 class="h2">Help us get back in the water.</h2>
         </div>
         <div class="support__body">
-            <p>Sponsors and donors cover parts, pool time and travel to competition. AVI is a @Nonprofit.Value.Status, so gifts are tax-deductible. EIN <span class="mono">@Nonprofit.Value.Ein</span>.</p>
+            <p>Sponsors and donors cover parts, pool time and travel to competition. AVI is a @Nonprofit.Value.Status, so gifts are tax-deductible. <Ein />.</p>
             <div class="support__actions">
-                <a class="btn btn--ink" href="/sponsors">Sponsor or donate</a>
+                <a class="btn btn--ink" href="/donate">Donate</a>
+                <a class="btn btn--ghost-on-accent" href="/sponsors">Become a sponsor</a>
                 <a class="link-arrow link-arrow--on-accent" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
             </div>
         </div>

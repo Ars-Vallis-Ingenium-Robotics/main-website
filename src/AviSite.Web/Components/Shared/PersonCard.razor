@@ -1,11 +1,22 @@
 @using AviSite.Web.Content
-<article class="person">
-    <span class="person__mono" aria-hidden="true">@Initials</span>
+@inject IWebHostEnvironment Env
+<article class="person @(HasPhoto ? "person--photo" : "")">
+    @if (HasPhoto)
+    {
+        <img class="person__photo" src="/img/people/@(Person.Slug)-160.webp" srcset="/img/people/@(Person.Slug)-160.webp 1x, /img/people/@(Person.Slug)-320.webp 2x"
+             alt="" width="160" height="160" loading="lazy" decoding="async" />
+    }
+    else
+    {
+        <span class="person__mono" aria-hidden="true">@Initials</span>
+    }
     <span class="person__name">@Person.Name</span>
     <span class="person__role">@Person.Role</span>
+    @if (Person.Group is not null) { <span class="person__group">@Person.Group</span> }
 </article>
 
 @code {
     [Parameter, EditorRequired] public ClubFacts.Person Person { get; set; } = default!;
     private string Initials => string.Concat(Person.Name.Replace("Dr. ", "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => w[0]).Take(2));
+    private bool HasPhoto => Env.WebRootFileProvider.GetFileInfo($"img/people/{Person.Slug}-160.webp").Exists;
 }

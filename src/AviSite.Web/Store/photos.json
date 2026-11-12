@@ -1,17 +1,4 @@
 {
- "worlds-rosie-closeup": {
-  "alt": "ROSIE, SMS's teal-and-black ROV, on a stand at the 2026 MATE ROV World Championship",
-  "widths": [
-   480,
-   960,
-   1600,
-   2400
-  ],
-  "w": 2400,
-  "h": 1600,
-  "focus": "50% 50%",
-  "lqip": "data:image/webp;base64,UklGRqAAAABXRUJQVlA4IJQAAADwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZACsOUAANzW0RDFrZIigAP6IFj+PJ/fSUUAzG19ESzyQV3rNKEBMc9q8a0+rHyRZU0SX08qNbRhe0CSY0ldNTUd/IubClBZSgDetlonnFGeffg5om9lFFvI9YOffsk35H5vO57jR809UTuUQMueO1x0eNchy+xY+AAAA"
- },
  "worlds-rosie-table": {
   "alt": "ROSIE on the team table, thrusters and rotating claw visible",
   "widths": [
@@ -335,5 +322,135 @@
   "h": 2133,
   "focus": "50% 50%",
   "lqip": "data:image/webp;base64,UklGRqIAAABXRUJQVlA4IJYAAADwBACdASoSABgAPu1mqk8ppaOiKA1RMB2JaAC2yBDl8/10EtAWbi7GNe08d4klpKwA/odZSM8sJc3/3ZyK21JGS6BFgMg6J3PwTTqLU/1azpTaILhn/FDpTGmUjQ2tHvdS1j1lwYELKqxmYb/oW5aCDIk4mrq0lbU+QIT1qC0XxooQo6RoGBlPXRiLVCROwHiE2a4AAAA="
+ },
+ "fall-group-2026": {
+  "alt": "About fifty AVI Robotics members gathered around the Lyles College of Engineering sign at Fresno State, fall 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 917,
+  "focus": "50% 55%",
+  "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAACwAwCdASoYAAkAPu1iqk2ppaQiMAgBMB2JZQC7ACIBBHDcJnfx0AD+QFOsArGh2NNLBUSfjyjFvOUfM2Y12fX0hqklf56eA86DkrBThu2vsIB9amtzxL9JKTZ+BqkgAAA="
+ },
+ "projects-day-rosie": {
+  "alt": "Robert Voss smiling behind an early ROSIE prototype at the Lyles College of Engineering Projects Day",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "40% 45%",
+  "lqip": "data:image/webp;base64,UklGRpwAAABXRUJQVlA4IJAAAAAwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JZACo9BeXAaIxl6SBk+3xWwAA/uzlLRsX8DktNvqQoxSwvG9CuLErUFqUL4nON9mM+oQRPHppFIceBu0NTuk/Hvc7CnPBK5qjVJDTAcL/g+c2yQPTEjWoWevO1/h2lgjRYLcq4K8uVU41p/mLOBN0RB2zT/xuAAA="
+ },
+ "worlds-rosie-feed": {
+  "alt": "ROSIE's four camera feeds on the pilot screen during a Worlds run",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpYAAABXRUJQVlA4IIoAAABQBACdASoYABAAPu1iqk4ppaQiMAgBMB2JbACdLwABo7ivQ8NwiZ1+sAwAAP7MP5Z9EnmN+x7/NrrKcG5hha7Wn0GNx77p+2UrqkWe+mQvZsYSqQ3DCEaWXySVueP8b1TKQ5xpZveQ/MCJI8Vu2q2ciFYQO+2zHwttBBp7QpX2svW3T9zA4mwMAAA="
+ },
+ "mesa-feb": {
+  "alt": "AVI volunteers posing together at the February 2026 MESA event at Fresno State",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 55%",
+  "lqip": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAADQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JYgCdMoMulE55euLtv9EDIV+IiHCgAAD0Srik8jS+hmGgCtI67b25VRddBILpZ6U3E9oq+knQ0YcbtRj9G8RGHxhb7s9UKJ9YGUsShmULa3Ky+shqX/m2Hqa0WtvEVsFfJcZ/1M0AAA=="
+ },
+ "mesa-apr": {
+  "alt": "AVI members in MESA volunteer shirts giving a thumbs up, April 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 40%",
+  "lqip": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAADwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JYwCo9B6FiMF+vPypsqnAAP5rtCuU2A4c7+ED4C6RStsvkJfBDjhw849W0UAORgXGPgSKHeHDOGivBUwNiBUwdpMeH0UWVxDfSVAv1/iGvTmp0AA="
+ },
+ "mesa-nov": {
+  "alt": "AVI and Sundog volunteers lined up on campus after a MESA event, November 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 60%",
+  "lqip": "data:image/webp;base64,UklGRmgAAABXRUJQVlA4IFwAAACQAwCdASoYABAAPu1kqU2ppaOiMAgBMB2JYwDImA8LXQ0i0B1gAPvY9DFJLmioyhcCEYyyyBJrsGsC2ZgCPxBl842LZ0H10Ne9b5zaAInfg1VNaTlAQ6byCoUQAA=="
+ },
+ "dec-meeting": {
+  "alt": "A member presenting to the club at a December 2025 AVI meeting",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "45% 50%",
+  "lqip": "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAADwAwCdASoYABAAPu1iqk4ppaQiMAgBMB2JQAAMMFn0RLAVZ/sgDIpQAP6pBCGTK4cp/AcI19mWlnJjS4yXs6UJQwupAI6LDXdA0Wasu+0zk+HOdG5EMBeguE+TxzNtnKwUD1jC4oAAAA=="
+ },
+ "jan-meeting": {
+  "alt": "Thanking our first sponsors on screen at the January 30, 2026 general meeting",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAABwBACdASoQABgAPu1iqU2ppaOiMAgBMB2JYwC7MoMww6AAZkrJ17slLVXJgAD+qbB0v+4x5q4qlcDjbVgoWcoZlbj3UmepQ7MPEv4I3XOkO3zYIi+7fTG0vC76vUkKMafGaAgypa4WwAsAAAA="
+ },
+ "phantom-booth": {
+  "alt": "AVI's Ars Vallis Ingenium booth lit up at night for the Phantom Bash, October 2026",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAADwAwCdASoYABAAPu1kqU2ppaQiMAgBMB2JYwAAW7ReZBgAE2LArWKAAP7sOtfdQAQ6kwGWLgI8hkdGR9QfLz8rteJjyhDtvECHO0JVDKqvRYmUsXIrMa5+GXQ1+NoAAAA="
+ },
+ "bcp-workshop": {
+  "alt": "New members wiring their first circuits at a fall 2026 build workshop",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAAAQBACdASoYABAAPu1iqk4ppaQiMAgBMB2JZwDGfB6M23Bw+CGTINScQAD90kf8wsq+uldXMrSujkLyWBq0CxOVPHRVPR5LqB5Hkrd+mCIjxdlw+cU+pojaLSjTG97sHAHGPX18AowpruCwQO5/BXYEg3Ch/EAA"
  }
 }

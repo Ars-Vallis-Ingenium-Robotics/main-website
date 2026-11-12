@@ -32,6 +32,16 @@ python3 tools/images/build_photos.py tools/images/photos.manifest.json
 Add an entry (key, absolute source path, alt text, optional crop/focus) to the manifest, rerun,
 then use `<Photo Key="..." Sizes="..." />`. Only the generated WebP files are committed.
 
+Headshots: `python3 tools/images/build_people.py` crops casual headshots from group photos
+(`tools/images/people.manifest.json`: slug + source + face box). `PersonCard` picks up
+`wwwroot/img/people/<slug>-160.webp` automatically and falls back to initials.
+
+Sponsor logos: `python3 tools/images/build_sponsors.py "<final sponsorship shirt back.png>"`
+cuts each logo out of the Worlds shirt artwork. Tiers live in `ClubFacts.Sponsors2026`.
+
+Donations: `/donate` reuses the order + PayPal pipeline with a single "donation" line
+(PayPal item category `DONATION`) and shows a receipt with the 501(c)(3) acknowledgment.
+
 ## Tests
 
 ```bash

@@ -1,0 +1,3 @@
+@* "EIN 39-4775163", never split across lines (the label and number stay together, and the hyphen can't break). *@
+@inject IOptions<NonprofitOptions> Nonprofit
+<span class="ein">EIN <span class="mono">@Nonprofit.Value.Ein</span></span>

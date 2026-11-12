@@ -75,6 +75,21 @@ public sealed class Order
     public List<OrderEvent> History { get; init; } = [];
 
     public void Log(string what) => History.Add(new OrderEvent(DateTimeOffset.UtcNow, what));
+
+    /// <summary>True for a one-line gift made through /donate (no goods, no pickup).</summary>
+    public bool IsDonation => Lines.Count > 0 && Lines.All(l => l.Slug == Donations.Slug);
+}
+
+/// <summary>Donations reuse the order + PayPal pipeline as a single "donation" line.</summary>
+public static class Donations
+{
+    public const string Slug = "donation";
+    public const int MinCents = 500;
+    public const int MaxCents = 1_000_000;
+    public static readonly int[] PresetDollars = [25, 50, 100, 250];
+
+    public static Quote Quote(int cents) =>
+        new([new QuoteLine(new Product { Slug = Slug, Name = "Donation to AVI Robotics", PriceCents = cents }, "", 1, cents)], cents, []);
 }
 
 public static class Money

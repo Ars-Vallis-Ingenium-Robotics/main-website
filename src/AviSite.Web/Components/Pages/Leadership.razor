@@ -2,14 +2,24 @@
 @using AviSite.Web.Content
 
 <PageTitle>Leadership · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="Meet AVI Robotics' 2026–27 officers, leads and faculty advisors." /></HeadContent>
+<HeadContent><meta name="description" content="Meet AVI Robotics' faculty advisors, mentors, founders, and 2026–27 officers and leads." /></HeadContent>
 
 <PageHero Kicker="Leadership · 2026–27" Title="The people running the club.">
-    <p>Officers are elected by members each spring. Leads guide each technical area. Faculty advisors keep us pointed in the right direction.</p>
+    <p>Faculty advisors and mentors keep us pointed in the right direction. Officers are elected by members each spring, and leads guide each technical area.</p>
 </PageHero>
 
 <section class="section">
     <div class="wrap">
+        <h2 class="h3 group-title">Faculty advisors</h2>
+        <ul class="people people--feature">
+            @foreach (var p in ClubFacts.Advisors) { <li class="reveal"><PersonCard Person="p" /></li> }
+        </ul>
+
+        <h2 class="h3 group-title">Mentors</h2>
+        <ul class="people people--feature">
+            @foreach (var p in ClubFacts.Mentors) { <li class="reveal"><PersonCard Person="p" /></li> }
+        </ul>
+
         <h2 class="h3 group-title">Executive board</h2>
         <ul class="people">
             @foreach (var p in ClubFacts.Officers) { <li class="reveal"><PersonCard Person="p" /></li> }
@@ -19,16 +29,23 @@
         <ul class="people">
             @foreach (var p in ClubFacts.Leads) { <li class="reveal"><PersonCard Person="p" /></li> }
         </ul>
+    </div>
+</section>
 
-        <h2 class="h3 group-title">Advisors & mentors</h2>
-        <ul class="people">
-            @foreach (var p in ClubFacts.Advisors) { <li class="reveal"><PersonCard Person="p" /></li> }
+<section class="section section--paper-2" aria-labelledby="founders-title">
+    <div class="wrap split">
+        <div class="split__head">
+            <p class="eyebrow">Founders</p>
+            <h2 class="h2" id="founders-title">Started by three people in 2025.</h2>
+            <p class="lede">Robert Voss, Declan Doss and Timothy Cromwell first competed in MATE ROV with Crush Depth at Clovis Community College, then founded AVI at Fresno State in September 2025.</p>
+            <a class="link-arrow" href="/history">Read the history</a>
+        </div>
+        <ul class="people people--founders">
+            @foreach (var p in ClubFacts.Founders) { <li class="reveal"><PersonCard Person="p" /></li> }
         </ul>
-
-        <p class="note">Portraits coming soon. Officers: send a headshot to marketing to be added.</p>
     </div>
 </section>
 
 <section class="section section--flush">
-    <Photo Key="worlds-team-rosie" Sizes="100vw" Class="photo--wide parallax" />
+    <Photo Key="fall-group-2026" Sizes="100vw" Class="crew__photo" Caption="AVI Robotics, fall 2026." />
 </section>

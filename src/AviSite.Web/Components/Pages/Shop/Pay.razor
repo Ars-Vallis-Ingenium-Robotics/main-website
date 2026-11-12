@@ -3,7 +3,7 @@
 @inject IOptions<PayPalOptions> PayPal
 @inject NavigationManager Nav
 
-<PageTitle>Pay · AVI Robotics shop</PageTitle>
+<PageTitle>@(order?.IsDonation == true ? "Donate · AVI Robotics" : "Pay · AVI Robotics shop")</PageTitle>
 <HeadContent><meta name="robots" content="noindex" /></HeadContent>
 
 @if (order is not null)
@@ -11,8 +11,16 @@
     <section class="section">
         <div class="wrap checkout">
             <div class="checkout__form">
-                <p class="eyebrow"><a href="/shop/checkout">Details</a> / Payment</p>
-                <h1 class="h1">Pay for order <span class="mono">@order.Code</span></h1>
+                @if (order.IsDonation)
+                {
+                    <p class="eyebrow"><a href="/donate">Your gift</a> / Payment</p>
+                    <h1 class="h1">Complete your donation</h1>
+                }
+                else
+                {
+                    <p class="eyebrow"><a href="/shop/checkout">Details</a> / Payment</p>
+                    <h1 class="h1">Pay for order <span class="mono">@order.Code</span></h1>
+                }
                 <p class="muted">Step 2 of 2. Paying as @order.Buyer.Name (@order.Buyer.Email).</p>
 
                 <div id="pay" class="pay"

@@ -1,4 +1,5 @@
 @page "/sms/2026"
+@inject SmsUrls Links
 
 <PageTitle>2026 Season · Sequoia Marine Solutions</PageTitle>
 <HeadContent><meta name="description" content="Sequoia Marine Solutions' first season: from PVC prototypes to the 2026 MATE ROV World Championship in St. John's and a record Engineering Presentation score." /></HeadContent>
@@ -14,16 +15,9 @@
 
 <section class="sms-section">
     <div class="wrap">
-        <ol class="timeline timeline--sms">
-            @foreach (var step in steps)
-            {
-                <li class="timeline__item reveal">
-                    <div class="timeline__when mono">@step.When</div>
-                    <div class="timeline__body"><h2 class="timeline__title">@step.Title</h2><p>@step.Body</p></div>
-                    @if (step.Photo is not null) { <Photo Key="@step.Photo" Sizes="(min-width: 56rem) 34vw, 100vw" Class="timeline__photo photo--frame" /> }
-                </li>
-            }
-        </ol>
+        <Timeline Items="steps" Class="timeline--sms" NextWhen="2027" NextTitle="Explorer class. In progress."
+                  NextBody="A bigger class, harder missions and a new robot. The 2027 build is happening right now on Friday nights."
+                  NextHref="@Links.Avi("/join")" NextLink="Join the build" />
     </div>
 </section>
 
@@ -44,20 +38,29 @@
         <Photo Key="worlds-auditorium" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
         <Photo Key="worlds-wavetank" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
         <Photo Key="worlds-awards-crowd" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="worlds-captains" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="worlds-rosie-feed" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
         <Photo Key="worlds-team-rosie" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
     </div>
 </section>
 
 @code {
-    private sealed record Step(string When, string Title, string Body, string? Photo = null);
-    private readonly Step[] steps =
+    private static readonly IReadOnlyList<ClubFacts.Milestone> steps =
     [
-        new("Fall 2025", "Company formed", "An open forum settles the structure: a C-suite and seven subsystems, each with a lead. Members try every subsystem before choosing."),
-        new("Winter", "Research & design", "Brainstorming workshops, a study of past MATE teams, and the first foamboard and PVC mockups.", "pool-proto"),
-        new("Mar–Apr 2026", "Water testing", "Leak hunting with sponges inside the pressure hull, a one-week saltwater corrosion test on the T-slot rail, then a successful April 4 water test.", "pool-jump"),
+        new("Fall 2025", "Company formed",
+            "An open forum settles the structure: a C-suite and seven subsystems, each with a lead. Members try every subsystem before choosing.",
+            More: ["The structure came from the founders' September plan: CEO, COO and CTO at the top, then financing, marketing, deck management, and the ROV and float subsystems underneath."]),
+        new("Winter", "Research & design",
+            "Brainstorming workshops, a study of past MATE teams, and the first foamboard and PVC mockups.", "pool-proto",
+            More: ["The Chief Design Officer ran idea-generation workshops. One of them produced the harpoon manipulators."]),
+        new("Mar–Apr 2026", "Water testing",
+            "Leak hunting with sponges inside the pressure hull, a one-week saltwater corrosion test on the T-slot rail, then a successful April 4 water test.", "pool-jump",
+            More: ["Sponges inside the hull showed exactly where water got in. After the April 4 success, the team jumped in the pool too."]),
         new("Apr 25", "Monterey regional", "SMS's first competition run.", "monterey-group"),
-        new("May", "Pilot selection & flight sticks", "Pilots trained on ThrustMaster flight sticks with 44 programmable buttons."),
-        new("June", "World Championship, St. John's", "Thirteen students and two robots fly LAX to St. John's for the MATE ROV World Championship.", "worlds-team-rosie"),
+        new("May", "Pilot selection & flight sticks",
+            "Pilots trained on ThrustMaster flight sticks with 44 programmable buttons.",
+            More: ["Two May water tests picked the pilots and tuned the flight-stick mapping."]),
+        new("June", "World Championship, St. John's",
+            "Thirteen students and two robots fly LAX to St. John's for the MATE ROV World Championship.", "worlds-team-rosie",
+            More: ["The result: the Engineering Presentation award with 102 out of 100, a Pioneer-class record."], MorePhoto: "worlds-award-stage"),
     ];
 }
