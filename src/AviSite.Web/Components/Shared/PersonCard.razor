@@ -1,0 +1,11 @@
+@using AviSite.Web.Content
+<article class="person">
+    <span class="person__mono" aria-hidden="true">@Initials</span>
+    <span class="person__name">@Person.Name</span>
+    <span class="person__role">@Person.Role</span>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public ClubFacts.Person Person { get; set; } = default!;
+    private string Initials => string.Concat(Person.Name.Replace("Dr. ", "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => w[0]).Take(2));
+}

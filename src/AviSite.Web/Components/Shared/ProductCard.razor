@@ -3,7 +3,11 @@
 <article class="product-card @(Product.Team is null ? "" : "product-card--" + Product.Team)">
     <a class="product-card__link" href="/shop/@Product.Slug">
         <div class="product-card__media">
-            @if (Product.Image is not null)
+            @if (Product.Photos.Count > 0)
+            {
+                <Photo Key="@Product.Photos[0]" Sizes="(min-width: 56rem) 24rem, 90vw" Ratio="1 / 1" />
+            }
+            else if (Product.Image is not null)
             {
                 <img src="@Product.Image" alt="@Product.ImageAlt" loading="lazy" decoding="async" width="480" height="480" />
             }

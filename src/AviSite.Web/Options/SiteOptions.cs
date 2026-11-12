@@ -16,6 +16,16 @@ public sealed class SiteOptions
     public string SponsorPacketPath { get; set; } = "/Files/aviSponsorship.pdf";
 }
 
+/// <summary>Legal nonprofit facts shown in the footer and on the support page. Bound from "Nonprofit".</summary>
+public sealed class NonprofitOptions
+{
+    public const string Section = "Nonprofit";
+    public string LegalName { get; set; } = "Ars Vallis Ingenium Robotics";
+    public string Ein { get; set; } = "39-4775163";
+    public string Status { get; set; } = "501(c)(3)";
+    public DateOnly? EffectiveDate { get; set; }
+}
+
 /// <summary>Store behaviour. Bound from the "Store" config section.</summary>
 public sealed class StoreOptions
 {

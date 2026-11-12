@@ -1,53 +1,77 @@
 @page "/about"
+@inject IOptions<NonprofitOptions> Nonprofit
+@inject SmsUrls SmsLinks
 
 <PageTitle>About · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="Who AVI Robotics is, what our name means, and how the club runs." /></HeadContent>
+<HeadContent><meta name="description" content="AVI Robotics (Ars Vallis Ingenium) is a student-led 501(c)(3) engineering club at Fresno State for students of every major." /></HeadContent>
 
-<PageHero Kicker="About" Title="Ars Vallis Ingenium">
-    <p>Latin, roughly <em>“the craft of Valley ingenuity.”</em> We picked it because the Central Valley builds things, and so do we.</p>
+<PageHero Kicker="About" Title="The Valley of Artistic Ingenuity">
+    <p><em>Ars Vallis Ingenium</em> is Latin for the art, or craft, of the Valley's ingenuity. We're students from STEAM, the humanities and the social sciences building industry-level solutions together.</p>
 </PageHero>
 
 <section class="section">
     <div class="wrap split">
         <div class="split__head">
-            <Eyebrow>The club</Eyebrow>
-            <h2 class="h2">Student-run, build-first.</h2>
+            <p class="eyebrow">Our purpose</p>
+            <h2 class="h2">Skills you don't get in a classroom.</h2>
         </div>
-        <div class="prose">
-            <p>AVI Robotics is a student engineering club at Fresno State. Members come from mechanical, electrical and computer engineering, computer science, and plenty of majors that have nothing to do with any of those.</p>
-            <p>The club is the umbrella. Competition teams live inside it. Our first is <a href="/teams/sms">Sequoia Marine Solutions</a>, which builds an underwater ROV for the MATE ROV Competition every season.</p>
-            <p>You don't need experience to join. You need to show up, ask questions and be willing to get your hands dirty (or wet).</p>
+        <div class="prose reveal">
+            <p>From our constitution: AVI exists to provide a space where students can develop hands-on and professional skills, and to find opportunities that enrich their academic and professional lives.</p>
+            <p>In practice that means training members in new tools, small-group projects, competing internationally, and showing up for our community. Most of us are doing something for the first time. That's the point.</p>
+            <p>Underwater robotics is our main focus through <a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a>, our MATE ROV company, but we support all kinds of ventures, robotics or not. A Micromouse team is forming now.</p>
         </div>
     </div>
 </section>
 
-<section class="section section--paper-2">
-    <div class="wrap split">
-        <div class="split__head">
-            <Eyebrow>How we run</Eyebrow>
-            <h2 class="h2">Organized like an engineering firm.</h2>
-        </div>
-        <SpecSheet Rows="@howWeRun" />
+<section class="section section--flush">
+    <div class="wrap mosaic">
+        <Photo Key="monterey-group" Sizes="(min-width: 56rem) 60vw, 100vw" Class="mosaic__a reveal" />
+        <Photo Key="traditions-demo" Sizes="(min-width: 56rem) 30vw, 50vw" Class="mosaic__b reveal" />
+        <Photo Key="worlds-float-electronics" Sizes="(min-width: 56rem) 30vw, 50vw" Class="mosaic__c reveal" />
     </div>
 </section>
 
 <section class="section">
     <div class="wrap split">
         <div class="split__head">
-            <Eyebrow>Leadership</Eyebrow>
-            <h2 class="h2">Officers</h2>
+            <p class="eyebrow">Every major</p>
+            <h2 class="h2">You and your talents have value here.</h2>
         </div>
-        <p class="note">TODO(confirm): officer names, roles and photos. Only with each person's OK.</p>
+        <div class="prose reveal">
+            <p>MATE ROV is scored like a real engineering company: the robot, a technical document, an engineering presentation, a marketing display and safety. That takes engineers and programmers, and it also takes writers, designers, business majors and people who keep 40 students organized.</p>
+            <SpecSheet Rows="@departments" />
+        </div>
+    </div>
+</section>
+
+<section class="section section--ink">
+    <div class="wrap split">
+        <div class="split__head">
+            <p class="eyebrow eyebrow--on-ink">Nonprofit</p>
+            <h2 class="h2">A registered @Nonprofit.Value.Status.</h2>
+        </div>
+        <div class="reveal">
+            <p class="lede-on-ink">@Nonprofit.Value.LegalName is a public charity recognized by the IRS under section @Nonprofit.Value.Status. Contributions are tax-deductible to the extent allowed by law.</p>
+            <SpecSheet Class="spec--on-ink" Rows="@nonprofitRows" />
+            <a class="btn btn--accent" href="/sponsors">Support AVI</a>
+        </div>
     </div>
 </section>
 
 @code {
-    private readonly IReadOnlyList<(string, string)> howWeRun =
+    private readonly IReadOnlyList<(string, string)> departments =
     [
-        ("Meetings", "Weekly. TODO: day, time, room"),
-        ("Sub-teams", "Mechanical, electrical, software, media"),
-        ("Project tracking", "Our member portal (projects, meetings, hours)"),
-        ("Communication", "Discord"),
-        ("Who can join", "TODO: Fresno State students only, or open?"),
+        ("Design & manufacturing", "CAD, 3D printing, machining, chassis, manipulators"),
+        ("Programming & electronics", "Control software, GUI, PCBs, power, sensors"),
+        ("Marketing & logistics", "Branding, social, sponsorships, travel, finance"),
+        ("Safety", "Checklists, JSEA, lab policy, deck management"),
+    ];
+
+    private IReadOnlyList<(string, string)> nonprofitRows => [
+        ("Legal name", Nonprofit.Value.LegalName),
+        ("Status", $"{Nonprofit.Value.Status} public charity"),
+        ("EIN", Nonprofit.Value.Ein),
+        ("Exempt since", Nonprofit.Value.EffectiveDate?.ToString("MMMM d, yyyy") ?? "2025"),
+        ("Home", "California State University, Fresno · Lyles College of Engineering"),
     ];
 }

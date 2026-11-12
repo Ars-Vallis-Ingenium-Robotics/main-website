@@ -66,6 +66,29 @@ Tiffany blue is never text on paper (use `--sms-deep`). Focus ring is blurple on
 - `favicon.ico`, `icon-32/180/192/512.png`, `/site.webmanifest`
 - Don't use anything from `Logo/SMS/phase out/`.
 
+## Photos: level of detail
+
+`tools/images/build_photos.py` turns full-size camera JPGs into 480/960/1600/2400 px WebP
+variants plus a ~24 px blurred placeholder stored in `Store/photos.json`. The `<Photo>` component
+paints the placeholder instantly, lets the browser choose a resolution via `srcset`, and `lod.js`
+fades the sharp image in once it decodes. Always set a realistic `Sizes` value.
+
+## Motion (scroll-driven)
+
+All motion is CSS scroll-driven (`animation-timeline`), progressive (no effect where unsupported)
+and off under `prefers-reduced-motion`. Vocabulary: `.reveal` (24 px rise on entry), `.parallax`
+(photo drifts inside its frame), scroll progress bar, hero dog drift, timeline spine fill,
+filmstrip scale-in, and the SMS depth gauge (≥ 88rem wide only). Don't add new effects
+without a reason tied to the content.
+
+## Sequoia Marine Solutions microsite
+
+`/sms/*` (and the root of `sms.avirobotics.org`) uses `SmsLayout` and the `.sms-site` theme:
+deep water `#06262b`, SMS Tiffany `#2cc0b6` (on dark only), teal-deep `#0f6f69` (text on light),
+cream `#eee1cc`, SMS white `#f7f9f9`. Display type is Archivo at 112–125% width, not Porcine.
+Every SMS page links back to AVI (nav pill + footer column) via `SmsUrls`, which emits relative
+links on /sms and absolute ones on the SMS host.
+
 ## Don'ts (the "AI website" tells)
 
 - No purple/blue gradients, glassmorphism, blobs, or emoji icons.

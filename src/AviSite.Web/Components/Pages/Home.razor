@@ -1,24 +1,28 @@
 ﻿@page "/"
+@using AviSite.Web.Content
 @inject ICatalog Catalog
 @inject IOptions<SiteOptions> Site
+@inject IOptions<NonprofitOptions> Nonprofit
+@inject SmsUrls SmsLinks
 
-<PageTitle>AVI Robotics · Fresno State robotics club</PageTitle>
+<PageTitle>AVI Robotics · Fresno State's award-winning robotics club</PageTitle>
 <HeadContent>
-    <meta name="description" content="AVI Robotics is a student engineering club at Fresno State. We design, build and compete with robots, including underwater ROVs for the MATE ROV Competition." />
+    <meta name="description" content="AVI Robotics is a student-led 501(c)(3) engineering club at Fresno State. Our MATE ROV company, Sequoia Marine Solutions, won the 2026 World Championship Engineering Presentation award." />
 </HeadContent>
 
 <section class="hero">
     <div class="wrap hero__grid">
         <div class="hero__copy">
-            <p class="eyebrow eyebrow--on-ink">Fresno State · Student robotics</p>
+            <p class="eyebrow eyebrow--on-ink">Fresno State · Student-led · 501(c)(3)</p>
             <h1 class="hero__title">The craft of <em>Valley</em> ingenuity.</h1>
             <p class="hero__lede">
-                We're Fresno State students who design, build and pilot underwater robots for the MATE ROV Competition,
-                and teach each other everything along the way. No experience needed to start.
+                We're Fresno State students from every major who design, build and pilot underwater robots.
+                In our first year our MATE ROV company took a robot to the World Championship in Newfoundland
+                and set a record doing it.
             </p>
             <div class="hero__actions">
                 <a class="btn btn--accent" href="/join">Join the club</a>
-                <a class="btn btn--ghost-on-ink" href="/sponsors">Sponsor a season</a>
+                <a class="btn btn--ghost-on-ink" href="/history">Our story</a>
             </div>
         </div>
         <div class="hero__dog">
@@ -27,48 +31,70 @@
     </div>
 </section>
 
+<section class="stats-band" aria-label="2026 season in numbers">
+    <div class="wrap stats-band__grid">
+        @foreach (var s in ClubFacts.Season2026)
+        {
+            <div class="stat-big reveal">
+                <span class="stat-big__value">@s.Value</span>
+                <span class="stat-big__label">@s.Label</span>
+            </div>
+        }
+    </div>
+</section>
+
 <section class="section">
+    <div class="wrap feature">
+        <div class="feature__media reveal">
+            <Photo Key="worlds-award-stage" Sizes="(min-width: 56rem) 55vw, 100vw" Class="photo--frame parallax" />
+        </div>
+        <div class="feature__copy reveal">
+            <p class="eyebrow">June 2026 · St. John's, Newfoundland</p>
+            <h2 class="h2">A first-year team, on the world stage.</h2>
+            <p class="lede">Sequoia Marine Solutions won the Engineering Presentation award at the MATE ROV World Championship, scoring 102 out of 100, an all-time record for the Pioneer class.</p>
+            <a class="link-arrow" href="@SmsLinks.Sms("/2026")">The 2026 season</a>
+        </div>
+    </div>
+</section>
+
+<section class="section section--ink">
     <div class="wrap split">
         <div class="split__head">
-            <Eyebrow>What we do</Eyebrow>
-            <h2 class="h2">From a sketch on a whiteboard to a robot in the water.</h2>
+            <p class="eyebrow eyebrow--on-ink">What we do</p>
+            <h2 class="h2">From a whiteboard sketch to a robot in the water.</h2>
+            <p class="lede-on-ink">AVI runs like an engineering firm: a C-suite, subsystem leads, purchase requests, design reviews and safety checklists. Members learn by doing the real thing.</p>
         </div>
-        <ol class="steps">
-            <li class="steps__item">
+        <ol class="steps steps--on-ink">
+            <li class="steps__item reveal">
                 <h3 class="steps__title">Design</h3>
-                <p>Members spec, model and simulate subsystems together. New members pair with someone who has built it before.</p>
+                <p>Members model every part in SolidWorks and review it with their subsystem before anything gets printed or cut.</p>
             </li>
-            <li class="steps__item">
+            <li class="steps__item reveal">
                 <h3 class="steps__title">Build</h3>
-                <p>Machining, wiring, waterproofing, control software. Everything on our robots is made and maintained by students.</p>
+                <p>3D-printed PETG frames, T-slot rail, custom PCBs, a 48 V power system and our own control software.</p>
             </li>
-            <li class="steps__item">
+            <li class="steps__item reveal">
                 <h3 class="steps__title">Compete</h3>
-                <p>Our MATE ROV team runs like a small company: engineering, documentation, a technical presentation and pool missions.</p>
+                <p>Every June we take a robot, a technical document and an engineering presentation to MATE ROV.</p>
             </li>
-            <li class="steps__item">
-                <h3 class="steps__title">Teach</h3>
-                <p>We bring robots to schools and community events across the Central Valley so younger students can drive one.</p>
+            <li class="steps__item reveal">
+                <h3 class="steps__title">Give back</h3>
+                <p>We bring robots to MESA Saturday Academy, open houses and classrooms across the Central Valley.</p>
             </li>
         </ol>
     </div>
 </section>
 
-<section class="section section--ink team-feature">
-    <div class="wrap team-feature__grid">
-        <div class="team-feature__logo">
-            <img src="/img/brand/sms-logo.webp" alt="Sequoia Marine Solutions logo" width="720" height="720" loading="lazy" />
-        </div>
-        <div>
-            <Eyebrow Class="eyebrow--on-ink">Our competition team</Eyebrow>
-            <h2 class="h2">Sequoia Marine Solutions</h2>
-            <p class="lede-on-ink">
-                SMS is AVI's MATE ROV company. Every season the team designs a remotely operated vehicle for a new set of
-                underwater missions, writes the technical documentation and pitches it to judges like a real engineering firm.
-            </p>
-            <SpecSheet Class="spec--on-ink" Rows="@smsSpec" />
-            <a class="btn btn--sms" href="/teams/sms">Meet the SMS team</a>
-        </div>
+<section class="section section--flush" aria-label="Photos">
+    <p class="filmstrip-hint" aria-hidden="true">Scroll sideways →</p>
+    <div class="filmstrip" tabindex="0" aria-label="Photo highlights, scroll sideways">
+        <Photo Key="worlds-rosie-closeup" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="monterey-group" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="pool-jump" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="traditions-booth" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="worlds-shirt-front" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="mesa-outreach" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="worlds-captains" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
     </div>
 </section>
 
@@ -76,7 +102,39 @@
     <div class="wrap">
         <div class="section__head">
             <div>
-                <Eyebrow>Shop</Eyebrow>
+                <p class="eyebrow">Teams</p>
+                <h2 class="h2">Where the robots get built.</h2>
+            </div>
+            <a class="link-arrow" href="/teams">All teams</a>
+        </div>
+        <div class="team-cards">
+            <div class="team-card team-card--sms reveal">
+                <Photo Key="sms-pool-pilot" Sizes="(min-width: 56rem) 50vw, 100vw" Class="team-card__photo" />
+                <div class="team-card__body">
+                    <img class="team-card__logo" src="/img/brand/sms-logo.webp" alt="" width="72" height="72" loading="lazy" />
+                    <span class="team-card__kicker">MATE ROV · Explorer class</span>
+                    <h3 class="team-card__name"><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></h3>
+                    <span class="team-card__desc">Our underwater robotics company. Builders of ROSIE and ADAM.</span>
+                    <span class="link-arrow" aria-hidden="true">Visit the SMS site</span>
+                </div>
+            </div>
+            <div class="team-card team-card--forming reveal">
+                <div class="team-card__body">
+                    <span class="team-card__kicker">Forming · 2026–27</span>
+                    <h3 class="team-card__name">Micromouse</h3>
+                    <span class="team-card__desc">Small autonomous robots that map and solve a maze as fast as they can. No name yet, no members yet. Want in?</span>
+                    <a class="link-arrow" href="/join">Tell us at a meeting</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section--paper-2">
+    <div class="wrap">
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Shop</p>
                 <h2 class="h2">Wear the club.</h2>
             </div>
             <a class="link-arrow" href="/shop">All gear</a>
@@ -93,25 +151,15 @@
 <section class="section section--accent">
     <div class="wrap support">
         <div>
-            <Eyebrow Class="eyebrow--on-accent">Support</Eyebrow>
-            <h2 class="h2">Help us get in the water.</h2>
+            <p class="eyebrow eyebrow--on-accent">Support · @Nonprofit.Value.Status nonprofit</p>
+            <h2 class="h2">Help us get back in the water.</h2>
         </div>
         <div class="support__body">
-            <p>Sponsors cover parts, pool time and travel to competition. In return your logo goes on our vehicle, shirts and this site.</p>
+            <p>Sponsors and donors cover parts, pool time and travel to competition. AVI is a @Nonprofit.Value.Status, so gifts are tax-deductible. EIN <span class="mono">@Nonprofit.Value.Ein</span>.</p>
             <div class="support__actions">
-                <a class="btn btn--ink" href="/sponsors">Become a sponsor</a>
+                <a class="btn btn--ink" href="/sponsors">Sponsor or donate</a>
                 <a class="link-arrow link-arrow--on-accent" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
             </div>
         </div>
     </div>
 </section>
-
-@code {
-    private readonly IReadOnlyList<(string, string)> smsSpec =
-    [
-        ("Competition", "MATE ROV"),
-        ("Format", "Company-style team"),
-        ("Deliverables", "ROV, tech docs, presentation"),
-        ("Home pool", "TODO: confirm"),
-    ];
-}

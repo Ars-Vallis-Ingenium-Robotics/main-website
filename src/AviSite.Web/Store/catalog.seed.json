@@ -1,34 +1,31 @@
 [
   {
-    "slug": "avi-team-tee",
-    "name": "AVI Team Tee",
-    "tagline": "The everyday club shirt.",
-    "description": "Heavyweight cotton tee with the AVI dog on the front and the club wordmark across the back. DRAFT: confirm blank, colors and print with the design team.",
+    "slug": "sms-team-tee",
+    "name": "SMS Team Tee",
+    "tagline": "The shirt we wore at the 2026 World Championship.",
+    "description": "Black tee with the Sequoia Marine Solutions mark on the front and our sponsors across the back, the same shirt the team wore in St. John's. TODO(confirm): price, sizes, and whether the back lists 2026 or 2027 sponsors for this run.",
     "priceCents": 2500,
     "sizes": [
-      { "code": "XS" }, { "code": "S" }, { "code": "M" }, { "code": "L" }, { "code": "XL" },
+      { "code": "S" }, { "code": "M" }, { "code": "L" }, { "code": "XL" },
       { "code": "2XL", "upchargeCents": 300 },
       { "code": "3XL", "upchargeCents": 300 }
     ],
-    "image": "/img/shirt-placeholder-ink.svg",
-    "imageAlt": "Placeholder outline of a dark t-shirt",
+    "photos": ["worlds-shirt-back", "worlds-shirt-front"],
+    "imageAlt": "Back of the black SMS team shirt with sponsor logos",
+    "team": "sms",
     "active": true,
     "ordersClose": null
   },
   {
-    "slug": "sms-crew-tee",
-    "name": "SMS Crew Tee",
-    "tagline": "For the Sequoia Marine Solutions pit crew.",
-    "description": "Sequoia Marine Solutions crew shirt for competition days. DRAFT: confirm design and whether it's members-only.",
+    "slug": "avi-club-tee",
+    "name": "AVI Club Tee",
+    "tagline": "The everyday club shirt.",
+    "description": "TODO(confirm): AVI club shirt design, color and price. Hidden until confirmed.",
     "priceCents": 2500,
-    "sizes": [
-      { "code": "S" }, { "code": "M" }, { "code": "L" }, { "code": "XL" },
-      { "code": "2XL", "upchargeCents": 300 }
-    ],
-    "image": "/img/shirt-placeholder-sea.svg",
-    "imageAlt": "Placeholder outline of a sea-green t-shirt",
-    "team": "sms",
-    "active": true,
+    "sizes": [ { "code": "S" }, { "code": "M" }, { "code": "L" }, { "code": "XL" } ],
+    "image": "/img/shirt-placeholder-ink.svg",
+    "imageAlt": "Placeholder outline of a dark t-shirt",
+    "active": false,
     "ordersClose": null
   }
 ]

@@ -1,42 +1,29 @@
 # Content & decisions to confirm
 
-Everything on the site that a human needs to confirm or supply. Search the code for
-`TODO(confirm)` to find the spots.
+Facts on the site now come from the club's own documents (see `src/AviSite.Web/Content/ClubFacts.cs`,
+each list notes its source). These are the things a human still needs to confirm.
 
-## Brand (blocks the visual pass)
-- [x] Hex values from `BRAND SWATCH.aco` (applied)
-- [x] Logos applied: AVI dog (header, hero, favicon), SMS logo (home, SMS page)
-- [ ] SVG versions of the dog and SMS logos, if they exist (sharper + smaller)
-- [ ] Porcine font: kit says public domain. Confirm before launch
-- [ ] Swatch vs. Branding doc disagree slightly (SMS white #f7f9f9 vs #ededed; blurple #0c63e6 vs #0d63e5). Using swatch
-- [ ] Acumin on the web? (needs an Adobe Fonts kit; Archivo is the stand-in)
-- [ ] "AVI DOG WITH TEXT.png" is 0 bytes on the drive. Re-export?
-
-## Copy written as a draft (check it's true)
-- [ ] Hero: "Fresno State students who design, build and pilot underwater robots for the MATE ROV Competition"
-- [ ] "Teach" step: school/community outreach. Do we actually do this?
-- [ ] "Everything on our robots is made and maintained by students"
-- [ ] Name meaning: "the craft of Valley ingenuity". Is this the official translation?
-- [ ] Sub-teams: mechanical, electrical, software, media
-- [ ] MATE scoring categories on the SMS page match the current season's manual
-
-## Missing facts
-- [ ] Meeting day / time / room
-- [ ] Who can join (Fresno State only?)
-- [ ] Discord invite URL, Instagram URL, contact email, member portal URL
-- [ ] Officers (names, roles, photo consent)
-- [ ] SMS: home pool, this season's vehicle name + specs
-- [ ] Crush Depth: does it get a team page?
-- [ ] Sponsor tiers/amounts/benefits; current sponsor logos + permission
-
-## Photos needed
-- [ ] Hero: team + ROV at a pool test (landscape and portrait crops)
-- [ ] SMS ROV during a mission run
-- [ ] Current ROV side profile, plain background
-- [ ] Shirt mockups or photos (front + back)
+## Please confirm
+- [ ] **Founding story** (History page): "AVI's founders first competed in MATE with Engineering Renaissance's Crush Depth at Clovis Community College." Who founded AVI, and is "Sept 2025" the right founding month?
+- [ ] **Record claim**: "102/100 Engineering Presentation, an all-time Pioneer-class record; 4th-highest overall Pioneer score" (from the Push-In Classroom Pitch doc).
+- [ ] **Officer roster** (from 10/9/26 minutes): Declan Doss (President), Dottie Gunn (VP), Jaime Jaurique (Treasurer; the tech doc spells it "Jaurigue"), Ansh Josan (Secretary), Robert Voss (MATE CEO); leads Caleb Bahne, Arshiro Vang, Sebastien Dupere, Santiago Flores, Matthew Sedano. OK to publish names? Headshots?
+- [ ] **SMS 2026 C-suite** on /sms/company: CEO Voss, COO Cromwell, CTO Doss, CDO Bahne, CPO/CSO Flores.
+- [ ] **Contact email**: using avi.robotics.csufresno@gmail.com (from the club letterhead). Or an @avirobotics.org address?
+- [ ] **Discord invite**: using discord.com/invite/xerHCd25XR (8/28/26 agenda). The new-member packet has a different one.
+- [ ] **Meetings**: Fridays 5:30–7:30 PM, EE 389 (from the recruiting poster).
+- [ ] **SMS for 2027**: Explorer class (from the new-member packet).
+- [ ] **Micromouse**: wording on /teams and home ("forming, no name yet").
 
 ## Shop
-- [ ] Shirt designs, blank (brand/color), prices, sizes, size upcharges
-- [ ] Order deadline per run; pickup only, or shipping too?
-- [ ] Members-only items?
-- [ ] PayPal: whose business account; sandbox app credentials for testing; refund policy text
+- [ ] **SMS Team Tee**: uses the real Worlds shirt photos. Price, sizes, and which sponsors go on the back for this run?
+- [ ] **AVI Club Tee**: is there an AVI-branded shirt? It's hidden (`active: false`) until there's a design + photo.
+- [ ] PayPal: whose business account; sandbox credentials for a real test; refund policy text.
+
+## Brand / assets
+- [x] Palette, Porcine (license confirmed by Robert), logos
+- [ ] SVG logos: none exist; PNG masters are used through the image pipeline
+- [ ] More photos: run `tools/images/build_photos.py` with new entries (see README)
+
+## Facts deliberately NOT published
+- Mailing address on the IRS letters (looks like a home address)
+- Personal emails/phone numbers from internal docs

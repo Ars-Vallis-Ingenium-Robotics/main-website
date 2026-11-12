@@ -11,6 +11,8 @@ public sealed class Product
     public required int PriceCents { get; init; }
     public IReadOnlyList<ProductSize> Sizes { get; init; } = [];
     public string? Image { get; init; }
+    /// <summary>Photo keys from photos.json (real photos of the product being worn). First one is the main image.</summary>
+    public IReadOnlyList<string> Photos { get; init; } = [];
     public string? ImageAlt { get; init; }
     /// <summary>Optional team tag, e.g. "sms", used for accent color.</summary>
     public string? Team { get; init; }

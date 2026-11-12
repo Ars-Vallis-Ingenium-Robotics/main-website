@@ -1,0 +1,43 @@
+@page "/history"
+@using AviSite.Web.Content
+
+<PageTitle>History · AVI Robotics</PageTitle>
+<HeadContent><meta name="description" content="How AVI Robotics went from Crush Depth at Clovis Community College to a record-setting first season at the MATE ROV World Championship." /></HeadContent>
+
+<PageHero Kicker="History" Title="One year, two robots, a world record.">
+    <p>AVI is young. Here's how we got from an idea to Newfoundland.</p>
+</PageHero>
+
+<section class="section">
+    <div class="wrap">
+        <ol class="timeline">
+            @foreach (var m in ClubFacts.History)
+            {
+                <li class="timeline__item reveal">
+                    <div class="timeline__when mono">@m.When</div>
+                    <div class="timeline__body">
+                        <h2 class="timeline__title">@m.Title</h2>
+                        <p>@m.Body</p>
+                    </div>
+                    @if (m.Photo is not null)
+                    {
+                        <Photo Key="@m.Photo" Sizes="(min-width: 56rem) 34vw, 100vw" Class="timeline__photo photo--frame" />
+                    }
+                </li>
+            }
+        </ol>
+    </div>
+</section>
+
+<section class="section section--ink">
+    <div class="wrap split">
+        <div class="split__head">
+            <p class="eyebrow eyebrow--on-ink">What's next</p>
+            <h2 class="h2">The 2027 season.</h2>
+        </div>
+        <div class="reveal">
+            <p class="lede-on-ink">SMS moves up to the Explorer class for MATE ROV 2027. Fall is for workshops (C++, Qt, electrical, CAD) and training new members; spring is for building, testing and competing.</p>
+            <a class="btn btn--accent" href="/join">Be part of it</a>
+        </div>
+    </div>
+</section>

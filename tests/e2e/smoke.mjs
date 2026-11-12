@@ -20,7 +20,7 @@ const consoleErrors = [];
 // 404s are expected: the not-found tests request missing pages on purpose.
 page.on("console", (m) => { if (m.type() === "error" && !/status of 404/.test(m.text())) consoleErrors.push(m.text()); });
 
-const routes = ["/", "/about", "/teams", "/teams/sms", "/sponsors", "/join", "/shop", "/shop/avi-team-tee", "/shop/cart", "/shop/checkout", "/admin/login"];
+const routes = ["/", "/about", "/history", "/leadership", "/teams", "/sponsors", "/join", "/shop", "/shop/sms-team-tee", "/shop/cart", "/shop/checkout", "/admin/login", "/sms", "/sms/rosie", "/sms/adam", "/sms/2026", "/sms/company"];
 
 await test("every public route returns 200 with a single h1", async () => {
   for (const r of routes) {
@@ -45,6 +45,38 @@ await test("legacy URLs from the old site still work (QR codes)", async () => {
   assert.ok([301, 302].includes(res.status()), "/showcase should redirect to /showcase/");
 });
 
+await test("SMS site works on its own host and links back to AVI", async () => {
+  // Chromium resolves *.localhost to loopback, so sms.localhost:<port> exercises host-based routing.
+  const SMS = BASE.replace(/\/\/[^:/]+/, "//sms.localhost");
+  const sms = await browser.newContext();
+  const p = await sms.newPage();
+  const res = await p.goto(SMS + "/rosie");
+  assert.equal(res.status(), 200);
+  assert.match(await p.locator("h1").innerText(), /ROSIE/);
+  assert.match(await p.locator(".sms-back").first().getAttribute("href"), /^https?:\/\/[^/]+\/$/, "absolute back link to AVI");
+  const old = await page.request.get(BASE + "/sms/adam", { maxRedirects: 0, headers: { Host: "sms.localhost" } });
+  assert.equal(old.status(), 301);
+  await sms.close();
+  // ...and at /sms on the main site, with a relative link back
+  await page.goto(BASE + "/sms");
+  assert.ok(await page.locator('.sms-back[href="/"]').count() > 0);
+  assert.equal((await page.request.get(BASE + "/teams/sms", { maxRedirects: 0 })).status(), 302);
+});
+
+await test("nonprofit status and EIN appear in the footer", async () => {
+  await page.goto(BASE + "/");
+  const footer = await page.locator("footer").innerText();
+  assert.match(footer, /501\(c\)\(3\)/);
+  assert.match(footer, /39-4775163/);
+});
+
+await test("photos ship multiple resolutions with a blurred placeholder", async () => {
+  await page.goto(BASE + "/");
+  const img = page.locator("img.photo__img").first();
+  assert.match(await img.getAttribute("srcset"), /480w.*960w.*1600w/);
+  assert.match(await page.locator("figure.photo").first().getAttribute("style"), /--lqip: url\('data:image\/webp;base64/);
+});
+
 await test("security headers present", async () => {
   const res = await page.goto(BASE + "/");
   const h = res.headers();
@@ -59,23 +91,23 @@ await test("/admin requires login", async () => {
 
 await test("state-changing POSTs without antiforgery token are rejected", async () => {
   for (const path of ["/cart/add", "/admin/logout", "/api/paypal/orders/x/create"]) {
-    const r = await page.request.post(BASE + path, { form: { slug: "avi-team-tee", size: "M", qty: "1" }, maxRedirects: 0 });
+    const r = await page.request.post(BASE + path, { form: { slug: "sms-team-tee", size: "M", qty: "1" }, maxRedirects: 0 });
     assert.ok(r.status() === 400 || r.status() === 404, `${path} → ${r.status()}`);
   }
 });
 
 let orderUrl;
 await test("buy flow: size required → cart → checkout validation → fake PayPal → paid", async () => {
-  await page.goto(BASE + "/shop/avi-team-tee");
+  await page.goto(BASE + "/shop/sms-team-tee");
   await page.locator('label[for="size-XL"]').click();
   await page.locator('input[name="qty"]').fill("2");
   await page.getByRole("button", { name: "Add to cart" }).click();
   await page.waitForURL(/\/shop\/cart/);
-  assert.match(await page.locator(".cart").innerText(), /AVI Team Tee/);
+  assert.match(await page.locator(".cart").innerText(), /SMS Team Tee/);
   assert.match(await page.locator(".cart__subtotal").innerText(), /\$50\.00/);
 
   // 2XL upcharge
-  await page.goto(BASE + "/shop/sms-crew-tee");
+  await page.goto(BASE + "/shop/sms-team-tee");
   await page.locator('label[for="size-2XL"]').click();
   await page.getByRole("button", { name: "Add to cart" }).click();
   await page.waitForURL(/\/shop\/cart/);

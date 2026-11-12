@@ -1,0 +1,7 @@
+@page "/teams/sms"
+@page "/teams/sequoia-marine-solutions"
+@inject NavigationManager Nav
+@inject SmsUrls SmsLinks
+@code {
+    protected override void OnInitialized() => Nav.NavigateTo(SmsLinks.Sms(), forceLoad: true);
+}

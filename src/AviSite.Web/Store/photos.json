@@ -1,0 +1,339 @@
+{
+ "worlds-rosie-closeup": {
+  "alt": "ROSIE, SMS's teal-and-black ROV, on a stand at the 2026 MATE ROV World Championship",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqAAAABXRUJQVlA4IJQAAADwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZACsOUAANzW0RDFrZIigAP6IFj+PJ/fSUUAzG19ESzyQV3rNKEBMc9q8a0+rHyRZU0SX08qNbRhe0CSY0ldNTUd/IubClBZSgDetlonnFGeffg5om9lFFvI9YOffsk35H5vO57jR809UTuUQMueO1x0eNchy+xY+AAAA"
+ },
+ "worlds-rosie-table": {
+  "alt": "ROSIE on the team table, thrusters and rotating claw visible",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "55% 50%",
+  "lqip": "data:image/webp;base64,UklGRpoAAABXRUJQVlA4II4AAACwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JQAAGRK2oRNsKqIyrgAD+o3aPj/y+uAlHX+lcE59Zhy/Z/j8wYOn5ukvPuk+rpnYsr5fiwnNAYpboO56TUgEraq2nTd6H+fv1u3HVZb5CXwMLdm/3AbdEvmm2p1oWLlUQdRKHy8+p+nvh8kGwSHWQhhpHdEAA"
+ },
+ "worlds-rosie-station": {
+  "alt": "ROSIE beside the pilot station and flight sticks during setup",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpwAAABXRUJQVlA4IJAAAABwBACdASoYABAAPu1iqU2ppaOiMAgBMB2JYwDCgCE+OyRudwEwXohAmqOYAAD9U7xP3gajW8TXFF5L+P108f+11kGE/SV+C+TbRXiA/pptyyL7Zd+ls6H81uCAGGqNXTtLMd6Fpo2Mpu9QHQYuHybl28MLPLmtu8UussCe5jJ5txH6/EolWAiWdm/Bb8uSQAA="
+ },
+ "worlds-team-rosie": {
+  "alt": "Sequoia Marine Solutions team behind a Fresno State table with ROSIE and the float",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoYAAABXRUJQVlA4IHoAAADQAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JagCdABr53qFqwjKc5QAA/tvEZDco4dgOzxnmbrqpLxzQD1X2SSRyAc/qwQo9VHR9ImD09deTqYqlcfSLANbQ2t0J/Ruq1WRy0T1EVLzI2BSHDdccxifGffzz/UoIgIcQAA=="
+ },
+ "worlds-award-stage": {
+  "alt": "SMS on stage receiving the Engineering Presentation Award in St. John's",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAAAQBACdASoYABAAPu1krU6ppaSiMAgBMB2JZQABHuyqW5xTGV3ZX8i9agD+/iCUuMqPUH/DJYHZXCFA1xFHLD5Ji7V0WppV3RlhFl2bb7eh7eDrUgO7AawNB0EXsJ4Q/JB2prplb3racIFjlxrdRe7Tumn0ZAAA"
+ },
+ "worlds-award-screen": {
+  "alt": "Screen reading Engineering Presentation Awards: Sequoia Marine Solutions",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRm4AAABXRUJQVlA4IGIAAADwAwCdASoYABAAPu1krU6ppaSiMAgBMB2JZwAAW+wAnus+gftdpUzAAP70Ihp+M60vb5aYPijN934WtinthiPYctdOtncGSswdhMKlu8kOBJEJTDmKT8NvvyfQiE46AIAAAA=="
+ },
+ "worlds-welcome": {
+  "alt": "Welcome to the 2026 MATE ROV World Tour, St. John's, Newfoundland and Labrador",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoYAAABXRUJQVlA4IHoAAAAwBACdASoYABAAPu1iqk4ppaQiMAgBMB2JbACxAQAAW6iPUngzawQbkAAA/oVX0W5Ce1Cx3DxDKa38fK7o0D/oBJaTePx2Ef+t7pZqkrq2OIBGrHQx5wVXx/4dftRIaBO8/1ETZqBEtSDW0NzlNn/NEMH0xQQSYQAAAA=="
+ },
+ "worlds-auditorium": {
+  "alt": "The team seated together at the opening ceremony",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAAAQBACdASoYABAAPu1iqU2ppaQiMAgBMB2JZgC7ABuJQZ4f5Z/Kpog3wAD+8rTOGrjbpUu4DtD0XT2820ExjdV0jxlQm1N0CJ0JdVP0delld4mm6wzl1ccQzRfxt/KcUDD55Cneoule7kCmVSqG7WcGL012gBVNZC+An6AA"
+ },
+ "worlds-awards-crowd": {
+  "alt": "Teams from around the world under national flags at the awards ceremony",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRooAAABXRUJQVlA4IH4AAADQAwCdASoYABAAPu1iqk4ppaQiMAgBMB2JQAAKkyFFHfIisI8n5CAA/vKw2QLDn4TMP9DdHbphtOusFJCvac5i2rpdW2gkoPYjrAgciNweWZAudA1sDR38c9xEI+qTiBkc23BLEFxPXANkE3xBSKNiaVXhC4jf29j6cUcAAAA="
+ },
+ "worlds-shirt-back": {
+  "alt": "Back of the black 2026 SMS team shirt listing the season's sponsors",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3600,
+  "focus": "50% 30%",
+  "lqip": "data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAAAwBACdASoQABgAPu1iqU2ppaOiMAgBMB2JQBYheABjiwRX4DwcDu4HuXAA/rXU/nsoiZYv46c5SHUb7XjOOcjD5gcNqem0ZkF1oRaS7VVDxHk77NM2CU0ogjaZhfdTvdCSeggQZx5HPbL/RCSEuCFmdTnXJ5A5vnav1OSQuNHJHAAA"
+ },
+ "worlds-shirt-front": {
+  "alt": "Team members in black SMS shirts carrying ADAM, the profiling float",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpIAAABXRUJQVlA4IIYAAACwAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JYwCw7AjYEnqYVqaTygD+S8u1NYVZ1JQDImp+0nEOlFeuWYjEumQH6lFFlwW6PlQH2wwfSzgB/fbdryoXjd3/6S5u3bQhm3eUKzlVLaQtO9fvwgQDJMw0BUx/gZcEbeUHPk7MgAc3Bj8aRWNgAA=="
+ },
+ "worlds-float-electronics": {
+  "alt": "ADAM's custom electronics inside the clear float tube",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpYAAABXRUJQVlA4IIoAAAAQBACdASoQABgAPu1iqk2ppaQiMAgBMB2JYgCsACGayWP4MDpPBXBqMAD+0WmsR4imCksqCaeg/drCfeg6Sed+fffu0HFi7dDaSFu6IGQzVAzLFPjTeyCHF0ZXVZ73Vo3kone2tV13NkG1n95+j/tzGW82ViEHO+Mygf4hXx6fsu8l4iMNeExrUAA="
+ },
+ "worlds-wavetank": {
+  "alt": "The Ocean Engineering Research Centre wave tank in St. John's",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRmwAAABXRUJQVlA4IGAAAADQAwCdASoYABAAPu1kqU2ppaQiMAgBMB2JZQAAUYAlzSjrEgIWgYAA/bQKShx+wkBxZbdgd4kWPgj44OvltHV+yOU2Gu2yxnbB7eej12zg+fa7jFMaibm3CmUOKZUK4AA="
+ },
+ "worlds-captains": {
+  "alt": "Team members in captain hats outside the competition venue",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqAAAABXRUJQVlA4IJQAAADwAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JYwCdABMVqFftkRUnDDkAAP4ntpucrRuVWgMhlIONb4Y1y3/C+V/4g1lCf1HJcya5h/HyWmZDcYyduAO5coEZts1I3h+tdt/t3fxXn49812vm7JTwwO/sLWTpL7mGKqFllq13t18AwwJ8cyR2uuQ4cxjvQJzlkMweAAAA"
+ },
+ "pool-proto": {
+  "alt": "An early ROSIE prototype with a PVC frame by a backyard pool",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRnQAAABXRUJQVlA4IGgAAADwAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JYwC7IDZB4jcxILPGduQgAOJZcr9FTodrKWHgQbQ3xgcnJrRWWdOFMEGzmrOSBVkzfQNlSB/nyyRlGusZH6uNkdSAAyxgMRu7fMEsijgAAA=="
+ },
+ "pool-jump": {
+  "alt": "Team members jumping into the pool after a successful water test",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAACwBACdASoYABAAPu1kqU2ppaQiMAgBMB2JYgCdMoMe6EOTIGafGbW0O8ZZ4DMAAP7AP0zl5W3Ay9JgoKt5wuDHDnYASo2wCWAGBHVa5ZoIyitv/b90cTBOyNinF3uoVVc/+I0kYWJH0Qlg8x3DgYg2UPHqvdo6s58XSsUJQHlNcAGsAAA="
+ },
+ "monterey-group": {
+  "alt": "AVI and SMS members together at the 2026 MATE Monterey regional",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAABQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JYwDCgCFshHTSHuK1+uZRZngAAP7Xhw6Rmzk3NGT/9LyAiDAiteJCZMStjUiDMx6rqsj6zpZgEYgjTNj/Lny3JmLWY2AM4oiO7uVExqklO84ZRycyIp53rki1fasRgxjGWOAA"
+ },
+ "sms-pool-pilot": {
+  "alt": "A team member lowers ROSIE into a pool during testing",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAACQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JbACdL1yBZ9AcjCqzC+X0IDNLLgAA/nFiqEAQzBjLBj9EdC6EgXXPIwg/FwtgJqVv4ts1dDw9jskz/EiR5DYRtbXiB6WpKMJwB7vceplDYm+iLdiiYdAZxzYbP0AA"
+ },
+ "sms-underwater": {
+  "alt": "ROSIE underwater, seen from above, trailing its tether",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRoQAAABXRUJQVlA4IHgAAABQBACdASoQABgAPu1iqk2ppaQiMAgBMB2JbACdMoACtWAP6C37/+jk57VQAP6585PT/JTwhUSxogkZ7rXYeWgH3Q9eZ0E+W1Ny/IvxtGvOVmRC2iGd7qwl4ExbfXnjmMRInn4N0s5XqOk6FjD3UfAp8s+i/HwAAAA="
+ },
+ "traditions-booth": {
+  "alt": "The AVI booth at Fresno State Traditions Day with ROSIE and the float",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpIAAABXRUJQVlA4IIYAAACQAwCdASoYABAAPu1iqU2ppaOiMAgBMB2JQBWAA3XaPo+4ZDmAAP05kHspAFHilWwZEpSi7LHDuXSlWgwhuZWS6vmXCJz4oaX9bxOEPBvPjmxctkG8CdPHNeginPIT+XbqwsnKJsqVYqUe4en8p5HZRwrcoZk9yrRji5ok76S79hn2WHmwAA=="
+ },
+ "traditions-demo": {
+  "alt": "Students checking out ROSIE at the AVI Traditions Day booth",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 3600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAAAwBACdASoQABgAPu1iqU2ppaOiMAgBMB2JZgCdAB6AbyV//Z/8wZckEE4A2/90LUoz1owOhH3fuMGZoaOuaIGSQjxNcZJpatwfNw6gYnMd2PkgsxhFkN9jAwVCrVkQehoajctU2JxH/fnrEEx3qKemMZ+z/pT1cHAt+lKorDYIT9nSw9CbBRAA"
+ },
+ "showcase-build": {
+  "alt": "Members working on ROSIE at the SMS and Crush Depth joint showcase",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRpAAAABXRUJQVlA4IIQAAAAwBACdASoYABAAPu1iqU2ppaQiMAgBMB2JYwC7ACB0MnA/jFCK9rhL2AAAy/ilGaayXtKkq5LdI0Bt1/iomWt5blNsWzLu+AtmCwJMymr66VwfimoCxezachq2LKUBE4MDhDd1wRJnaLffcE88LcrnwLGeK+7URzlQvKkSDYoacY5H6AA="
+ },
+ "mesa-outreach": {
+  "alt": "AVI members with students at a MESA Saturday Academy outreach day",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRowAAABXRUJQVlA4IIAAAACwAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JQBWABCA5LsUY2VUCpgD+6tIh8hjZeY9CcXDoqpN2e5HpHSwzIID23UjHCesU3HDBhNT8Brz2IQVR1/9WStVol0/6ASxMpy3rgRLiX08dV+nWkGuuYSUuqgj32elYVMTXyGFIParAAA=="
+ },
+ "poster-rosie": {
+  "alt": "ROSIE exploded-view poster with labeled thruster mounts, rails, manipulator and harpoons",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 2400,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRp4AAABXRUJQVlA4IJIAAAAQBQCdASoYABgAPu1oqk+ppiOiKA1RMB2JYwAAKdWxSMP9syosTYE2M+2oxHUzEBQAAP7zgdsxAUT7tT00D0vUJhE2U1rA3dPUrnaq92v3ejYMMdR9shQRqovoOM0drqIN7gL7I8OrT/HIniThhhwUW0HJM+qXFuiruRWDfVqZ9m0CsTdb6Vj19uFHva0B0IAAAA=="
+ },
+ "poster-adam": {
+  "alt": "ADAM float exploded-view poster with labeled buoyancy engine parts",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 4800,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAACQAwCdASoMABgAPu1iqU2ppaQiMAgBMB2JZwAAW+mp5ePJYwmAAP7uMPaxylKIYWthmsvvAUqi3weM7g5ufrnqsyBrm6hvMALcAAAA"
+ },
+ "poster-club": {
+  "alt": "AVI Robotics recruiting poster: Fridays in EE 389, 5:30 to 7:30 PM, calling all majors",
+  "widths": [
+   480,
+   960,
+   1600
+  ],
+  "w": 1600,
+  "h": 2133,
+  "focus": "50% 50%",
+  "lqip": "data:image/webp;base64,UklGRqIAAABXRUJQVlA4IJYAAADwBACdASoSABgAPu1mqk8ppaOiKA1RMB2JaAC2yBDl8/10EtAWbi7GNe08d4klpKwA/odZSM8sJc3/3ZyK21JGS6BFgMg6J3PwTTqLU/1azpTaILhn/FDpTGmUjQ2tHvdS1j1lwYELKqxmYb/oW5aCDIk4mrq0lbU+QIT1qC0XxooQo6RoGBlPXRiLVCROwHiE2a4AAAA="
+ }
+}

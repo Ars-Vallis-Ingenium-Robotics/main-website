@@ -1,55 +1,75 @@
 @page "/sponsors"
+@using AviSite.Web.Content
 @inject IOptions<SiteOptions> Site
+@inject IOptions<NonprofitOptions> Nonprofit
 
-<PageTitle>Sponsor us · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="Sponsor AVI Robotics: fund parts, pool time and travel for Fresno State's student robotics club." /></HeadContent>
+<PageTitle>Support AVI · AVI Robotics</PageTitle>
+<HeadContent><meta name="description" content="Sponsor or donate to AVI Robotics, a 501(c)(3) nonprofit at Fresno State. EIN 39-4775163. Gifts are tax-deductible." /></HeadContent>
 
-<PageHero Kicker="Sponsors" Title="Put your name on the robot.">
-    <p>Every dollar goes into parts, pool time and getting students to competition.</p>
+<PageHero Kicker="@($"Support · {Nonprofit.Value.Status}")" Title="Put your name on the robot.">
+    <p>Every dollar goes into parts, pool time and getting students to competition. AVI is a registered @Nonprofit.Value.Status, so your gift is tax-deductible.</p>
 </PageHero>
 
 <section class="section">
     <div class="wrap split">
         <div class="split__head">
-            <Eyebrow>Where it goes</Eyebrow>
-            <h2 class="h2">What a sponsorship pays for.</h2>
+            <p class="eyebrow">Where it goes</p>
+            <h2 class="h2">A real season costs real money.</h2>
+            <p class="lede">The 2026 season had a total value of about $34,000, including donated and reused parts. The biggest line was getting 13 students and two robots to Newfoundland.</p>
         </div>
-        <SpecSheet Rows="@uses" />
+        <div class="reveal">
+            <SpecSheet Rows="@uses" />
+            <p class="muted small">From the Sequoia Marine Solutions 2026 technical documentation, accounting section.</p>
+        </div>
     </div>
 </section>
 
 <section class="section section--paper-2">
     <div class="wrap split">
         <div class="split__head">
-            <Eyebrow>What you get</Eyebrow>
-            <h2 class="h2">Recognition that travels.</h2>
+            <p class="eyebrow">2026 sponsors</p>
+            <h2 class="h2">Thank you.</h2>
+            <p class="lede">These partners were printed on the back of every shirt we wore at Worlds.</p>
         </div>
-        <div class="prose">
-            <p>Logo placement on the vehicle, team shirts and this site, mentions in our technical documentation and competition presentation, and a team that remembers who got them there.</p>
-            <p class="note">TODO(confirm): tier names, amounts and benefits from the sponsorship packet.</p>
-            <div class="actions">
-                <a class="btn btn--ink" href="@Site.Value.SponsorPacketPath">Download the packet (PDF)</a>
-                @if (Site.Value.ContactEmail is { } email) { <a class="link-arrow" href="mailto:@email?subject=Sponsoring%20AVI%20Robotics">Email us</a> }
-            </div>
+        <div class="reveal">
+            <ul class="sponsor-list">
+                @foreach (var s in ClubFacts.Sponsors2026) { <li>@s</li> }
+            </ul>
+            <Photo Key="worlds-shirt-back" Sizes="(min-width: 56rem) 30vw, 70vw" Class="sponsor-shirt photo--frame" Ratio="4 / 5" />
         </div>
     </div>
 </section>
 
-<section class="section">
-    <div class="wrap">
-        <Eyebrow>Current sponsors</Eyebrow>
-        <h2 class="h2">Thank you.</h2>
-        <p class="note">TODO(confirm): sponsor logos (SVG preferred) and permission to display them.</p>
+<section class="section section--ink">
+    <div class="wrap split">
+        <div class="split__head">
+            <p class="eyebrow eyebrow--on-ink">How to give</p>
+            <h2 class="h2">Sponsor a season, or give once.</h2>
+        </div>
+        <div class="reveal">
+            <p class="lede-on-ink">Sponsors get their logo on the robot, the team shirt and this site, plus mentions in our technical documentation and presentation. Download the packet for tiers, or email us.</p>
+            <SpecSheet Class="spec--on-ink" Rows="@nonprofitRows" />
+            <div class="actions">
+                <a class="btn btn--accent" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
+                @if (Site.Value.ContactEmail is { } email) { <a class="btn btn--ghost-on-ink" href="mailto:@email?subject=Supporting%20AVI%20Robotics">Email @email</a> }
+            </div>
+        </div>
     </div>
 </section>
 
 @code {
     private readonly IReadOnlyList<(string, string)> uses =
     [
-        ("Parts", "Thrusters, cameras, electronics, stock"),
-        ("Pool time", "Testing before competition"),
-        ("Travel", "Getting the team and ROV to MATE events"),
-        ("Tools", "Shared shop equipment members learn on"),
-        ("Outreach", "Demos for local schools"),
+        ("Competition travel", "$18,869 · flights and hotel for 13 students in St. John's"),
+        ("ROV electronics & controls", "Largest build category: thrusters, cameras, power"),
+        ("Fundraising operations", "$2,405 · Vintage Days booth supplies"),
+        ("Team operations", "$1,327 · shirts, booth, materials"),
+        ("Admin & registration", "$877 · 501(c)(3) filing, CA DOJ, MATE registration"),
+    ];
+
+    private IReadOnlyList<(string, string)> nonprofitRows => [
+        ("Organization", Nonprofit.Value.LegalName),
+        ("Status", $"{Nonprofit.Value.Status} · contributions tax-deductible"),
+        ("EIN", Nonprofit.Value.Ein),
     ];
 }

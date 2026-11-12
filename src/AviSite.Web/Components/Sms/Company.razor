@@ -1,0 +1,49 @@
+@page "/sms/company"
+@inject SmsUrls Links
+
+<PageTitle>Company · Sequoia Marine Solutions</PageTitle>
+<HeadContent><meta name="description" content="How Sequoia Marine Solutions is organized: a C-suite, seven subsystems and more than 40 students from every major." /></HeadContent>
+
+<section class="sms-page-hero">
+    <div class="wrap">
+        <p class="sms-kicker">Company</p>
+        <h1 class="sms-page-hero__title">Run like a real firm.</h1>
+        <p class="sms-page-hero__lede">More than 40 students, a C-suite, seven subsystem leads and a purchase-request process that goes through design, operations and finance before anything gets ordered.</p>
+    </div>
+</section>
+
+<section class="sms-section">
+    <div class="wrap">
+        <p class="sms-kicker sms-kicker--dark">2026 C-suite</p>
+        <ul class="people">
+            @foreach (var p in ClubFacts.SmsCSuite2026) { <li class="reveal"><PersonCard Person="p" /></li> }
+        </ul>
+    </div>
+</section>
+
+<section class="sms-section sms-section--cream">
+    <div class="wrap split">
+        <div class="split__head">
+            <p class="sms-kicker sms-kicker--dark">Subsystems</p>
+            <h2 class="sms-h2">Seven crews, one robot.</h2>
+        </div>
+        <ul class="subsystems reveal">
+            <li>ROV Manipulators</li><li>ROV Chassis & Propulsion</li><li>ROV Controls & Electronics</li>
+            <li>Float Chassis & Buoyancy</li><li>Float Controls & Electronics</li><li>GUI & Communications</li>
+            <li>Deck Management</li><li>Marketing</li><li>Logistics</li>
+        </ul>
+    </div>
+</section>
+
+<section class="sms-section">
+    <div class="wrap split">
+        <div class="split__head">
+            <p class="sms-kicker sms-kicker--dark">What we learned</p>
+            <h2 class="sms-h2">Communication, creativity, autonomy.</h2>
+        </div>
+        <div class="prose reveal">
+            <p>From our 2026 company evaluation: with over fifty people involved, structure came first. Then the Chief Design Officer ran idea-generation workshops, which produced the harpoon manipulators. As the year went on, leads handed more ownership to individual members, and the chassis came together from many people's work: thruster shrouds, camera mounts, manipulators.</p>
+            <p><a class="btn btn--sms-dark" href="@Links.Avi("/join")">Join through AVI</a></p>
+        </div>
+    </div>
+</section>

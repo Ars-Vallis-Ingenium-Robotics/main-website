@@ -1,0 +1,58 @@
+@page "/sms/adam"
+
+<PageTitle>ADAM · Sequoia Marine Solutions</PageTitle>
+<HeadContent><meta name="description" content="ADAM, Sequoia Marine Solutions' autonomous vertical profiling float: a peristaltic-pump buoyancy engine, Raspberry Pi Pico control and LoRa telemetry." /></HeadContent>
+
+<section class="sms-page-hero">
+    <div class="wrap sms-page-hero__grid">
+        <div>
+            <p class="sms-kicker">Profiling float · 2026</p>
+            <h1 class="sms-page-hero__title">ADAM</h1>
+            <p class="sms-page-hero__lede">Aquatic Drifter for Autonomous Monitoring. It sinks and rises on its own, logging depth on the way, like the floats that measure the ocean's health.</p>
+        </div>
+        <Photo Key="worlds-shirt-front" Sizes="(min-width: 56rem) 50vw, 100vw" Eager="true" Class="photo--frame" Alt="Team members carrying ADAM, the clear-tube profiling float" />
+    </div>
+</section>
+
+<section class="sms-section">
+    <div class="wrap split">
+        <div class="split__head">
+            <p class="sms-kicker sms-kicker--dark">How it works</p>
+            <h2 class="sms-h2">A buoyancy engine in a tube.</h2>
+            <p class="lede">A peristaltic pump moves water in and out of an internal bladder, changing ADAM's density so it can complete vertical profiles without a tether.</p>
+        </div>
+        <SpecSheet Class="reveal" Rows="@spec" />
+    </div>
+</section>
+
+<section class="sms-section sms-section--deep">
+    <div class="wrap sms-adam">
+        <Photo Key="poster-adam" Sizes="(min-width: 56rem) 30vw, 70vw" Class="sms-poster sms-poster--tall reveal" />
+        <div class="sms-chapters sms-chapters--single">
+            <article class="sms-chapter reveal">
+                <h3>Seals that survive the cold</h3>
+                <p>Custom-machined end caps use internal O-rings. The team researched thermal expansion so the seals hold across the temperature swing from a warm deck to cold water.</p>
+            </article>
+            <article class="sms-chapter reveal">
+                <h3>Quiet power</h3>
+                <p>An independent NiMH pack with its own regulation feeds the logic and the pump separately, so motor noise doesn't corrupt the depth readings.</p>
+            </article>
+            <article class="sms-chapter reveal">
+                <h3>Long-range, low-power radio</h3>
+                <p>A LoRa module sends telemetry to the surface from a custom PCB built around a Raspberry Pi Pico running MicroPython.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+@code {
+    private readonly IReadOnlyList<(string, string)> spec =
+    [
+        ("Hull", "4 in polycarbonate tube, machined end caps, internal O-rings"),
+        ("Buoyancy", "Peristaltic pump + internal bladder"),
+        ("Control", "Custom PCB, Raspberry Pi Pico (MicroPython)"),
+        ("Sensing", "Blue Robotics depth sensor"),
+        ("Telemetry", "LoRa"),
+        ("Power", "Independent NiMH pack, isolated logic and pump rails"),
+    ];
+}

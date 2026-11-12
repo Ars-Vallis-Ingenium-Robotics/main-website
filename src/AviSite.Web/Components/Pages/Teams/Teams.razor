@@ -1,4 +1,5 @@
 @page "/teams"
+@inject SmsUrls SmsLinks
 
 <PageTitle>Teams · AVI Robotics</PageTitle>
 
@@ -7,23 +8,24 @@
 </PageHero>
 
 <section class="section">
-    <div class="wrap">
-        <ul class="team-list">
-            <li class="team-list__item team-list__item--sms">
-                <a href="/teams/sms" class="team-list__link">
-                    <span class="mono team-list__code">SMS</span>
-                    <h2 class="team-list__name">Sequoia Marine Solutions</h2>
-                    <span class="team-list__desc">MATE ROV Competition. Underwater remotely operated vehicle.</span>
-                    <span class="link-arrow" aria-hidden="true">Team page</span>
-                </a>
-            </li>
-            <li class="team-list__item team-list__item--muted">
-                <div class="team-list__link">
-                    <span class="mono team-list__code">NEXT</span>
-                    <h2 class="team-list__name">Your team here</h2>
-                    <span class="team-list__desc">Have a competition in mind? Bring it to a meeting. That's how SMS started.</span>
-                </div>
-            </li>
-        </ul>
+    <div class="wrap team-cards">
+        <div class="team-card team-card--sms reveal">
+            <Photo Key="worlds-rosie-table" Sizes="(min-width: 56rem) 50vw, 100vw" Class="team-card__photo" />
+            <div class="team-card__body">
+                <img class="team-card__logo" src="/img/brand/sms-logo.webp" alt="" width="72" height="72" loading="lazy" />
+                <span class="team-card__kicker">MATE ROV · since 2025</span>
+                <h2 class="team-card__name"><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></h2>
+                <span class="team-card__desc">AVI's underwater robotics company. In 2026 SMS built ROSIE, an eight-thruster ROV, and ADAM, an autonomous profiling float, then won the Engineering Presentation award at the World Championship.</span>
+                <span class="link-arrow" aria-hidden="true">Visit the SMS site</span>
+            </div>
+        </div>
+        <div class="team-card team-card--forming reveal">
+            <div class="team-card__body">
+                <span class="team-card__kicker">Forming · 2026–27</span>
+                <h2 class="team-card__name">Micromouse</h2>
+                <span class="team-card__desc">A small autonomous robot that explores a maze, maps it, then races to the center. Great for programmers and embedded-systems folks. No name or roster yet: this is the time to shape it.</span>
+                <a class="link-arrow" href="/join">Come to a meeting</a>
+            </div>
+        </div>
     </div>
 </section>

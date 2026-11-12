@@ -1,0 +1,62 @@
+@inherits LayoutComponentBase
+@inject SmsUrls Links
+@inject IOptions<NonprofitOptions> Nonprofit
+
+<HeadContent>
+    <meta name="theme-color" content="#06262b" />
+    <link rel="icon" href="/img/brand/sms-icon-32.png" type="image/png" sizes="32x32" />
+</HeadContent>
+
+<div class="sms-site">
+    <a class="skip-link" href="#sms-main">Skip to content</a>
+    <div class="scroll-progress" aria-hidden="true"></div>
+    <div class="sms-depth" aria-hidden="true"><span class="sms-depth__label">DEPTH</span><span class="sms-depth__value"></span></div>
+
+    <header class="sms-header">
+        <div class="wrap sms-header__bar">
+            <a class="sms-brand" href="@Links.Sms()" aria-label="Sequoia Marine Solutions home">
+                <img src="/img/brand/sms-logo.webp" alt="" width="44" height="44" />
+                <span class="sms-brand__word">Sequoia<span>Marine Solutions</span></span>
+            </a>
+            <nav class="nav nav--wide sms-nav" aria-label="SMS">
+                <SmsNavLinks />
+            </nav>
+            <details class="nav nav--narrow sms-nav">
+                <summary class="nav__toggle">Menu</summary>
+                <nav class="nav__sheet" aria-label="SMS (menu)"><SmsNavLinks /></nav>
+            </details>
+        </div>
+    </header>
+
+    <main id="sms-main" tabindex="-1">
+        @Body
+    </main>
+
+    <footer class="sms-footer">
+        <div class="wrap sms-footer__grid">
+            <div>
+                <img src="/img/brand/sms-logo.webp" alt="" width="96" height="96" loading="lazy" />
+                <p class="sms-footer__name">Sequoia Marine Solutions</p>
+                <p>The MATE ROV company of <a href="@Links.Avi("/")">AVI Robotics</a> at Fresno State. @Nonprofit.Value.LegalName is a @Nonprofit.Value.Status nonprofit, EIN <span class="mono">@Nonprofit.Value.Ein</span>.</p>
+            </div>
+            <nav aria-label="SMS footer">
+                <p class="sms-footer__label">SMS</p>
+                <ul>
+                    <li><a href="@Links.Sms("/rosie")">ROSIE (ROV)</a></li>
+                    <li><a href="@Links.Sms("/adam")">ADAM (float)</a></li>
+                    <li><a href="@Links.Sms("/2026")">2026 season</a></li>
+                    <li><a href="@Links.Sms("/company")">Company</a></li>
+                </ul>
+            </nav>
+            <nav aria-label="AVI">
+                <p class="sms-footer__label">Part of AVI Robotics</p>
+                <ul>
+                    <li><a href="@Links.Avi("/")">AVI home</a></li>
+                    <li><a href="@Links.Avi("/join")">Join</a></li>
+                    <li><a href="@Links.Avi("/sponsors")">Sponsor or donate</a></li>
+                    <li><a href="@Links.Avi("/shop/sms-team-tee")">SMS Team Tee</a></li>
+                </ul>
+            </nav>
+        </div>
+    </footer>
+</div>

@@ -17,6 +17,21 @@ dotnet run --project src/AviSite.Web        # http://localhost:5002, Development
 Development uses a **fake PayPal** (click "Simulate PayPal payment"). Admin dashboard:
 `/admin`, dev password `avi-dev-password` (Development only; never published).
 
+## SMS microsite
+
+Served at `/sms` and, by host, at the root of `sms.avirobotics.org` (`SmsSite:Host`). Test the host
+locally at `http://sms.localhost:5002`. nginx needs a `server_name sms.avirobotics.org` block proxying
+to the same app.
+
+## Photos
+
+```bash
+pip install pillow
+python3 tools/images/build_photos.py tools/images/photos.manifest.json
+```
+Add an entry (key, absolute source path, alt text, optional crop/focus) to the manifest, rerun,
+then use `<Photo Key="..." Sizes="..." />`. Only the generated WebP files are committed.
+
 ## Tests
 
 ```bash

@@ -1,0 +1,63 @@
+@page "/sms/2026"
+
+<PageTitle>2026 Season · Sequoia Marine Solutions</PageTitle>
+<HeadContent><meta name="description" content="Sequoia Marine Solutions' first season: from PVC prototypes to the 2026 MATE ROV World Championship in St. John's and a record Engineering Presentation score." /></HeadContent>
+
+<section class="sms-page-hero sms-page-hero--photo">
+    <Photo Key="worlds-welcome" Sizes="100vw" Eager="true" Class="sms-hero__bg" />
+    <div class="wrap sms-hero__copy">
+        <p class="sms-kicker">Season one</p>
+        <h1 class="sms-page-hero__title">2026: Fresno to Newfoundland</h1>
+        <p class="sms-page-hero__lede">The mission theme followed the UN Ocean Decade: invasive species detection, iceberg monitoring in the North Atlantic, and maintaining Blue Economy infrastructure.</p>
+    </div>
+</section>
+
+<section class="sms-section">
+    <div class="wrap">
+        <ol class="timeline timeline--sms">
+            @foreach (var step in steps)
+            {
+                <li class="timeline__item reveal">
+                    <div class="timeline__when mono">@step.When</div>
+                    <div class="timeline__body"><h2 class="timeline__title">@step.Title</h2><p>@step.Body</p></div>
+                    @if (step.Photo is not null) { <Photo Key="@step.Photo" Sizes="(min-width: 56rem) 34vw, 100vw" Class="timeline__photo photo--frame" /> }
+                </li>
+            }
+        </ol>
+    </div>
+</section>
+
+<section class="sms-section sms-section--deep">
+    <div class="wrap sms-record">
+        <div class="reveal">
+            <p class="sms-kicker">Engineering Presentation Award · Pioneer class</p>
+            <p class="sms-record__score" aria-label="102 out of 100"><span aria-hidden="true">102/100</span></p>
+            <p class="sms-record__text">An all-time record for the class, plus the fourth-highest overall Pioneer score. For 2027, SMS moves up to Explorer.</p>
+        </div>
+        <Photo Key="worlds-award-stage" Sizes="(min-width: 56rem) 50vw, 100vw" Class="photo--frame reveal" />
+    </div>
+</section>
+
+<section class="sms-section sms-section--flush">
+    <p class="filmstrip-hint" aria-hidden="true">Scroll sideways →</p>
+    <div class="filmstrip" tabindex="0" aria-label="World Championship photos, scroll sideways">
+        <Photo Key="worlds-auditorium" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="worlds-wavetank" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="worlds-awards-crowd" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="worlds-captains" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        <Photo Key="worlds-team-rosie" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+    </div>
+</section>
+
+@code {
+    private sealed record Step(string When, string Title, string Body, string? Photo = null);
+    private readonly Step[] steps =
+    [
+        new("Fall 2025", "Company formed", "An open forum settles the structure: a C-suite and seven subsystems, each with a lead. Members try every subsystem before choosing."),
+        new("Winter", "Research & design", "Brainstorming workshops, a study of past MATE teams, and the first foamboard and PVC mockups.", "pool-proto"),
+        new("Mar–Apr 2026", "Water testing", "Leak hunting with sponges inside the pressure hull, a one-week saltwater corrosion test on the T-slot rail, then a successful April 4 water test.", "pool-jump"),
+        new("Apr 25", "Monterey regional", "SMS's first competition run.", "monterey-group"),
+        new("May", "Pilot selection & flight sticks", "Pilots trained on ThrustMaster flight sticks with 44 programmable buttons."),
+        new("June", "World Championship, St. John's", "Thirteen students and two robots fly LAX to St. John's for the MATE ROV World Championship.", "worlds-team-rosie"),
+    ];
+}

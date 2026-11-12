@@ -44,6 +44,10 @@ services.AddSingleton<ICatalog, JsonCatalog>();
 services.AddSingleton<IOrderStore, JsonOrderStore>();
 services.AddSingleton<Pricing>();
 services.AddSingleton<PaymentReconciler>();
+services.AddSingleton<PhotoCatalog>();
+services.Configure<NonprofitOptions>(builder.Configuration.GetSection(NonprofitOptions.Section));
+services.Configure<SmsSiteOptions>(builder.Configuration.GetSection(SmsSiteOptions.Section));
+services.AddScoped<SmsUrls>();
 services.AddScoped<CartCookie>();
 
 var payPalMode = builder.Configuration.GetValue<PayPalMode?>("PayPal:Mode") ?? PayPalMode.Fake;
@@ -77,6 +81,7 @@ else
 }
 
 services.AddAdminAuth(builder.Environment.IsDevelopment());
+var storeLimit = builder.Environment.IsDevelopment() ? 1000 : 30; // dev: test suites hit checkout repeatedly
 services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -86,7 +91,7 @@ services.AddRateLimiter(o =>
     // Checkout + PayPal API: each call can create an order and/or hit PayPal.
     o.AddPolicy(StoreRateLimit, ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(10) }));
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = storeLimit, Window = TimeSpan.FromMinutes(10) }));
 });
 
 // nginx terminates TLS on the same box and forwards to Kestrel on loopback (same as SecWeb).
@@ -98,6 +103,8 @@ services.Configure<ForwardedHeadersOptions>(o =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseSmsHostRouting(builder.Configuration["SmsSite:Host"] ?? "sms.avirobotics.org");
+app.UseRouting(); // explicit, so routing sees the rewritten /sms path
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/error", createScopeForErrors: true);

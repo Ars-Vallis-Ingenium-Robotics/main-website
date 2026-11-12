@@ -1,8 +1,12 @@
 @inherits LayoutComponentBase
 @inject IOptions<SiteOptions> Site
+@inject IOptions<NonprofitOptions> Nonprofit
 @inject CartCookie Cart
+@inject SmsUrls SmsLinks
 
+<HeadContent><meta name="theme-color" content="#101011" /></HeadContent>
 <a class="skip-link" href="#main">Skip to content</a>
+<div class="scroll-progress" aria-hidden="true"></div>
 
 <header class="site-header">
     <div class="wrap site-header__bar">
@@ -34,24 +38,31 @@
 <footer class="site-footer">
     <div class="wrap site-footer__grid">
         <div class="site-footer__about">
+            <img class="site-footer__letters" src="/img/brand/avi-letters-white.webp" alt="" width="153" height="120" loading="lazy" />
             <p class="site-footer__name">@Site.Value.LongName</p>
-            <p class="muted">A student engineering club at Fresno State, home of the Sequoia Marine Solutions ROV team.</p>
+            <p class="muted">A student-led engineering club at Fresno State and home of Sequoia Marine Solutions, our MATE ROV company.</p>
+            <p class="site-footer__legal">
+                @Nonprofit.Value.LegalName is a @Nonprofit.Value.Status nonprofit organization.
+                EIN <span class="mono">@Nonprofit.Value.Ein</span>. Donations are tax-deductible to the extent allowed by law.
+            </p>
         </div>
         <nav class="site-footer__links" aria-label="Footer">
-            <p class="eyebrow eyebrow--plain">Site</p>
+            <p class="eyebrow eyebrow--plain">Club</p>
             <ul>
                 <li><a href="/about">About</a></li>
+                <li><a href="/history">History</a></li>
+                <li><a href="/leadership">Leadership</a></li>
                 <li><a href="/teams">Teams</a></li>
-                <li><a href="/sponsors">Sponsors</a></li>
-                <li><a href="/shop">Shop</a></li>
                 <li><a href="/join">Join</a></li>
             </ul>
         </nav>
-        <nav class="site-footer__links" aria-label="Elsewhere">
-            <p class="eyebrow eyebrow--plain">Elsewhere</p>
+        <nav class="site-footer__links" aria-label="More">
+            <p class="eyebrow eyebrow--plain">More</p>
             <ul>
+                <li><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></li>
+                <li><a href="/sponsors">Sponsor or donate</a></li>
+                <li><a href="/shop">Shop</a></li>
                 @if (Site.Value.DiscordInviteUrl is { } d) { <li><a href="@d" rel="noopener">Discord</a></li> }
-                @if (Site.Value.InstagramUrl is { } ig) { <li><a href="@ig" rel="noopener">Instagram</a></li> }
                 @if (Site.Value.YouTubeUrl is { } yt) { <li><a href="@yt" rel="noopener">YouTube</a></li> }
                 @if (Site.Value.LinktreeUrl is { } lt) { <li><a href="@lt" rel="noopener">Linktree</a></li> }
                 @if (Site.Value.PortalUrl is { } p) { <li><a href="@p">Member portal</a></li> }
@@ -59,7 +70,7 @@
         </nav>
     </div>
     <div class="wrap site-footer__base">
-        <p class="mono">© @DateTime.UtcNow.Year @Site.Value.Name</p>
+        <p class="mono">© @DateTime.UtcNow.Year @Site.Value.LongName</p>
         @if (Site.Value.ContactEmail is { } email) { <p class="mono"><a href="mailto:@email">@email</a></p> }
     </div>
 </footer>

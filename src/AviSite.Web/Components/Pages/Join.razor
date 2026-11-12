@@ -1,40 +1,34 @@
 @page "/join"
+@using AviSite.Web.Content
 @inject IOptions<SiteOptions> Site
 
 <PageTitle>Join · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="Join AVI Robotics at Fresno State. No experience needed." /></HeadContent>
+<HeadContent><meta name="description" content="Join AVI Robotics at Fresno State. Meetings Fridays 5:30–7:30 PM in EE 389. All majors welcome." /></HeadContent>
 
-<PageHero Kicker="Join" Title="No experience required.">
-    <p>Come to a meeting, hop in the Discord, pick something to build.</p>
+<PageHero Kicker="Join · all majors" Title="No experience required.">
+    <p>@ClubFacts.MeetingTime in @ClubFacts.MeetingRoom. Show up, hop in the Discord, pick something to build.</p>
 </PageHero>
 
 <section class="section">
-    <div class="wrap">
+    <div class="wrap join">
         <ol class="join-steps">
-            <li>
-                <span class="join-steps__num mono" aria-hidden="true">01</span>
-                <h2 class="h3">Join the Discord</h2>
-                <p>Announcements, meeting times and every sub-team channel live there.</p>
-                @if (Site.Value.DiscordInviteUrl is { } d)
-                {
-                    <a class="btn btn--accent" href="@d" rel="noopener">Open Discord invite</a>
-                }
-                else
-                {
-                    <p class="note">TODO(confirm): Discord invite link (Site:DiscordInviteUrl).</p>
-                }
-            </li>
-            <li>
-                <span class="join-steps__num mono" aria-hidden="true">02</span>
+            <li class="reveal">
+                <span class="join-steps__num mono" aria-hidden="true">1</span>
                 <h2 class="h3">Come to a meeting</h2>
-                <p>TODO(confirm): day, time and room. Bring a laptop if you have one.</p>
+                <p>@ClubFacts.MeetingTime, @ClubFacts.MeetingRoom. Fall is workshops: C++, Qt, basic and advanced electrical, beginner and advanced CAD.</p>
             </li>
-            <li>
-                <span class="join-steps__num mono" aria-hidden="true">03</span>
-                <h2 class="h3">Get a portal account</h2>
-                <p>Officers send an invite to the member portal, where we track projects, meetings and hours.</p>
-                @if (Site.Value.PortalUrl is { } p) { <a class="link-arrow" href="@p">Member portal</a> }
+            <li class="reveal">
+                <span class="join-steps__num mono" aria-hidden="true">2</span>
+                <h2 class="h3">Join the Discord</h2>
+                <p>Announcements, meeting slides and every subsystem's channel live there. Introduce yourself so a lead can add you.</p>
+                @if (Site.Value.DiscordInviteUrl is { } d) { <a class="btn btn--accent" href="@d" rel="noopener">Open the Discord invite</a> }
+            </li>
+            <li class="reveal">
+                <span class="join-steps__num mono" aria-hidden="true">3</span>
+                <h2 class="h3">Pick a crew</h2>
+                <p>Try the subsystems before you settle: mechanical, electrical, software, GUI, deck, marketing, logistics. Then put Sequoia Marine Solutions on your resume.</p>
             </li>
         </ol>
+        <Photo Key="poster-club" Sizes="(min-width: 56rem) 28vw, 80vw" Class="join__poster photo--frame reveal" />
     </div>
 </section>

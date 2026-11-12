@@ -1,0 +1,41 @@
+@*
+    Level-of-detail photo:
+      1. a ~24px blurred placeholder is painted instantly as the background (from photos.json),
+      2. the browser picks the right resolution from srcset (480 / 960 / 1600 / 2400 px),
+      3. lod.js fades the sharp image in over the placeholder once it has decoded.
+    Without JS the image simply shows normally.
+*@
+@inject PhotoCatalog Photos
+
+@if (info is not null)
+{
+    <figure class="photo @Class" style="--lqip: url('@info.Lqip'); --focus: @(Focus ?? info.Focus); aspect-ratio: @(Ratio ?? $"{info.W} / {info.H}");">
+        <img class="photo__img"
+             src="/img/photos/@(Key)-@(Pick(960)).webp"
+             srcset="@SrcSet"
+             sizes="@Sizes"
+             width="@info.W" height="@info.H"
+             alt="@(Alt ?? info.Alt)"
+             loading="@(Eager ? "eager" : "lazy")"
+             fetchpriority="@(Eager ? "high" : "auto")"
+             decoding="async" />
+        @if (Caption is not null) { <figcaption class="photo__caption">@Caption</figcaption> }
+    </figure>
+}
+
+@code {
+    [Parameter, EditorRequired] public string Key { get; set; } = "";
+    [Parameter] public string Sizes { get; set; } = "100vw";
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Alt { get; set; }
+    [Parameter] public string? Ratio { get; set; }
+    [Parameter] public string? Focus { get; set; }
+    [Parameter] public string? Caption { get; set; }
+    [Parameter] public bool Eager { get; set; }
+
+    private PhotoInfo? info;
+    protected override void OnParametersSet() => info = Photos.Get(Key);
+
+    private string SrcSet => string.Join(", ", info!.Widths.Select(w => $"/img/photos/{Key}-{w}.webp {w}w"));
+    private int Pick(int want) => info!.Widths.Where(w => w <= want).DefaultIfEmpty(info.Widths[0]).Max();
+}
