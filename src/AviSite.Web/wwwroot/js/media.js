@@ -21,10 +21,34 @@
     const d = lightbox(), big = d.querySelector(".lightbox__img");
     const srcs = (img.getAttribute("srcset") || "").split(",").map((s) => s.trim().split(" ")[0]).filter(Boolean);
     big.src = srcs.at(-1) || img.currentSrc || img.src;
-    big.alt = img.alt;
-    const cap = img.closest("figure").querySelector(".photo__caption")?.textContent || img.alt;
+    // Every zoomable photo gets a caption: its own caption, else the catalog description
+    // (data-caption, set even when the inline image is decorative), else the alt text.
+    const fig = img.closest("figure");
+    const cap = fig.querySelector(".photo__caption")?.textContent || fig.dataset.caption || img.alt;
+    big.alt = img.alt || cap || "";
     d.querySelector(".lightbox__cap").textContent = cap;
     d.showModal();
+  });
+
+  // ---- 1b. drag to scroll (mouse only; touch and trackpads scroll natively) ----
+  document.querySelectorAll("[data-drag-scroll]").forEach((el) => {
+    let x0 = 0, left0 = 0, down = false, moved = false;
+    el.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      down = true; moved = false; x0 = e.clientX; left0 = el.scrollLeft;
+    });
+    el.addEventListener("pointermove", (e) => {
+      if (!down) return;
+      const dx = e.clientX - x0;
+      if (!moved && Math.abs(dx) > 6) { moved = true; el.classList.add("is-dragging"); el.setPointerCapture(e.pointerId); }
+      if (moved) el.scrollLeft = left0 - dx;
+    });
+    const up = () => { down = false; requestAnimationFrame(() => el.classList.remove("is-dragging")); };
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+    // a drag must not open the lightbox
+    el.addEventListener("click", (e) => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+    el.addEventListener("dragstart", (e) => e.preventDefault());
   });
 
   // ---- 2. 3D models ----

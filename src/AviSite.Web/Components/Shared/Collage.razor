@@ -1,15 +1,20 @@
 @*
     Photo collage in soft, mixed shapes (big rounded square, circle, arch, pill, leaf), packed with
-    grid-auto-flow: dense. The band runs edge to edge and fades out on both sides.
+    grid-auto-flow: column dense into a horizontal band you can scroll (swipe, trackpad, shift+wheel,
+    or drag with a mouse, see media.js). The band runs edge to edge and fades out on both sides;
+    as the page scrolls the strip drifts sideways, and photos grow in as they enter the band.
     Every photo opens in the lightbox (media.js).
 *@
 <div class="collage-band @Class" role="group" aria-label="@Label">
-    <div class="collage">
-        @for (var i = 0; i < Keys.Count; i++)
-        {
-            <Photo Key="@Keys[i]" Sizes="(min-width: 56rem) 30vw, 50vw" Class="@($"collage__item collage__item--{Shapes[i % Shapes.Length]}")" />
-        }
+    <div class="collage-band__scroller" tabindex="0" data-drag-scroll aria-label="@Label, scroll sideways">
+        <div class="collage">
+            @for (var i = 0; i < Keys.Count; i++)
+            {
+                <Photo Key="@Keys[i]" Sizes="(min-width: 64rem) 24rem, 18rem" Class="@($"collage__item collage__item--{Shapes[i % Shapes.Length]}")" />
+            }
+        </div>
     </div>
+    <p class="collage-band__hint mono" aria-hidden="true">Swipe or drag sideways <span>→</span></p>
 </div>
 
 @code {

@@ -9,7 +9,7 @@
 
 @if (info is not null)
 {
-    <figure class="photo @Class" style="--lqip: url('@info.Lqip'); --focus: @(Focus ?? info.Focus); aspect-ratio: @(Ratio ?? $"{info.W} / {info.H}");">
+    <figure class="photo @Class" data-caption="@(Caption ?? (string.IsNullOrWhiteSpace(Alt) ? info.Alt : Alt))" style="--lqip: url('@info.Lqip'); --focus: @(Focus ?? info.Focus); aspect-ratio: @(Ratio ?? $"{info.W} / {info.H}");">
         <img class="photo__img"
              src="/img/photos/@(Key)-@(Pick(960)).webp"
              srcset="@SrcSet"

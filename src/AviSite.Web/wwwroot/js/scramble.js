@@ -8,7 +8,9 @@
   let i = 0;
   const to = (target) => new Promise((done) => {
     const from = el.textContent, len = Math.max(from.length, target.length);
-    const queue = [...Array(len)].map((_, k) => ({ a: from[k] || "", b: target[k] || "", start: Math.floor(Math.random() * 30), end: 36 + Math.floor(Math.random() * 40) }));
+    // Left to right: each letter starts scrambling a little after the one before it and
+    // settles a fixed while later, so the new phrase sweeps in from the left.
+    const queue = [...Array(len)].map((_, k) => ({ a: from[k] || "", b: target[k] || "", start: k * 2, end: k * 2 + 16 }));
     let frame = 0;
     const tick = () => {
       let out = "", finished = 0;

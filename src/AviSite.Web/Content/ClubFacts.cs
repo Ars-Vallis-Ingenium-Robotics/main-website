@@ -156,6 +156,7 @@ public static class ClubFacts
                 new("June 23 – 24", "Safety inspections and the marketing display", null, "worlds-display"),
                 new("June 25 – 27", "Competition days", "Float deployment, the wave tank and the engineering presentation.", "worlds-rosie-feed"),
                 new("June 27", "102 out of 100", "The Engineering Presentation award.", "worlds-award-screen"),
+                new("June 27", "Three California teams, one stage", "Sequoia Marine Solutions, Clovis Community College's Crush Depth and Cal Poly Pomona's Pomona Subsea Initiative together on stage when Pomona took second place in the Pioneer class.", "worlds-stage-friends"),
                 new("June 2026", "The team in St. John's", null, "worlds-backdrop"),
             ]),
         new("Fall 2026", "Year two",
@@ -240,6 +241,7 @@ public static class ClubFacts
                 new("June 23 – 24", "Safety inspections", null, "worlds-display"),
                 new("June 25 – 27", "Competition days", null, "worlds-wavetank"),
                 new("June 27", "Engineering Presentation award, 102/100", null, "worlds-award-stage"),
+                new("June 27", "Three California teams, one stage", "Sequoia Marine Solutions, Clovis Community College's Crush Depth and Cal Poly Pomona's Pomona Subsea Initiative together on stage when Pomona took second place in the Pioneer class.", "worlds-stage-friends"),
                 new("June 28", "Home to Fresno", null, "worlds-backdrop"),
             ]),
     ];

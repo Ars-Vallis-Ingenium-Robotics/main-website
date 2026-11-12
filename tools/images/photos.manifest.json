@@ -499,5 +499,221 @@
   "key": "worlds-group-outside",
   "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01745.JPG",
   "alt": "The SMS team together outside on the last competition day"
+ },
+ {
+  "key": "worlds-stage-friends",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 4 - Awards/Marketing Worthy/Copy of Copy of RAV01971.JPG",
+  "alt": "Sequoia Marine Solutions, Clovis Community College's Crush Depth and Cal Poly Pomona's Pomona Subsea Initiative together on the awards stage in St. John's",
+  "focus": "50% 60%",
+  "crop": [
+   0.04,
+   0.14,
+   0.96,
+   0.83
+  ]
+ },
+ {
+  "key": "worlds-badges",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00645.JPG",
+  "alt": "Team members holding up their new competitor badges at check-in",
+  "focus": "50% 55%"
+ },
+ {
+  "key": "worlds-badge-grin",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00669.JPG",
+  "alt": "A grinning team member pointing at his Worlds badge outside the venue",
+  "focus": "45% 40%"
+ },
+ {
+  "key": "worlds-parts",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00759.JPG",
+  "alt": "3D-printed thruster mounts laid out on the Fresno State table",
+  "focus": "50% 55%"
+ },
+ {
+  "key": "worlds-table-crowd",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00782.JPG",
+  "alt": "The team gathered around ROSIE and ADAM at the Fresno State display table",
+  "focus": "40% 50%"
+ },
+ {
+  "key": "worlds-mingle",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 2 - Opening Ceremonies/Marketing Worthy/Copy of RAV00940.JPG",
+  "alt": "SMS members meeting other teams in the lobby before the opening ceremony",
+  "focus": "50% 45%"
+ },
+ {
+  "key": "worlds-other-teams",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 2 - Opening Ceremonies/Marketing Worthy/Copy of RAV00971.JPG",
+  "alt": "Trading stories with a team from another country before the opening ceremony",
+  "focus": "50% 45%"
+ },
+ {
+  "key": "worlds-float-check",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01259.JPG",
+  "alt": "Two members checking ADAM's clear float tube before its run",
+  "focus": "50% 50%"
+ },
+ {
+  "key": "worlds-float-bench",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01300.JPG",
+  "alt": "A member tuning ADAM's electronics on the bench at the wave tank",
+  "focus": "50% 45%"
+ },
+ {
+  "key": "worlds-inspection",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01455.JPG",
+  "alt": "SMS walking a judge through ROSIE during safety inspection",
+  "focus": "50% 45%"
+ },
+ {
+  "key": "worlds-pilot",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01653.JPG",
+  "alt": "Our pilot in a captain's hat at the controls during a run",
+  "focus": "50% 40%"
+ },
+ {
+  "key": "worlds-lawn",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01680.JPG",
+  "alt": "The team hamming it up on the lawn outside the Marine Institute",
+  "focus": "50% 55%"
+ },
+ {
+  "key": "worlds-sunny",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01712.JPG",
+  "alt": "Team members chatting outside in the St. John's sunshine",
+  "focus": "45% 45%"
+ },
+ {
+  "key": "worlds-stairs",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 4 - Awards/Marketing Worthy/Copy of RAV01782.JPG",
+  "alt": "The team on a staircase before the awards ceremony",
+  "focus": "50% 45%"
+ },
+ {
+  "key": "worlds-lobby",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 4 - Awards/Marketing Worthy/Copy of RAV01799.JPG",
+  "alt": "Waiting in the lobby, lit purple, before the awards ceremony",
+  "focus": "50% 50%"
+ },
+ {
+  "key": "worlds-cheer",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 4 - Awards/Marketing Worthy/Copy of RAV01904.JPG",
+  "alt": "SMS cheering from the seats as the awards are announced",
+  "focus": "45% 50%"
+ },
+ {
+  "key": "worlds-huddle",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 4 - Awards/Marketing Worthy/Copy of RAV01983.JPG",
+  "alt": "The team huddled together after the awards ceremony",
+  "focus": "55% 50%"
+ },
+ {
+  "key": "worlds-selfie",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 4 - Awards/Marketing Worthy/Copy of RAV02005.JPG",
+  "alt": "A team selfie in the auditorium after the awards",
+  "focus": "45% 60%"
+ },
+ {
+  "key": "meeting0-friends",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-08-28 AVI Meeting 0/RAV03475.JPG",
+  "alt": "Two members throwing up peace signs at the first meeting of fall 2026",
+  "focus": "45% 50%"
+ },
+ {
+  "key": "meeting0-smiles",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-08-28 AVI Meeting 0/RAV03486.JPG",
+  "alt": "Two members smiling for the camera at the fall 2026 kickoff meeting",
+  "focus": "50% 50%"
+ },
+ {
+  "key": "worlds-puffins",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-08-28 AVI Meeting 0/RAV03492.JPG",
+  "alt": "Four plush puffins brought home from St. John's, Newfoundland",
+  "focus": "50% 50%"
+ },
+ {
+  "key": "traditions-float",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-02 Traditions Day/RAV03563.JPG",
+  "alt": "Talking to students about ADAM, the profiling float, at Traditions Day",
+  "focus": "50% 45%"
+ },
+ {
+  "key": "traditions-crowd",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-02 Traditions Day/RAV03599.JPG",
+  "alt": "Students crowding the AVI table and ROSIE at Traditions Day",
+  "focus": "45% 50%"
+ },
+ {
+  "key": "traditions-rosie",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-02 Traditions Day/RAV03632.JPG",
+  "alt": "AVI members with ROSIE under the umbrellas at Traditions Day",
+  "focus": "50% 50%"
+ },
+ {
+  "key": "meeting1-room",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-09 AVI Meeting 1/RAV03665.JPG",
+  "alt": "A packed room at the first general meeting of fall 2026",
+  "focus": "50% 50%"
+ },
+ {
+  "key": "meeting1-table",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-09 AVI Meeting 1/RAV03754.JPG",
+  "alt": "New members getting to know each other around a table at a fall meeting",
+  "focus": "50% 50%"
+ },
+ {
+  "key": "meeting3-leads",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-18 AVI Meeting 3/RAV03809.JPG",
+  "alt": "Introducing the new team leads at a September 2026 meeting",
+  "focus": "50% 45%"
+ },
+ {
+  "key": "workshop-pcb",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-25 AVI Meeting 4/RAV03832.JPG",
+  "alt": "A circuit board design workshop, with the layout projected on the wall",
+  "focus": "45% 45%"
+ },
+ {
+  "key": "workshop-safety",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-25 AVI Meeting 4/RAV03847.JPG",
+  "alt": "Going over PCB and circuit board safety at a fall 2026 workshop",
+  "focus": "60% 45%"
+ },
+ {
+  "key": "workshop-rosie-cad",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-02 AVI Meeting 5/RAV03885.JPG",
+  "alt": "Walking the club through ROSIE's CAD model at an October 2026 meeting",
+  "focus": "50% 40%"
+ },
+ {
+  "key": "workshop-laptop",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-02 AVI Meeting 5/RAV03904.JPG",
+  "alt": "A member writing code on a laptop during a workshop",
+  "focus": "50% 50%"
+ },
+ {
+  "key": "workshop-help",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-02 AVI Meeting 5/RAV03921.JPG",
+  "alt": "A member helping another with a workshop exercise in the computer lab",
+  "focus": "45% 45%"
+ },
+ {
+  "key": "mesa-oct-lawn",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-03 MESA Saturday Academy/RAV03995.JPG",
+  "alt": "AVI volunteers and MESA students outside at the October 2026 Saturday Academy",
+  "focus": "50% 50%"
+ },
+ {
+  "key": "phantom-contest",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-30 AVI Meeting 9 - BCP and Phantom Bash/RAV04628.JPG",
+  "alt": "The costume contest at the Phantom Bash meeting, October 2026",
+  "focus": "50% 50%"
+ },
+ {
+  "key": "bcp-laptops",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-30 AVI Meeting 9 - BCP and Phantom Bash/RAV04721.JPG",
+  "alt": "Members on laptops working on their Blank Check Projects",
+  "focus": "50% 45%"
  }
 ]

@@ -350,6 +350,74 @@ await test("no sideways scroll on any page at 360px", async () => {
   assert.deepEqual(wide, [], wide.join(", "));
 });
 
+await test("phone menu is a full-height sheet showing every link, on every page", async () => {
+  const ctx = await browser.newContext({ ...devices["iPhone 13"] });
+  const phone = await ctx.newPage();
+  for (const [r, y] of [["/", 2000], ["/about", 0], ["/sms/2026", 600]]) {
+    await phone.goto(BASE + r);
+    await phone.evaluate((y) => scrollTo(0, y), y);
+    await phone.waitForTimeout(300);
+    await phone.click(".nav--narrow summary");
+    const sheet = phone.locator(".nav--narrow[open] .nav__sheet");
+    const box = await sheet.boundingBox();
+    const vh = await phone.evaluate(() => innerHeight);
+    assert.ok(box && box.height > vh * 0.8, `${r}: sheet is only ${box?.height}px tall`);
+    const links = sheet.locator("a");
+    const n = await links.count();
+    assert.ok(n >= 5, `${r}: only ${n} links`);
+    for (let i = 0; i < n; i++) {
+      await links.nth(i).scrollIntoViewIfNeeded();
+      assert.ok(await links.nth(i).isVisible(), `${r}: link ${i} hidden`);
+      const h = (await links.nth(i).boundingBox()).height;
+      assert.ok(h >= 44, `${r}: link ${i} tap target ${h}px`);
+    }
+    await phone.keyboard.press("Escape");
+  }
+  await ctx.close();
+});
+
+await test("every zoomable photo has a caption", async () => {
+  const missing = [];
+  for (const r of routes) {
+    await page.goto(BASE + r);
+    const caps = await page.evaluate(() => [...document.querySelectorAll("figure.photo:not(.no-zoom) .photo__img")]
+      .filter((i) => !i.closest("a, button, .hero"))
+      .map((img) => { const f = img.closest("figure"); return [img.getAttribute("src"), (f.querySelector(".photo__caption")?.textContent || f.dataset.caption || img.alt || "").trim()]; }));
+    for (const [src, cap] of caps) if (cap.length < 12) missing.push(`${r} ${src}`);
+  }
+  assert.deepEqual(missing, [], missing.slice(0, 5).join(" | "));
+  await page.goto(BASE + "/");
+  await page.locator(".what__photo .photo__img").first().click();
+  assert.ok((await page.locator(".lightbox__cap").textContent()).trim().length > 12, "decorative photo opens with a caption");
+  await page.keyboard.press("Escape");
+});
+
+await test("collages are horizontal scroll bands", async () => {
+  for (const r of ["/", "/about", "/projects", "/sms/2026"]) {
+    await page.goto(BASE + r);
+    const s = page.locator(".collage-band__scroller").first();
+    const [sw, cw] = await s.evaluate((el) => [el.scrollWidth, el.clientWidth]);
+    assert.ok(sw > cw * 1.5, `${r}: band doesn't overflow sideways (${sw} vs ${cw})`);
+    await s.evaluate((el) => { el.scrollLeft = 400; });
+    assert.ok(await s.evaluate((el) => el.scrollLeft) > 0, `${r}: band doesn't scroll`);
+    assert.ok(await page.locator(".collage-band .photo").count() >= 16, `${r}: fewer than 16 collage photos`);
+  }
+});
+
+await test("landing shows the AVI dog and says Robotics", async () => {
+  await page.goto(BASE + "/");
+  assert.ok(await page.locator(".landing__mark .landing__dog").isVisible());
+  assert.match(await page.locator(".landing__mark").innerText(), /AVI\s*Robotics/i);
+  assert.match(await page.locator("#hero-title").getAttribute("aria-label"), /^AVI Robotics/);
+});
+
+await test("Worlds chapter has the three-team stage photo", async () => {
+  for (const r of ["/history", "/sms/2026"]) {
+    await page.goto(BASE + r);
+    assert.ok(await page.locator('img[src*="worlds-stage-friends"]').count() >= 1, r);
+  }
+});
+
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });
 
 await browser.close();

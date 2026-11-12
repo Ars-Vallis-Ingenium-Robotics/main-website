@@ -28,11 +28,16 @@
 
         <details class="nav nav--narrow">
             <summary class="nav__toggle">
-                <span>Menu</span>
+                <span class="nav__toggle-open">Menu</span><span class="nav__toggle-close" aria-hidden="true">Close</span>
                 @if (cartCount > 0) { <span class="badge" aria-hidden="true">@cartCount</span><span class="visually-hidden">, @cartCount @(cartCount == 1 ? "item" : "items") in cart</span> }
             </summary>
             <nav class="nav__sheet" aria-label="Main (menu)">
                 <NavLinks CartCount="cartCount" />
+                <ul class="nav__more">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></li>
+                    <li><a href="/donate">Donate</a></li>
+                </ul>
             </nav>
         </details>
     </div>
@@ -53,30 +58,32 @@
                 <Ein />. Donations are tax-deductible to the extent allowed by law.
             </p>
         </div>
-        <nav class="site-footer__links" aria-label="Footer">
-            <p class="eyebrow eyebrow--plain">Club</p>
-            <ul>
-                <li><a href="/about">About</a></li>
-                <li><a href="/history">History</a></li>
-                <li><a href="/leadership">Leadership</a></li>
-                <li><a href="/teams">Teams</a></li>
-                <li><a href="/projects">Projects &amp; workshops</a></li>
-                <li><a href="/join">Join</a></li>
-            </ul>
-        </nav>
-        <nav class="site-footer__links" aria-label="More">
-            <p class="eyebrow eyebrow--plain">More</p>
-            <ul>
-                <li><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></li>
-                <li><a href="/sponsors">Sponsor or donate</a></li>
-                <li><a href="@ClubFacts.MateUrl" target="_blank" rel="noopener">MATE ROV Competition</a></li>
-                <li><a href="/shop">Shop</a></li>
-                @if (Site.Value.DiscordInviteUrl is { } d) { <li><a href="@d" rel="noopener">Discord</a></li> }
-                @if (Site.Value.YouTubeUrl is { } yt) { <li><a href="@yt" rel="noopener">YouTube</a></li> }
-                @if (Site.Value.LinktreeUrl is { } lt) { <li><a href="@lt" rel="noopener">Linktree</a></li> }
-                @if (Site.Value.PortalUrl is { } p) { <li><a href="@p">Member portal</a></li> }
-            </ul>
-        </nav>
+        <div class="site-footer__col">
+            <nav class="site-footer__links" aria-label="Footer">
+                <p class="eyebrow eyebrow--plain">Club</p>
+                <ul>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/history">History</a></li>
+                    <li><a href="/leadership">Leadership</a></li>
+                    <li><a href="/teams">Teams</a></li>
+                    <li><a href="/projects">Projects &amp; workshops</a></li>
+                    <li><a href="/join">Join</a></li>
+                </ul>
+            </nav>
+            <nav class="site-footer__links" aria-label="More">
+                <p class="eyebrow eyebrow--plain">More</p>
+                <ul>
+                    <li><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></li>
+                    <li><a href="/sponsors">Sponsor or donate</a></li>
+                    <li><a href="@ClubFacts.MateUrl" target="_blank" rel="noopener">MATE ROV Competition</a></li>
+                    <li><a href="/shop">Shop</a></li>
+                    @if (Site.Value.DiscordInviteUrl is { } d) { <li><a href="@d" rel="noopener">Discord</a></li> }
+                    @if (Site.Value.YouTubeUrl is { } yt) { <li><a href="@yt" rel="noopener">YouTube</a></li> }
+                    @if (Site.Value.LinktreeUrl is { } lt) { <li><a href="@lt" rel="noopener">Linktree</a></li> }
+                    @if (Site.Value.PortalUrl is { } p) { <li><a href="@p">Member portal</a></li> }
+                </ul>
+            </nav>
+        </div>
     </div>
     <div class="wrap site-footer__base">
         <p class="mono">© @DateTime.UtcNow.Year @Site.Value.LongName</p>
