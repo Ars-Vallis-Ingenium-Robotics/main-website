@@ -4,10 +4,12 @@ Everything on the site that a human needs to confirm or supply. Search the code 
 `TODO(confirm)` to find the spots.
 
 ## Brand (blocks the visual pass)
-- [ ] Hex values from `BRAND SWATCH.aco`
-- [ ] Primary logo choice (AVI dog normal / black / white) and an SVG if one exists
-- [ ] SMS logo (current, not "phase out")
-- [ ] Porcine font: license for web? Where to use it?
+- [x] Hex values from `BRAND SWATCH.aco` (applied)
+- [x] Logos applied: AVI dog (header, hero, favicon), SMS logo (home, SMS page)
+- [ ] SVG versions of the dog and SMS logos, if they exist (sharper + smaller)
+- [ ] Porcine font: kit says public domain. Confirm before launch
+- [ ] Swatch vs. Branding doc disagree slightly (SMS white #f7f9f9 vs #ededed; blurple #0c63e6 vs #0d63e5). Using swatch
+- [ ] Acumin on the web? (needs an Adobe Fonts kit; Archivo is the stand-in)
 - [ ] "AVI DOG WITH TEXT.png" is 0 bytes on the drive. Re-export?
 
 ## Copy written as a draft (check it's true)

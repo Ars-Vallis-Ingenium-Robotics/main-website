@@ -2,41 +2,48 @@
 
 Read this before touching UI. AI agents: this file is loaded by the `avi-brand` skill.
 
-> **Status:** palette and logo are **placeholders**. The real brand kit lives in
-> `Media & Marketing/Branding` (BRAND SWATCH.aco, Porcine font, AVI dog + SMS logos).
-> When it's pulled in, change the `tokens` layer in `wwwroot/css/site.css` and this file.
-> Nothing else should need to change.
+> **Status:** official brand applied (Nov 2026) from `Media & Marketing/Branding`:
+> `BRAND SWATCH.aco`, the "Branding Resources" doc, the AVI dog / AVI letters / SMS logos,
+> and Porcine Heavy. Brand values live only in the `tokens` layer of `wwwroot/css/site.css`.
 
 ## Idea
 
-**An engineering club's drafting table.** Deep-water ink, drafting-paper off-white,
-one hi-vis amber for anything you're meant to press. Technical-drawing details
-(crop marks, title-block spec sheets) used **sparingly**. They're seasoning, not the meal.
+**The AVI robot dog's workshop.** AVI Black surfaces, cool SMS-white paper, one strong
+AVI Blurple for anything you're meant to press. The dog mascot and the Porcine Heavy
+display face carry the personality; technical-drawing details (crop marks, title-block
+spec sheets) are used sparingly. SMS pages switch the accent to Tiffany blue + cream.
 
 ## Tokens (`site.css` → `@layer tokens`)
 
-| Token | Value | Use |
-|---|---|---|
-| `--ink` | `#0b1220` | Dark surfaces, primary text, borders that matter |
-| `--paper` / `--paper-2` | `#f3f4f1` / `#e7e9e4` | Page background / alternate band |
-| `--signal` | `#ffb000` | Primary actions, highlights **on dark**, the one accent |
-| `--sea` / `--sea-deep` | `#19b3a4` / `#0f766e` | SMS team accent. `--sea` on dark only; `--sea-deep` on light |
-| `--text-muted` | `#4b5567` | Secondary text on paper (6.8:1) |
-| `--on-ink-muted` | `#a3aec3` | Secondary text on ink (8.4:1) |
-| `--line-input` | ink @ 55% | Input/chip borders (≥3:1) |
+| Token | Value | Source | Use |
+|---|---|---|---|
+| `--ink` | `#101011` | AVI BLACK (swatch) | Dark surfaces, primary text |
+| `--paper` / `--paper-2` | `#f7f9f9` / `#eceff1` | SMS WHITE (swatch) | Page background / alt band |
+| `--accent` | `#0c63e6` | AVI BLURPLE | Buttons, links, the support band. White text on it 5.3:1 |
+| `--accent-on-ink` | `#5a95f2` | derived | Blurple **text/focus on ink** (6.3:1). Raw blurple on ink is 3.6:1 |
+| `--slate` | `#364964` | dog dark grey | Strong secondary on light |
+| `--steel` | `#6c7283` | dog light grey | Decorative / large text only |
+| `--antenna` | `#911b1b` | dog antenna red | Tiny details only |
+| `--sms` | `#2cc0b6` | SMS TIFF BLUE | SMS accent **on ink only** (8.5:1; 2.1:1 on paper) |
+| `--sms-deep` | `#0f6f69` | derived | SMS teal as text on paper/cream |
+| `--sms-cream` | `#eee1cc` | SMS CREAM | SMS logo disc, SMS product backgrounds |
 
-**Contrast rules (checked):** amber is never text on paper (1.7:1). Sea is never text
-on paper (2.4:1). The focus ring is ink on light surfaces and amber on dark ones.
+Note: the Branding Resources doc lists SMS White as `#ededed` and Blurple as `#0d63e5`;
+the swatch file says `#f7f9f9` / `#0c63e6`. The site uses the swatch values.
+
+**Contrast rules (checked):** blurple is never body text on ink (use `--accent-on-ink`).
+Tiffany blue is never text on paper (use `--sms-deep`). Focus ring is blurple on light,
+`--accent-on-ink` on dark, white on the blurple band.
 
 ## Type
 
-- **Archivo** (variable, self-hosted, `wdth` 62–125). Display text uses
-  `font-stretch: 118–125%` at weight 800–850, tight tracking. Body uses normal width.
-- **JetBrains Mono** for labels, prices, codes, eyebrow text. Uppercase,
-  tracking ≤ 0.08em, never body copy.
+- **Porcine Heavy** (`--font-display`, self-hosted woff2): headings, wordmark, product
+  names. One weight; lowercase renders as small caps. Never body text, labels or buttons.
+  Font kit says "License: none (public domain)", by Unbranded Design Studio. Confirm.
+- **Archivo** (variable, self-hosted) for body and UI. Stand-in for **Acumin**, the brand's
+  Adobe body face, which isn't licensed for web use without an Adobe Fonts kit.
+- **JetBrains Mono** for labels, prices, codes. Uppercase, tracking ≤ 0.08em.
 - Scale: `--step--1 … --step-5` (fluid `clamp`). One h1 per page.
-- When the brand kit arrives: decide where **Porcine** fits (probably the wordmark /
-  hero display only) and check its license allows web embedding.
 
 ## Layout
 
@@ -49,7 +56,15 @@ on paper (2.4:1). The focus ring is ink on light surfaces and amber on dark ones
 
 `Eyebrow`, `PageHero`, `Figure` (crop marks + caption, honest "photo needed" slot),
 `SpecSheet` (title-block `<dl>`), `ProductCard`, `OrderSummary`, `Price`, buttons
-(`btn--signal | ink | sea | ghost | ghost-on-ink`), `link-arrow`, `tag`, `alert`, `note`.
+(`btn--accent | ink | sms | ghost | ghost-on-ink`), `link-arrow`, `tag`, `alert`, `note`.
+
+## Logos (`wwwroot/img/brand/`, generated from the 12800px masters)
+
+- `avi-dog.webp` (hero), `avi-dog-sm.webp` (header), `avi-dog-white.webp`
+- `avi-letters-white|black.webp`: the hand-drawn AVI letter mark
+- `sms-logo.webp` (cream disc), `sms-logo-white.webp`
+- `favicon.ico`, `icon-32/180/192/512.png`, `/site.webmanifest`
+- Don't use anything from `Logo/SMS/phase out/`.
 
 ## Don'ts (the "AI website" tells)
 

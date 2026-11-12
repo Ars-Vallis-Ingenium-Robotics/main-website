@@ -17,12 +17,13 @@
                 and teach each other everything along the way. No experience needed to start.
             </p>
             <div class="hero__actions">
-                <a class="btn btn--signal" href="/join">Join the club</a>
+                <a class="btn btn--accent" href="/join">Join the club</a>
                 <a class="btn btn--ghost-on-ink" href="/sponsors">Sponsor a season</a>
             </div>
         </div>
-        @* TODO(photo): when a strong team/ROV photo exists, add it back here:
-           <Figure Number="01" Src="/img/..." Alt="..." Caption="..." Ratio="4 / 5" Tone="ink" Class="hero__figure" Eager="true" /> *@
+        <div class="hero__dog">
+            <img src="/img/brand/avi-dog.webp" alt="The AVI robot dog mascot" width="1200" height="1506" fetchpriority="high" />
+        </div>
     </div>
 </section>
 
@@ -55,7 +56,9 @@
 
 <section class="section section--ink team-feature">
     <div class="wrap team-feature__grid">
-        <Figure Number="02" Caption="SMS ROV during a mission run" Ratio="16 / 10" Tone="sea" />
+        <div class="team-feature__logo">
+            <img src="/img/brand/sms-logo.webp" alt="Sequoia Marine Solutions logo" width="720" height="720" loading="lazy" />
+        </div>
         <div>
             <Eyebrow Class="eyebrow--on-ink">Our competition team</Eyebrow>
             <h2 class="h2">Sequoia Marine Solutions</h2>
@@ -64,7 +67,7 @@
                 underwater missions, writes the technical documentation and pitches it to judges like a real engineering firm.
             </p>
             <SpecSheet Class="spec--on-ink" Rows="@smsSpec" />
-            <a class="btn btn--sea" href="/teams/sms">Meet the SMS team</a>
+            <a class="btn btn--sms" href="/teams/sms">Meet the SMS team</a>
         </div>
     </div>
 </section>
@@ -87,17 +90,17 @@
     </div>
 </section>
 
-<section class="section section--signal">
+<section class="section section--accent">
     <div class="wrap support">
         <div>
-            <Eyebrow Class="eyebrow--on-signal">Support</Eyebrow>
+            <Eyebrow Class="eyebrow--on-accent">Support</Eyebrow>
             <h2 class="h2">Help us get in the water.</h2>
         </div>
         <div class="support__body">
             <p>Sponsors cover parts, pool time and travel to competition. In return your logo goes on our vehicle, shirts and this site.</p>
             <div class="support__actions">
                 <a class="btn btn--ink" href="/sponsors">Become a sponsor</a>
-                <a class="link-arrow link-arrow--ink" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
+                <a class="link-arrow link-arrow--on-accent" href="@Site.Value.SponsorPacketPath">Sponsorship packet (PDF)</a>
             </div>
         </div>
     </div>

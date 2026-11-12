@@ -25,5 +25,6 @@ description: AVI Robotics / Sequoia Marine Solutions brand and UI rules for avir
 - `Porcine Font.zip`: display font. Check license before web use.
 - `Branding Resources` (Google Doc): read for usage rules.
 
-TODO: once pulled in, replace the placeholder palette in DESIGN.md + site.css and
-list the exact hex values here.
+Official values (applied): AVI Black #101011, AVI Blurple #0c63e6, dog greys #364964 /
+#6c7283, antenna red #911b1b, SMS Tiffany #2cc0b6, SMS cream #eee1cc, SMS white #f7f9f9.
+Display font: Porcine Heavy. Brand body font Acumin (Adobe) → Archivo on the web.

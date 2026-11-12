@@ -13,7 +13,7 @@
             <p class="product-card__meta">
                 <Price Cents="Product.PriceCents" />
                 @if (!Catalog.IsOrderable(Product)) { <span class="tag">Closed</span> }
-                else if (Product.OrdersClose is { } close) { <span class="tag tag--signal">Order by @close.ToString("MMM d")</span> }
+                else if (Product.OrdersClose is { } close) { <span class="tag tag--accent">Order by @close.ToString("MMM d")</span> }
             </p>
         </div>
     </a>

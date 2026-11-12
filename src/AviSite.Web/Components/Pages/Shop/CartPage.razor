@@ -17,7 +17,7 @@
         @if (quote.IsEmpty)
         {
             <p class="lede">Nothing here yet.</p>
-            <a class="btn btn--signal" href="/shop">Browse gear</a>
+            <a class="btn btn--accent" href="/shop">Browse gear</a>
         }
         else
         {
@@ -52,7 +52,7 @@
                 <p class="muted">@Store.Value.PickupNote</p>
                 @if (Store.Value.OrdersOpen)
                 {
-                    <a class="btn btn--signal btn--lg" href="/shop/checkout">Check out</a>
+                    <a class="btn btn--accent btn--lg" href="/shop/checkout">Check out</a>
                 }
                 else
                 {

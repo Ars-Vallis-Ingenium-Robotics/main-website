@@ -2,6 +2,7 @@
     <div class="wrap page-hero__inner">
         @if (Kicker is not null) { <p class="eyebrow eyebrow--on-ink">@Kicker</p> }
         <h1 class="page-hero__title">@Title</h1>
+        @if (Logo is not null) { <img class="page-hero__logo" src="@Logo" alt="@LogoAlt" width="720" height="720" /> }
         @if (ChildContent is not null) { <div class="page-hero__lede">@ChildContent</div> }
     </div>
 </section>
@@ -10,5 +11,7 @@
     [Parameter, EditorRequired] public string Title { get; set; } = "";
     [Parameter] public string? Kicker { get; set; }
     [Parameter] public string? Tone { get; set; }
+    [Parameter] public string? Logo { get; set; }
+    [Parameter] public string? LogoAlt { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 }
