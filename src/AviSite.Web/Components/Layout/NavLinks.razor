@@ -12,7 +12,13 @@
             </NavLink>
         </li>
     }
-    <li><CopyLink Link="@site["nav.join"].Link()" Class="btn btn--accent btn--sm" /></li>
+    @{ var join = site["nav.join"].Link(); var joinShort = site["nav.join"].Text("short"); }
+    <li>
+        <a class="btn btn--accent btn--sm nav__join" aria-label="@join.PlainText" href="@join.Href" target="@join.Target" rel="@join.Rel">
+            @* Full label when there's room; the short one ("Join") when the bar gets tight. *@
+            <span class="nav__join-long">@join.Text</span><span class="nav__join-short" aria-hidden="true">@joinShort</span>
+        </a>
+    </li>
 </ul>
 
 @code {

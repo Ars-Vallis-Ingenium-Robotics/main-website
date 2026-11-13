@@ -63,27 +63,54 @@ admin pickup + CSV, phone layout, and the mobile menu.
 
 | Key | Where | Notes |
 |---|---|---|
-| `PayPal:Mode` | env | `Fake` (dev only), `Sandbox`, `Live`. Production refuses anything but `Live` |
+| `PayPal:Mode` | env | `Fake` (dev only), `Sandbox`, `Live`, `Off` (no online payments; donate page shows offline giving). Outside Development, Sandbox needs `PayPal:AllowSandboxOutsideDevelopment` |
 | `PayPal:ClientId` / `ClientSecret` / `WebhookId` | env / user-secrets | From developer.paypal.com → Apps & Credentials |
 | `Admin:PasswordHash` | env | `dotnet run --project src/AviSite.Web -- hash-password` |
 | `Site:*` | appsettings / env | Discord, Instagram, email, portal URL |
-| `Store:OrdersOpen` | appsettings / env | Close the shop between runs |
+| `Store:OrdersOpen` | appsettings / env | Products visible, checkout closed |
+| `Store:ComingSoon` | appsettings / env | Between drops: /shop shows "next drop" (content/pages/shop.md › coming-soon); product/cart/checkout redirect to /shop |
+| `Site:NoIndex` | appsettings | Testing only: `X-Robots-Tag: noindex` |
 
 PayPal webhook URL to register: `https://avirobotics.org/api/paypal/webhook`
 (events: `PAYMENT.CAPTURE.COMPLETED`, `.DENIED`, `.REFUNDED`, `.REVERSED`).
 
-## Deploy (Linode, alongside SecWeb)
+## Environments
 
-`deploy/nginx/avirobotics.org.conf` and `deploy/systemd/avisite.service` have the
-server setup steps in their comments. `.github/workflows/deploy.yml` publishes over
-SSH; it's **manual** (`workflow_dispatch`) for now.
+| | Testing | Production |
+|---|---|---|
+| Branch | `site-v2` | `main` |
+| URLs | testing.voss.industries (SMS at `/sms`) | avirobotics.org, www → apex, sms.avirobotics.org |
+| `ASPNETCORE_ENVIRONMENT` | `Staging` → `appsettings.Staging.json` | `Production` → `appsettings.Production.json` |
+| Store | open, PayPal sandbox | **coming soon**, PayPal `Off` (set `PayPal__Mode=Live` + creds in prod.env to turn donations on) |
+| Service / port | `avi-site-testing` / 5081 | `avi-site-prod` / 5080 |
+| Deploys | every push to `site-v2` (CI) | every push to `main` (CI) |
+| Orders + keys | inside the release (throwaway) | `~/.local/share/avi-site-prod/data` (kept) |
 
-## Before cutover from GitHub Pages
+**Ship to prod:** once testing looks right, `git push origin site-v2:main` (fast-forward).
+CI tests it, runs `deploy-site-prod <sha>` on the server and checks avirobotics.org,
+sms.avirobotics.org and that the shop says coming soon. **Roll back:** push the older commit to
+`main`, or on the server run the prod deploy with an older SHA (releases are kept).
 
-1. ✅ Done on `site-v2`: `showcase/`, `countdown/`, `vintagedays/`, `dynamicqr/`, `Files/`,
-   `Logos/` live in `src/AviSite.Web/legacy-static/` and are served unchanged, so printed
-   QR codes keep working. The old construction page is in `archive/`.
-2. Point DNS for avirobotics.org at the Linode, run certbot, then remove `CNAME` / Pages.
+Server files: `deploy/systemd/avi-site-{prod,testing}.service` (user units),
+`deploy/nginx/*.conf`, `deploy/scripts/deploy-{staging,production}.sh`.
+
+## One-time production setup (server + DNS)
+
+1. Testing unit: make sure it has `ASPNETCORE_ENVIRONMENT=Staging` (reference copy in
+   `deploy/systemd/avi-site-testing.service`); sandbox creds in `~/.config/avi-site/testing.env`.
+2. Prod unit: copy `deploy/systemd/avi-site-prod.service` to `~/.config/systemd/user/`,
+   optional `~/.config/avi-site/prod.env` (Admin hash; PayPal Live later), `systemctl --user daemon-reload && systemctl --user enable avi-site-prod`.
+3. Deploy hook: copy the `deploy-site-v2` forced command to `deploy-site-prod` pointing at
+   `deploy/scripts/deploy-production.sh` and root `~/.local/share/avi-site-prod`; new key pair,
+   `command=` restricted in `authorized_keys`; private key → GitHub secret `PROD_DEPLOY_KEY`.
+4. First prod release by hand: `deploy-site-prod <site-v2 sha>`; check `curl 127.0.0.1:5080/healthz`.
+5. nginx: install the new `sms.avirobotics.org.conf` (now → 5080) and reload. SMS is on prod from here.
+6. DNS: point `avirobotics.org` + `www` (A/AAAA) at the Linode, turn GitHub Pages off in repo
+   settings, get the cert (command in `deploy/nginx/avirobotics.org.conf`), install that conf, reload.
+7. `git push origin site-v2:main`. From now on prod only changes through `main`.
+
+QR-code paths (`showcase/`, `countdown/`, `vintagedays/`, `dynamicqr/`, `Files/`, `Logos/`)
+are served unchanged from `src/AviSite.Web/legacy-static/`.
 
 ## Known draft limitations
 

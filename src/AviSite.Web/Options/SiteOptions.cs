@@ -14,6 +14,9 @@ public sealed class SiteOptions
     public string? LinktreeUrl { get; set; } = "https://linktr.ee/avi_robotics";
     public string? PortalUrl { get; set; }
     public string SponsorPacketPath { get; set; } = "/Files/aviSponsorship.pdf";
+
+    /// <summary>Testing deployments: send X-Robots-Tag: noindex so search engines never list them.</summary>
+    public bool NoIndex { get; set; }
 }
 
 /// <summary>Legal nonprofit facts shown in the footer and on the support page. Bound from "Nonprofit".</summary>
@@ -37,6 +40,12 @@ public sealed class StoreOptions
     /// <summary>Master switch. When false the shop shows products but checkout is closed.</summary>
     public bool OrdersOpen { get; set; } = true;
 
+    /// <summary>
+    /// Between drops: /shop shows the "next drop" panel (content/pages/shop.md › coming-soon) instead of products,
+    /// and product, cart and checkout URLs redirect to /shop. Donations are unaffected.
+    /// </summary>
+    public bool ComingSoon { get; set; }
+
     public string PickupNote { get; set; } =
         "Orders are picked up at a club meeting. We'll email you when shirts arrive.";
 
@@ -44,7 +53,8 @@ public sealed class StoreOptions
     public int MaxLinesPerOrder { get; set; } = 20;
 }
 
-public enum PayPalMode { Fake, Sandbox, Live }
+/// <summary>Off = no online payments at all (donate page shows the offline ways to give). Fake is Development-only.</summary>
+public enum PayPalMode { Fake, Sandbox, Live, Off }
 
 /// <summary>PayPal REST credentials. Bound from the "PayPal" config section. Secrets come from env vars / user-secrets, never appsettings.json.</summary>
 public sealed class PayPalOptions

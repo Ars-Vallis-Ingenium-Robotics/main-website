@@ -30,6 +30,7 @@
       return `<li><a class="profile__link profile__link--${esc(l.kind)}" href="${esc(l.href)}"${ext ? ' target="_blank" rel="noopener me"' : ""}>${esc(l.label)}</a></li>`;
     }).join("");
     return `
+      <button class="sheet__close" type="button" data-person-close aria-label="Close">×</button>
       <div class="sheet__head">
         ${photo}
         <div>
@@ -38,7 +39,6 @@
           ${p.headline ? `<p class="person-sheet__headline">${esc(p.headline)}</p>` : ""}
           ${p.major ? `<p class="muted">${esc(p.major)}</p>` : ""}
         </div>
-        <button class="sheet__close" type="button" data-person-close aria-label="Close">×</button>
       </div>
       ${roles ? `<ul class="person-sheet__roles">${roles}</ul>` : ""}
       ${p.bio ? `<div class="profile__bio">${p.bio}</div>` : ""}

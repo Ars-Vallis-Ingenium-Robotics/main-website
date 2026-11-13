@@ -166,6 +166,12 @@
   .nav__link:hover { background: var(--ink-3); }
   .nav__link.active { box-shadow: inset 0 -2px 0 var(--accent-on-ink); }
   .nav--narrow { display: none; }
+  .nav__join { white-space: nowrap; }
+  .nav__join-short { display: none; }
+  @media (max-width: 60rem) {
+    .nav--wide .nav__join-long { display: none; }
+    .nav--wide .nav__join-short { display: inline; }
+  }
   @media (max-width: 47.99rem) {
     .nav--wide { display: none; }
     .nav--narrow { display: block; position: relative; }
@@ -284,6 +290,10 @@
   .tag--needsreview, .tag--denied { background: var(--danger); color: var(--white); border-color: var(--danger); }
   .tag--refunded, .tag--cancelled { color: var(--text-muted); }
   .alert { padding: var(--s-3) var(--s-4); margin-bottom: var(--s-5); border-left: 4px solid var(--danger); background: #fbeaea; color: #5c0f0a; }
+  .shop-soon__inner { display: grid; gap: var(--s-5); justify-items: start; max-width: 44rem; }
+  .shop-soon__note { font-size: var(--step-1); }
+  .shop-soon__actions { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+  .donate-offline { display: grid; gap: var(--s-4); padding: var(--s-5); border-left: 4px solid var(--accent); background: var(--paper-2, #f4f1ea); font-size: 1.05rem; }
   .alert--ok { border-color: var(--ok); background: #e5f3ec; color: #0c3b24; }
   .alert ul { margin: 0; padding-left: 1.1rem; }
   .note { font-family: var(--font-mono); font-size: 0.8rem; padding: var(--s-3) var(--s-4); border: 1px dashed var(--line-strong); color: var(--text-muted); background: rgb(12 99 230 / 0.06); }
@@ -1038,10 +1048,11 @@
   .sheet[open] { animation: sheet-in 0.25s var(--ease); }
   @keyframes sheet-in { from { opacity: 0; transform: translateY(16px) scale(0.98); } }
   .sheet:target { display: block; position: fixed; inset: 5vh auto auto 50%; transform: translateX(-50%); z-index: 100; }
-  .sheet__head { display: grid; grid-template-columns: auto 1fr auto; gap: var(--s-5); align-items: start; margin-bottom: var(--s-5); }
-  .sheet__head:not(:has(.avatar)) { grid-template-columns: 1fr auto; }
+  .sheet__head { display: grid; grid-template-columns: auto 1fr; gap: var(--s-5); align-items: start; margin-bottom: var(--s-5); }
+  .sheet__head:not(:has(.avatar)) { grid-template-columns: 1fr; }
   .sheet__title { font-size: var(--step-2); font-weight: 850; font-stretch: 120%; line-height: 1.05; margin-bottom: var(--s-2); }
-  .sheet__close { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgb(6 38 43 / 0.2); font-size: 1.6rem; line-height: 1; text-decoration: none; color: inherit; }
+  /* Close is the dialog's first child, floated right and sticky, so it stays in reach however far the sheet scrolls. */
+  .sheet__close { position: sticky; top: calc(var(--s-3) - var(--s-6)); z-index: 3; float: right; margin: 0 0 var(--s-3) var(--s-4); display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgb(6 38 43 / 0.2); background: var(--white); box-shadow: 0 4px 14px -6px rgb(6 38 43 / 0.45); font-size: 1.6rem; line-height: 1; text-decoration: none; color: inherit; }
   .sheet__close:hover { background: var(--sms-ink); color: var(--white); }
   .sheet__photo { border-radius: 12px; overflow: hidden; margin-bottom: var(--s-5); }
   .sheet__h { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sms-teal-deep); margin: var(--s-5) 0 var(--s-3); }
@@ -1553,10 +1564,15 @@
   .person-link:hover { text-decoration-color: currentColor; }
   .person__name .person-link { text-decoration-color: transparent; }
   .person__name .person-link:hover { text-decoration-color: currentColor; }
-  button.sheet__close { background: none; cursor: pointer; font: inherit; font-size: 1.6rem; }
+  button.sheet__close { cursor: pointer; font: inherit; font-size: 1.6rem; }
   .person-sheet { width: min(30rem, calc(100vw - 2 * var(--gutter))); color: var(--ink); }
-  .person-sheet .sheet__head { grid-template-columns: auto 1fr auto; align-items: center; }
-  .person-sheet__photo { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: var(--paper-2); }
+  .person-sheet .sheet__head { grid-template-columns: auto 1fr; align-items: center; }
+  .person-sheet__photo { width: 96px; height: 96px; min-width: 96px; aspect-ratio: 1; border-radius: 50%; object-fit: cover; background: var(--paper-2); }
+  @media (max-width: 30rem) {
+    .person-sheet__photo { width: 72px; height: 72px; min-width: 72px; }
+    .person-sheet .sheet__head { gap: var(--s-4); }
+    .person-sheet .sheet__title { font-size: var(--step-1); }
+  }
   .person-sheet__photo--initials { display: grid; place-items: center; font-family: var(--font-mono); font-weight: 700; font-size: 1.6rem; color: var(--text-muted); }
   .person-sheet__pronouns { font-size: 0.75rem; letter-spacing: 0.08em; color: var(--text-muted); }
   .person-sheet__headline { font-weight: 600; }

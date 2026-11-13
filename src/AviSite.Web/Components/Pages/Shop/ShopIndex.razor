@@ -6,6 +6,26 @@
 <PageTitle>@c.Meta("title")</PageTitle>
 <HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
 
+@if (Store.Value.ComingSoon)
+{
+    var soon = c["coming-soon"];
+    <PageHero Kicker="@soon.Text("kicker")" Title="@soon.Text("title")">
+        <p>@soon.Inline()</p>
+    </PageHero>
+    <section class="section shop-soon" data-store="coming-soon">
+        <div class="wrap shop-soon__inner">
+            <p class="shop-soon__note">@c["coming-soon.note"].Inline()</p>
+            <div class="shop-soon__actions">
+                @foreach (var (b, i) in c["coming-soon.buttons"].Links().Select((b, i) => (b, i)))
+                {
+                    <a class="btn @(i == 0 ? "btn--accent" : "btn--ghost")" href="@b.Href" target="@b.Target" rel="@b.Rel">@b.Text</a>
+                }
+            </div>
+        </div>
+    </section>
+}
+else
+{
 <PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
     <p>@c["hero"].Inline() @Store.Value.PickupNote</p>
 </PageHero>
@@ -19,6 +39,7 @@
         </ul>
     </div>
 </section>
+}
 
 @code {
     [SupplyParameterFromQuery] public string? Error { get; set; }

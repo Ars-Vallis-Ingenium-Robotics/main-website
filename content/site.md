@@ -23,6 +23,9 @@ crush-depth: https://cloviscollege.edu/academics/guided-pathways/stem-computer-s
 - [Shop](/shop)
 
 ## nav.join
+<!-- short: what the button says when the menu bar is tight. -->
+short: Join
+
 [Join the club](/join)
 
 <!-- Extra links at the bottom of the phone menu. -->

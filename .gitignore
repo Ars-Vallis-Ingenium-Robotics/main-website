@@ -4,7 +4,7 @@ obj/
 *.user
 publish/
 **/App_Data/
-appsettings.Production.json
+# appsettings.*.json hold switches only; secrets live in the server env files (deploy/systemd/*.service).
 *.env
 .env
 node_modules/

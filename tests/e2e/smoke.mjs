@@ -460,6 +460,58 @@ await test("names open a person pop-up; profiles show only what's shared", async
   assert.equal((await page.goto(BASE + "/people/not-a-member")).status(), 404);
 });
 
+await test("every pop-up keeps its close button in view while scrolling (sticky)", async () => {
+  await page.setViewportSize({ width: 390, height: 640 });
+  const check = async (dlg, what) => {
+    await dlg.waitFor({ state: "visible" });
+    const r = await dlg.evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+      const c = el.querySelector(".sheet__close").getBoundingClientRect(), b = el.getBoundingClientRect();
+      return { scrolled: el.scrollTop > 0, inView: c.top >= b.top - 1 && c.bottom <= b.bottom + 1 };
+    });
+    assert.ok(r.inView, `${what}: close button scrolled out of view`);
+    return r;
+  };
+  try {
+    await page.goto(BASE + "/history");
+    const open = page.locator(".timeline__open").first();
+    const sub = page.locator("#" + (await open.getAttribute("data-sub")));
+    await open.click();
+    await sub.locator(".subtl__card").first().click();
+    await check(page.locator("dialog.moment-sheet[open]"), "moment");
+    await page.locator("dialog.moment-sheet[open] .sheet__close").click();
+    await page.locator("dialog.moment-sheet[open]").waitFor({ state: "detached" }).catch(() => {});
+    assert.equal(await page.locator("dialog.moment-sheet[open]").count(), 0, "moment closes from its sticky button");
+
+    await page.goto(BASE + "/sms/company");
+    await page.locator("a[href^='#crew-']").first().click();
+    const scrolled = await check(page.locator("dialog[open]"), "crew");
+    assert.ok(scrolled.scrolled, "crew sheet is long enough on a phone to actually scroll");
+
+    await page.goto(BASE + "/leadership");
+    await page.locator("a.person-link").first().click();
+    await check(page.locator("dialog.person-sheet[open]"), "person");
+  } finally {
+    await page.setViewportSize({ width: 1280, height: 900 });
+  }
+});
+
+await test("join button never wraps: full label when roomy, \"Join\" when tight", async () => {
+  try {
+    for (const [w, label] of [[800, "Join"], [1280, "Join the club"]]) {
+      await page.setViewportSize({ width: w, height: 700 });
+      await page.goto(BASE + "/about");
+      const j = page.locator(".nav--wide .nav__join");
+      assert.equal((await j.innerText()).trim(), label, `label at ${w}px`);
+      assert.equal(await j.getAttribute("aria-label"), "Join the club");
+      assert.ok((await j.boundingBox()).height < 48, `join button stays one line at ${w}px`);
+      assert.equal(await page.evaluate(() => { const b = document.querySelector(".site-header__bar"); return b.scrollWidth <= b.clientWidth + 1; }), true, `header fits at ${w}px`);
+    }
+  } finally {
+    await page.setViewportSize({ width: 1280, height: 900 });
+  }
+});
+
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });
 
 await browser.close();

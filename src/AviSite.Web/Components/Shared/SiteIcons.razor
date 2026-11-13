@@ -1,0 +1,29 @@
+@* Favicons + theme colour, rendered straight into App.razor's <head>.
+   (A layout's <HeadContent> loses to the page's own <HeadContent>, which is why icons went missing.) *@
+@inject IHttpContextAccessor Http
+
+@if (sms)
+{
+    <meta name="theme-color" content="#06262b" />
+    <link rel="icon" href="/img/brand/sms-favicon.ico" sizes="any" />
+    <link rel="icon" href="/img/brand/sms-icon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/img/brand/sms-icon-180.png" />
+}
+else
+{
+    <meta name="theme-color" content="#101011" />
+    <link rel="icon" href="/img/brand/favicon.ico" sizes="any" />
+    <link rel="icon" href="/img/brand/icon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/img/brand/icon-180.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+}
+
+@code {
+    private bool sms;
+    protected override void OnInitialized()
+    {
+        var ctx = Http.HttpContext;
+        var path = ctx?.Request.Path.Value ?? "/";
+        sms = ctx.OnSmsHost() || path.Equals("/sms", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/sms/", StringComparison.OrdinalIgnoreCase);
+    }
+}

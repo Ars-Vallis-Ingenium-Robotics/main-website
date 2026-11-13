@@ -76,6 +76,7 @@
 {
     var slug = People.SlugOf(l.Name);
     <dialog class="sheet" id="person-@slug" aria-labelledby="person-@slug-name">
+        <a class="sheet__close" href="#crews-title" data-dialog-close aria-label="Close">×</a>
         <div class="sheet__head">
             <Avatar Name="@l.Name" Size="120" />
             <div>
@@ -83,7 +84,6 @@
                 <h3 class="sheet__title" id="person-@slug-name">@l.Name</h3>
                 <p class="muted">@l.Major</p>
             </div>
-            <a class="sheet__close" href="#crews-title" data-dialog-close aria-label="Close">×</a>
         </div>
         <ul class="sheet__list">@foreach (var d in l.Did) { <li>@Copy.Inline(d)</li> }</ul>
         <ProfileLinks Slug="@slug" />
@@ -93,13 +93,13 @@
 @foreach (var cr in Data.SmsCrews)
 {
     <dialog class="sheet" id="crew-@cr.Id" aria-labelledby="crew-@cr.Id-name">
+        <a class="sheet__close" href="#crews-title" data-dialog-close aria-label="Close">×</a>
         <div class="sheet__head">
             <div>
                 <p class="sms-kicker sms-kicker--dark">Crew</p>
                 <h3 class="sheet__title" id="crew-@cr.Id-name">@cr.Name</h3>
                 <p>@Copy.Inline(cr.Summary)</p>
             </div>
-            <a class="sheet__close" href="#crews-title" data-dialog-close aria-label="Close">×</a>
         </div>
         @if (cr.Photo is not null) { <Photo Key="@cr.Photo" Sizes="(min-width: 56rem) 40rem, 100vw" Class="sheet__photo" Ratio="16 / 9" /> }
         <h4 class="sheet__h">What they built</h4>

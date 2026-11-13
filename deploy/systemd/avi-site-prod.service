@@ -1,0 +1,28 @@
+# ~/.config/systemd/user/avi-site-prod.service   (user hermes_990-005, next to avi-site-testing.service)
+#   systemctl --user daemon-reload && systemctl --user enable --now avi-site-prod
+#   loginctl enable-linger hermes_990-005   (already on if testing survives reboots)
+# Optional secrets in ~/.config/avi-site/prod.env (chmod 600), e.g.:
+#   Admin__PasswordHash=pbkdf2-sha256$...      (dotnet run --project src/AviSite.Web -- hash-password)
+#   PayPal__Mode=Live  PayPal__ClientId=...  PayPal__ClientSecret=...  PayPal__WebhookId=...
+# Without a PayPal block prod runs with payments Off (appsettings.Production.json).
+
+[Unit]
+Description=AVI Robotics site - production (avirobotics.org, sms.avirobotics.org)
+After=network-online.target
+
+[Service]
+WorkingDirectory=%h/.local/share/avi-site-prod/current
+ExecStart=/usr/bin/dotnet %h/.local/share/avi-site-prod/current/AviSite.Web.dll
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5080
+Environment=Store__DataDirectory=%h/.local/share/avi-site-prod/data
+Environment=DOTNET_NOLOGO=1
+EnvironmentFile=-%h/.config/avi-site/prod.env
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+SyslogIdentifier=avi-site-prod
+UMask=0077
+
+[Install]
+WantedBy=default.target

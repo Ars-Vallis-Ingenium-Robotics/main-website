@@ -18,6 +18,14 @@
             <h1 class="h1">@c["intro"].Inline("title")</h1>
             <p class="lede">@c["intro"].Inline()</p>
 
+            @if (PayPal.Value.Mode == PayPalMode.Off)
+            {
+                <div class="donate-offline" data-payments="off">
+                    @c["offline"].Html()
+                </div>
+            }
+            else
+            {
             <EditForm Model="Model!" FormName="donate" OnValidSubmit="SubmitAsync" OnInvalidSubmit="() => hasErrors = true" method="post" class="form" novalidate>
                 <DataAnnotationsValidator />
                 <div role="alert" class="validation-wrap"><ValidationSummary class="alert" /></div>
@@ -67,6 +75,7 @@
                 <button class="btn btn--accent btn--lg" type="submit">Continue to PayPal</button>
                 <p class="muted small">@c["card-note"].Inline()</p>
             </EditForm>
+            }
         </div>
 
         <aside class="checkout__summary donate-aside" aria-label="Where your gift goes">
@@ -92,6 +101,7 @@
 
     private async Task SubmitAsync()
     {
+        if (PayPal.Value.Mode == PayPalMode.Off) { error = "Online donations are off right now."; hasErrors = true; return; }
         var dollars = Model!.Preset is > 0 ? Model.Preset.Value : Model.Custom ?? 0;
         var cents = dollars * 100;
         if (cents < Donations.MinCents || cents > Donations.MaxCents)

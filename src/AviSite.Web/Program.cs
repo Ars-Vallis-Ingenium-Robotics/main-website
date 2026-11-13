@@ -62,6 +62,10 @@ if (payPalMode == PayPalMode.Fake)
         throw new InvalidOperationException("PayPal:Mode=Fake is only allowed in Development. Set Sandbox or Live with credentials.");
     services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
 }
+else if (payPalMode == PayPalMode.Off)
+{
+    services.AddSingleton<IPaymentGateway, DisabledPaymentGateway>();
+}
 else
 {
     if (string.IsNullOrWhiteSpace(builder.Configuration["PayPal:ClientId"]) || string.IsNullOrWhiteSpace(builder.Configuration["PayPal:ClientSecret"]))
@@ -109,6 +113,7 @@ var app = builder.Build();
 
 app.UseForwardedHeaders();
 app.UseSmsHostRouting(builder.Configuration["SmsSite:Host"] ?? "sms.avirobotics.org");
+app.UseStoreComingSoon();
 app.UseRouting(); // explicit, so routing sees the rewritten /sms path
 if (!app.Environment.IsDevelopment())
 {
@@ -116,6 +121,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseBaselineSecurityHeaders();
+if (app.Configuration.GetValue<bool>("Site:NoIndex"))
+    app.Use((ctx, next) => { ctx.Response.Headers["X-Robots-Tag"] = "noindex, nofollow"; return next(); });
 
 // Legacy pages from the old GitHub Pages site (QR codes point here). Served byte-for-byte, before the app's CSP.
 var legacyRoot = Path.Combine(app.Environment.ContentRootPath, "legacy-static");
@@ -140,9 +147,16 @@ app.MapCartEndpoints();
 app.MapPayPalEndpoints();
 app.MapAdminEndpoints();
 app.MapPeopleEndpoints();
+// Browsers ask for /favicon.ico on their own (and for PDFs, feeds, etc.): answer with the right mark per host.
+app.MapGet("/favicon.ico", (HttpContext ctx, IWebHostEnvironment env) =>
+{
+    ctx.Response.Headers.CacheControl = "public, max-age=86400";
+    return Results.File(Path.Combine(env.WebRootPath, "img", "brand", ctx.OnSmsHost() ? "sms-favicon.ico" : "favicon.ico"), "image/x-icon");
+});
 app.MapRazorComponents<App>();
 
-app.Logger.LogInformation("PayPal mode: {Mode}", payPalMode);
+app.Logger.LogInformation("Environment: {Env} · PayPal mode: {Mode} · store coming soon: {Soon}",
+    app.Environment.EnvironmentName, payPalMode, app.Configuration.GetValue<bool>("Store:ComingSoon"));
 app.Run();
 return 0;
 

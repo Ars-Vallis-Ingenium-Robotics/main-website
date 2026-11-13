@@ -1,0 +1,25 @@
+# ~/.config/systemd/user/avi-site-testing.service   (user hermes_990-005)
+# Reference copy. The one thing that matters for the prod/testing split:
+#   ASPNETCORE_ENVIRONMENT=Staging  -> appsettings.Staging.json (store open, PayPal sandbox, noindex).
+# Sandbox credentials go in ~/.config/avi-site/testing.env:
+#   PayPal__ClientId=...  PayPal__ClientSecret=...  PayPal__WebhookId=...
+
+[Unit]
+Description=AVI Robotics site - testing (testing.voss.industries)
+After=network-online.target
+
+[Service]
+WorkingDirectory=%h/.local/share/avi-site-testing/current
+ExecStart=/usr/bin/dotnet %h/.local/share/avi-site-testing/current/AviSite.Web.dll
+Environment=ASPNETCORE_ENVIRONMENT=Staging
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5081
+Environment=DOTNET_NOLOGO=1
+EnvironmentFile=-%h/.config/avi-site/testing.env
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+SyslogIdentifier=avi-site-testing
+UMask=0077
+
+[Install]
+WantedBy=default.target

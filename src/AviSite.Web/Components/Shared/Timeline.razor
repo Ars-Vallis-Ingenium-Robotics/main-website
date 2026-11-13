@@ -102,12 +102,12 @@
             var mo = m.Moments[k];
             var dlg = $"{Id}-m-{i}-{k}";
             <dialog class="sheet moment-sheet" id="@dlg" aria-labelledby="@(dlg)-title">
+                <a class="sheet__close" href="#@sub" data-dialog-close aria-label="Close">×</a>
                 <div class="sheet__head">
                     <div>
                         <p class="moment-sheet__date mono">@mo.Date · @Copy.Plain(m.Title)</p>
                         <h3 class="sheet__title" id="@(dlg)-title">@Copy.Inline(mo.Title)</h3>
                     </div>
-                    <a class="sheet__close" href="#@sub" data-dialog-close aria-label="Close">×</a>
                 </div>
                 @if (mo.Photo is not null)
                 {

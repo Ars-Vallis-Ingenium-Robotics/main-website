@@ -2,6 +2,7 @@
 @* Copy: content/pages/home.md *@
 @inject ICatalog Catalog
 @inject ClubData Data
+@inject IOptions<StoreOptions> StoreOpts
 
 <PageTitle>@c.Meta("title")</PageTitle>
 <HeadContent>
@@ -193,12 +194,20 @@
             </div>
             <CopyLink Link="@shop.Link("link")" Class="link-arrow" />
         </div>
+        @if (StoreOpts.Value.ComingSoon)
+        {
+            @* Between drops (prod): no product cards, just the shop page's coming-soon line. *@
+            <p class="lede">@Copy.Page("pages/shop")["coming-soon"].Inline()</p>
+        }
+        else
+        {
         <ul class="product-row">
             @foreach (var p in Catalog.Active.Take(3))
             {
                 <li><ProductCard Product="p" /></li>
             }
         </ul>
+        }
     </div>
 </section>
 @{ var sp = c["sponsors"]; }

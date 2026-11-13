@@ -20,6 +20,15 @@ public interface IPaymentGateway
     Task<bool> VerifyWebhookAsync(IHeaderDictionary headers, string body, CancellationToken ct);
 }
 
+/// <summary>PayPal:Mode=Off. Nothing can be paid online; pages hide their payment forms and this refuses anything that slips through.</summary>
+public sealed class DisabledPaymentGateway : IPaymentGateway
+{
+    public PayPalMode Mode => PayPalMode.Off;
+    public Task<string> CreateOrderAsync(Order order, CancellationToken ct) => throw new PayPalException("Online payments are turned off.", null);
+    public Task<CaptureResult> CaptureAsync(string providerOrderId, string localOrderId, CancellationToken ct) => throw new PayPalException("Online payments are turned off.", null);
+    public Task<bool> VerifyWebhookAsync(IHeaderDictionary headers, string body, CancellationToken ct) => Task.FromResult(false);
+}
+
 /// <summary>
 /// Development-only stand-in so the whole checkout can be clicked through without PayPal.
 /// Program.cs refuses to start with this gateway outside Development.

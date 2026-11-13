@@ -11,6 +11,12 @@ title: Send us money.
 
 Any amount helps. Gifts are tax-deductible: AVI is a {status}, {ein}.
 
+<!-- Shown instead of the form when online payments are off (PayPal:Mode=Off). -->
+## offline
+Online giving isn't open yet. To give now, [email us](contact) and we'll send you the easiest way to do it, by check or in person.
+
+Gifts are tax-deductible: AVI is a {status}, {ein}.
+
 ## card-note
 Card works too, no PayPal account needed.
 
