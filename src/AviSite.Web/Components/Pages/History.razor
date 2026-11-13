@@ -1,43 +1,48 @@
 @page "/history"
-@using AviSite.Web.Content
+@* Copy: content/pages/history.md · timeline: content/timelines/history.md · founders: content/roster.md *@
+@inject ClubData Data
 
-<PageTitle>History · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="How AVI Robotics went from Crush Depth at Clovis Community College to a record-setting first season at the MATE ROV World Championship." /></HeadContent>
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
 
-<PageHero Kicker="History" Title="One year, two robots, a world record.">
-    <p>AVI is young. Here's how three founders got from an idea to Newfoundland. Click any chapter to open its own timeline, and any moment for the full story.</p>
+<PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
+    @c["hero"].Html()
 </PageHero>
-
+@{ var f = c["founders"]; }
 <section class="section section--paper-2" aria-labelledby="founders-title">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow">The founders</p>
-            <h2 class="h2" id="founders-title">Started by three people in 2025.</h2>
-            <p class="lede">Robert Voss, Declan Doss and Timothy Cromwell first competed in the <a href="@ClubFacts.MateUrl" target="_blank" rel="noopener">MATE ROV Competition</a> with Engineering Renaissance's <a href="@ClubFacts.CrushDepthUrl" target="_blank" rel="noopener">Crush Depth</a> team at Clovis Community College. In September 2025 they started AVI at Fresno State.</p>
+            <p class="eyebrow">@f.Inline("eyebrow")</p>
+            <h2 class="h2" id="founders-title">@f.Inline("title")</h2>
+            <p class="lede">@f.Inline()</p>
         </div>
         <ul class="people people--founders">
-            @foreach (var p in ClubFacts.Founders) { <li class="reveal"><PersonCard Person="p" /></li> }
+            @foreach (var p in Data.Roster("founders")) { <li class="reveal"><PersonCard Person="p" /></li> }
         </ul>
     </div>
 </section>
-
+@{ var next = c["timeline.next"]; var nl = next.Link("link"); }
 <section class="section">
     <div class="wrap">
-        <Timeline Items="ClubFacts.History" Id="history" NextWhen="2027 and on" NextTitle="Still being written."
-                  NextBody="SMS is building an Explorer-class robot, Micromouse is forming, and this timeline is nowhere near done. The next entry could have your name in it."
-                  NextHref="/join" NextLink="Help write it" />
+        <Timeline Items="@(Data.Timeline("history"))" Id="history" NextWhen="@next.Text("when")" NextTitle="@next.Text("title")"
+                  NextBody="@next.Text()" NextHref="@nl.Href" NextLink="@nl.PlainText" />
     </div>
 </section>
-
+@{ var w = c["next"]; }
 <section class="section section--ink">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow eyebrow--on-ink">What's next</p>
-            <h2 class="h2">The 2027 season.</h2>
+            <p class="eyebrow eyebrow--on-ink">@w.Inline("eyebrow")</p>
+            <h2 class="h2">@w.Inline("title")</h2>
         </div>
         <div class="reveal">
-            <p class="lede-on-ink">SMS moves up to the Explorer class for MATE ROV 2027. Fall is for workshops and growth: programming, electronics, CAD and design, and a Blank Check Project where new members build something real in teams. Spring is for building, testing and competing.</p>
-            <a class="btn btn--accent" href="/join">Be part of it</a>
+            <p class="lede-on-ink">@w.Inline()</p>
+            <CopyLink Link="@w.Link("button")" Class="btn btn--accent" />
         </div>
     </div>
 </section>
+
+@code {
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/history");
+}

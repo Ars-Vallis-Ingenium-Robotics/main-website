@@ -1,131 +1,92 @@
 @page "/about"
-@inject IOptions<NonprofitOptions> Nonprofit
-@inject SmsUrls SmsLinks
+@* Copy: content/pages/about.md *@
 
-<PageTitle>About · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="AVI Robotics (Ars Vallis Ingenium) is a student-led 501(c)(3) engineering club at Fresno State for students of every major." /></HeadContent>
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
 
-<PageHero Kicker="About" Title="The Valley of Artistic Ingenuity" Tone="blurple">
-    <p><em>Ars Vallis Ingenium</em> is Latin for the art, or craft, of the Valley's ingenuity. We're students from STEAM, the humanities and the social sciences building industry-level solutions together.</p>
+<PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")" Tone="blurple">
+    @c["hero"].Html()
 </PageHero>
-
+@{ var purpose = c["purpose"]; }
 <section class="section">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow">Our purpose</p>
-            <h2 class="h2">Skills you don't get in a classroom.</h2>
+            <p class="eyebrow">@purpose.Inline("eyebrow")</p>
+            <h2 class="h2">@purpose.Inline("title")</h2>
         </div>
-        <div class="prose reveal">
-            <p>From our constitution: AVI exists to provide a space where students can develop hands-on and professional skills, and to find opportunities that enrich their academic and professional lives.</p>
-            <p>Underwater robotics is where we started, but AVI is here to support whatever our members want to build, robotics or otherwise. Teams compete, projects teach, and outreach brings it all back to the Central Valley.</p>
-        </div>
+        <div class="prose reveal">@purpose.Html()</div>
     </div>
 </section>
-
+@{ var pillars = c["pillars"]; }
 <section class="section section--paper-2" aria-labelledby="pillars-title">
     <div class="wrap">
-        <p class="eyebrow">How AVI works</p>
-        <h2 class="h2" id="pillars-title">Four ways in.</h2>
+        <p class="eyebrow">@pillars.Inline("eyebrow")</p>
+        <h2 class="h2" id="pillars-title">@pillars.Inline("title")</h2>
         <ul class="pillars" role="list">
-            <li class="pillar reveal"><span class="pillar__num mono">01</span><h3 class="pillar__title">Teams</h3><p>Competition teams run like small companies. <a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a> builds underwater robots for MATE ROV; a Micromouse team is forming.</p></li>
-            <li class="pillar reveal"><span class="pillar__num mono">02</span><h3 class="pillar__title">Blank Check Projects</h3><p>Four-week team builds where new members design and finish something real. <a href="/projects">How they work</a></p></li>
-            <li class="pillar reveal"><span class="pillar__num mono">03</span><h3 class="pillar__title">Workshops</h3><p>Programming, electronics, CAD and design, every Friday night. <a href="/projects">The tracks</a></p></li>
-            <li class="pillar reveal"><span class="pillar__num mono">04</span><h3 class="pillar__title">Outreach</h3><p>MESA, community runs, regional competitions and open houses.</p></li>
+            @foreach (var (p, i) in pillars.Items.Select((p, i) => (p, i)))
+            {
+                <li class="pillar reveal"><span class="pillar__num mono">@((i + 1).ToString("00"))</span><h3 class="pillar__title">@p.Title</h3><p>@p.Inline()</p></li>
+            }
         </ul>
     </div>
 </section>
-
+@{ var bcp = c["bcp"]; }
 <section class="section" aria-labelledby="bcp-title">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow">Blank Check Projects</p>
-            <h2 class="h2" id="bcp-title">Blank check. (Because we're broke.)</h2>
-            <p class="lede">Every fall, new members split into teams and get four weeks to design and build a themed, interactive display that combines mechanical motion, embedded electronics, programming and promotion.</p>
-            <Photo Key="bcp-build" Sizes="(min-width: 56rem) 40vw, 100vw" Class="photo--frame" />
-            <a class="btn btn--accent" href="/projects">Projects and workshops</a>
+            <p class="eyebrow">@bcp.Inline("eyebrow")</p>
+            <h2 class="h2" id="bcp-title">@bcp.Inline("title")</h2>
+            <p class="lede">@bcp.Inline()</p>
+            <Photo Key="@bcp.Photo" Sizes="(min-width: 56rem) 40vw, 100vw" Class="photo--frame" />
+            <CopyLink Link="@bcp.Link("button")" Class="btn btn--accent" />
         </div>
         <div class="reveal">
-            <SpecSheet Rows="@bcp" />
-            <p class="muted small">Run in fall 2025 (Oct 10 to Nov 7) and fall 2026 (Oct 16 to Nov 13).</p>
+            <SpecSheet Rows="@c["bcp.spec"].Pairs()" />
+            <p class="muted small">@bcp.Inline("note")</p>
         </div>
     </div>
 </section>
 
 <section class="section section--flush" aria-label="Photos of AVI">
-    <Collage Keys="@collage" Label="Photos of AVI" />
+    <Collage Keys="@c["collage"].List()" Label="Photos of AVI" />
 </section>
-
+@{ var majors = c["majors"]; }
 <section class="section">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow">Every major</p>
-            <h2 class="h2">You and your talents have value here.</h2>
+            <p class="eyebrow">@majors.Inline("eyebrow")</p>
+            <h2 class="h2">@majors.Inline("title")</h2>
         </div>
         <div class="prose reveal">
-            <p>Our competitions are scored like real engineering companies: the robot, technical documents, presentations, marketing and safety. Our teams take engineers and programmers, and they also take writers, designers, business majors and people who keep 51 students organized.</p>
-            <SpecSheet Rows="@departments" />
+            @majors.Html()
+            <SpecSheet Rows="@c["majors.departments"].Pairs()" />
             <figure class="majors" aria-labelledby="majors-cap">
-                <figcaption id="majors-cap" class="eyebrow">Club majors, fall 2025</figcaption>
-                @foreach (var (major, pct) in majors)
+                <figcaption id="majors-cap" class="eyebrow">@majors.Inline("chart-title")</figcaption>
+                @foreach (var row in c["majors.chart"].Rows())
                 {
-                    <div class="majors__row"><span>@major</span><span class="majors__bar" style="--pct: @pct.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span><span class="mono">@pct.ToString("0.#")%</span></div>
+                    var pct = double.TryParse(row.ElementAtOrDefault(1), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 0;
+                    <div class="majors__row"><span>@Copy.Inline(row[0])</span><span class="majors__bar" style="--pct: @pct.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span><span class="mono">@pct.ToString("0.#")%</span></div>
                 }
             </figure>
         </div>
     </div>
 </section>
-
+@{ var np = c["nonprofit"]; }
 <section class="section section--ink">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow eyebrow--on-ink">Nonprofit</p>
-            <h2 class="h2">A registered @Nonprofit.Value.Status.</h2>
+            <p class="eyebrow eyebrow--on-ink">@np.Inline("eyebrow")</p>
+            <h2 class="h2">@np.Inline("title")</h2>
         </div>
         <div class="reveal">
-            <p class="lede-on-ink">@Nonprofit.Value.LegalName is a public charity recognized by the IRS under section @Nonprofit.Value.Status. Contributions are tax-deductible to the extent allowed by law.</p>
-            <SpecSheet Class="spec--on-ink" Rows="@nonprofitRows" />
-            <a class="btn btn--accent" href="/sponsors">Support AVI</a>
+            <p class="lede-on-ink">@np.Inline()</p>
+            <SpecSheet Class="spec--on-ink" Rows="@c["nonprofit.spec"].Pairs()" />
+            <CopyLink Link="@np.Link("button")" Class="btn btn--accent" />
         </div>
     </div>
 </section>
 
 @code {
-    private static readonly IReadOnlyList<string> collage =
-    [
-        "fall-group-2026", "uhc-kid", "rosie-in-pool", "bcp-build", "pi-day-booth", "traditions-demo",
-        "worlds-backdrop", "phantom-booth", "first-water", "monterey-crew", "mesa-feb-fun", "worlds-jump",
-        "uhc-crowd", "booth-installed", "bcp-solder", "mesa-nov", "pool-guests", "worlds-rosie-hall",
-        "meeting1-room", "meeting0-friends", "workshop-rosie-cad", "traditions-rosie", "worlds-puffins", "meeting3-leads", "phantom-contest", "workshop-help", "meeting1-table", "worlds-selfie", "meeting0-smiles", "worlds-cheer",
-    ];
-
-    private readonly IReadOnlyList<(string, string)> departments =
-    [
-        ("Design & manufacturing", "CAD, 3D printing, machining, chassis, manipulators"),
-        ("Programming & electronics", "Control software, GUI, PCBs, power, sensors"),
-        ("Marketing & logistics", "Branding, social, sponsorships, travel, finance"),
-        ("Safety", "Checklists, JSEA, lab policy, deck management"),
-    ];
-
-    // Source: 2025/26 sponsorship packet, "Breakdown of Club Majors".
-    private static readonly (string, double)[] majors =
-        [("Computer Science", 33.0), ("Mechanical Engineering", 32.4), ("Electrical Engineering", 19.0), ("Computer Engineering", 8.4), ("Other", 7.3)];
-
-    // Source: "AVI Robotics - Blank Check Project Rules & Guidelines".
-    private static readonly IReadOnlyList<(string, string)> bcp =
-    [
-        ("Length", "Four weeks"),
-        ("Brief", "A themed, interactive display"),
-        ("Must combine", "Mechanical motion, embedded electronics, programming, promotion"),
-        ("Each team", "Writes its own timeline and has a technical lead"),
-        ("Every week", "A progress summary to the technical lead"),
-        ("At the end", "A presentation and a documentation report"),
-    ];
-
-    private IReadOnlyList<(string, string)> nonprofitRows => [
-        ("Legal name", Nonprofit.Value.LegalName),
-        ("Status", $"{Nonprofit.Value.Status} public charity"),
-        ("Tax ID", $"EIN {Nonprofit.Value.Ein}"),
-        ("Exempt since", Nonprofit.Value.EffectiveDate?.ToString("MMMM d, yyyy") ?? "2025"),
-        ("Home", "California State University, Fresno · Lyles College of Engineering"),
-    ];
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/about");
 }

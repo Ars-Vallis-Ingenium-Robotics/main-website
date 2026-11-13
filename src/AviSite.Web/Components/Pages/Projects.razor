@@ -1,124 +1,99 @@
 @page "/projects"
-@using AviSite.Web.Content
+@* Copy: content/pages/projects.md *@
 
-<PageTitle>Blank Check Projects and workshops · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="How new AVI Robotics members learn: Friday workshops in programming, electronics and CAD, and Blank Check Projects, four-week team builds of interactive displays." /></HeadContent>
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
 
-<PageHero Kicker="Projects & workshops" Title="Learn it Friday. Build it in four weeks.">
-    <p>Nobody needs to know how to code, wire or CAD before joining. Workshops teach the basics every week, and Blank Check Projects put them to work on something real, with a team.</p>
+<PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
+    @c["hero"].Html()
 </PageHero>
-
+@{ var ws = c["workshops"]; }
 <section class="section" aria-labelledby="ws-title">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow">Workshops</p>
-            <h2 class="h2" id="ws-title">Every Friday night.</h2>
-            <p class="lede">@ClubFacts.MeetingTime in @ClubFacts.MeetingRoom. After announcements, members split into tracks and spend about 90 minutes learning by doing, taught by members who learned it the same way.</p>
-            <a class="btn btn--accent" href="/join">Come to a meeting</a>
+            <p class="eyebrow">@ws.Inline("eyebrow")</p>
+            <h2 class="h2" id="ws-title">@ws.Inline("title")</h2>
+            <p class="lede">@ws.Inline()</p>
+            <CopyLink Link="@ws.Link("button")" Class="btn btn--accent" />
         </div>
         <ul class="tracks" role="list">
-            <li class="track reveal">
-                <Photo Key="workshop-code" Sizes="(min-width: 56rem) 30vw, 100vw" Class="track__photo" Ratio="16 / 10" />
-                <div class="track__body">
-                    <h3 class="track__title">Programming and electronics</h3>
-                    <p>A beginner track for your first lines of code and your first circuit, and an advanced track for microcontrollers, sensors and the code that runs our robots.</p>
-                </div>
-            </li>
-            <li class="track reveal">
-                <Photo Key="workshop-cad" Sizes="(min-width: 56rem) 30vw, 100vw" Class="track__photo" Ratio="16 / 10" />
-                <div class="track__body">
-                    <h3 class="track__title">CAD and design for manufacturing</h3>
-                    <p>From your first sketch in CAD to designing parts that can actually be printed, cut, bent and assembled: the step between a model on screen and a part in your hand.</p>
-                </div>
-            </li>
-            <li class="track reveal">
-                <Photo Key="workshop-mar" Sizes="(min-width: 56rem) 30vw, 100vw" Class="track__photo" Ratio="16 / 10" />
-                <div class="track__body">
-                    <h3 class="track__title">Build nights</h3>
-                    <p>Hands on the hardware: 3D printing, soldering, wiring and testing, side by side with the teams building competition robots.</p>
-                </div>
-            </li>
+            @foreach (var t in ws.Items)
+            {
+                <li class="track reveal">
+                    @if (t.Value("photo") is { } ph) { <Photo Key="@ph" Sizes="(min-width: 56rem) 30vw, 100vw" Class="track__photo" Ratio="16 / 10" /> }
+                    <div class="track__body">
+                        <h3 class="track__title">@t.Title</h3>
+                        <p>@t.Inline()</p>
+                    </div>
+                </li>
+            }
         </ul>
     </div>
 </section>
-
+@{ var bcp = c["bcp"]; }
 <section class="section section--ink" aria-labelledby="bcp-title">
     <div class="wrap">
         <div class="section__head">
             <div>
-                <p class="eyebrow eyebrow--on-ink">Blank Check Projects</p>
-                <h2 class="h2" id="bcp-title">Blank check. (Because we're broke.)</h2>
+                <p class="eyebrow eyebrow--on-ink">@bcp.Inline("eyebrow")</p>
+                <h2 class="h2" id="bcp-title">@bcp.Inline("title")</h2>
             </div>
-            <p class="lede-on-ink bcp__lede">Every fall, new members split into small teams and get four weeks to design and build a themed, interactive display that combines mechanical motion, embedded electronics, programming and promotion.</p>
+            <p class="lede-on-ink bcp__lede">@bcp.Inline()</p>
         </div>
         <div class="bcp">
             <div class="bcp__steps">
                 <ol class="bcp-steps" role="list">
-                    <li><span class="mono">Week 1</span> Get the theme and your kit, meet your technical lead, write your own timeline.</li>
-                    <li><span class="mono">Weeks 2–3</span> Design, print, wire and code. Send a progress summary to your technical lead every week.</li>
-                    <li><span class="mono">Week 4</span> Finish it, then present the display and hand in a short documentation report.</li>
+                    @foreach (var row in c["bcp.steps"].Rows())
+                    {
+                        <li><span class="mono">@Copy.Inline(row[0])</span> @Copy.Inline(row.ElementAtOrDefault(1))</li>
+                    }
                 </ol>
-                <SpecSheet Class="spec--on-ink" Rows="@bcp" />
+                <SpecSheet Class="spec--on-ink" Rows="@c["bcp.spec"].Pairs()" />
             </div>
-            <Photo Key="bcp-kit" Sizes="(min-width: 56rem) 40vw, 100vw" Class="photo--frame bcp__kit" />
+            <Photo Key="@bcp.Photo" Sizes="(min-width: 56rem) 40vw, 100vw" Class="photo--frame bcp__kit" />
         </div>
     </div>
 </section>
 
 <section class="section section--flush section--ink" aria-label="Blank Check Project photos">
-    <Collage Keys="@bcpPhotos" Label="Blank Check Project photos" Class="collage-band--ink" />
+    <Collage Keys="@c["bcp.photos"].List()" Label="Blank Check Project photos" Class="collage-band--ink" />
 </section>
-
+@{ var rounds = c["rounds"]; }
 <section class="section">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow">So far</p>
-            <h2 class="h2">Two rounds.</h2>
+            <p class="eyebrow">@rounds.Inline("eyebrow")</p>
+            <h2 class="h2">@rounds.Inline("title")</h2>
         </div>
         <ul class="rounds" role="list">
-            <li class="round reveal">
-                <span class="round__when mono">Oct 10 – Nov 7, 2025</span>
-                <h3 class="round__title">Round one</h3>
-                <p>AVI's first semester and its first Blank Check Project: new members in small teams, four weeks, one themed display each.</p>
-            </li>
-            <li class="round reveal">
-                <span class="round__when mono">Oct 16 – Nov 13, 2026</span>
-                <h3 class="round__title">Round two</h3>
-                <p>A technical lead for every group and a kit for each team, run alongside the Friday workshops.</p>
-            </li>
+            @foreach (var r in rounds.Items)
+            {
+                <li class="round reveal">
+                    <span class="round__when mono">@r.Inline("when")</span>
+                    <h3 class="round__title">@r.Title</h3>
+                    <p>@r.Inline()</p>
+                </li>
+            }
         </ul>
     </div>
 </section>
-
+@{ var cta = c["cta"]; var cb = c["cta.buttons"].Links(); }
 <section class="section section--accent">
     <div class="wrap support">
         <div>
-            <p class="eyebrow eyebrow--on-accent">Want in?</p>
-            <h2 class="h2">Show up on a Friday.</h2>
+            <p class="eyebrow eyebrow--on-accent">@cta.Inline("eyebrow")</p>
+            <h2 class="h2">@cta.Inline("title")</h2>
         </div>
         <div class="support__body">
-            <p>No experience needed and every major is welcome. Come to a meeting, try a workshop, and join a Blank Check team in the fall.</p>
+            <p>@cta.Inline()</p>
             <div class="support__actions">
-                <a class="btn btn--ink" href="/join">Join the club</a>
-                <a class="btn btn--ghost-on-accent" href="/about">About AVI</a>
+                @for (var i = 0; i < cb.Count; i++) { <CopyLink Link="@cb[i]" Class="@(i == 0 ? "btn btn--ink" : "btn btn--ghost-on-accent")" /> }
             </div>
         </div>
     </div>
 </section>
 
 @code {
-    private static readonly IReadOnlyList<string> bcpPhotos =
-        ["bcp-build", "bcp-intro", "bcp-solder", "bcp-team", "bcp-workshop", "phantom-costumes", "workshop-code", "bcp-kit",
-        "bcp-laptops", "workshop-pcb", "workshop-safety", "workshop-laptop", "workshop-help", "workshop-rosie-cad", "phantom-contest", "workshop-cad",
-    ];
-
-    // Source: "AVI Robotics - Blank Check Project Rules & Guidelines".
-    private static readonly IReadOnlyList<(string, string)> bcp =
-    [
-        ("Length", "Four weeks"),
-        ("Brief", "A themed, interactive display"),
-        ("Must combine", "Mechanical motion, embedded electronics, programming, promotion"),
-        ("Each team", "Writes its own timeline and has a technical lead"),
-        ("At the end", "A presentation and a documentation report"),
-    ];
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/projects");
 }

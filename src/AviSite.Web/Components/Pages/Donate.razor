@@ -7,15 +7,16 @@
 @inject IOptions<NonprofitOptions> Nonprofit
 @inject NavigationManager Nav
 
-<PageTitle>@(hasErrors ? "Error: " : "")Donate · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="Make a tax-deductible donation to AVI Robotics, a 501(c)(3) student robotics club at Fresno State. EIN 39-4775163." /></HeadContent>
+@* Copy: content/pages/donate.md (form labels and errors stay here) *@
+<PageTitle>@(hasErrors ? "Error: " : "")@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
 
 <section class="section">
     <div class="wrap checkout">
         <div class="checkout__form">
-            <p class="eyebrow"><a href="/sponsors">Support</a> / Donate</p>
-            <h1 class="h1">Send us money.</h1>
-            <p class="lede">Any amount helps. Gifts are tax-deductible: AVI is a @Nonprofit.Value.Status, <Ein />.</p>
+            <p class="eyebrow"><CopyLink Link="@c["intro"].Link("crumb")" /> / Donate</p>
+            <h1 class="h1">@c["intro"].Inline("title")</h1>
+            <p class="lede">@c["intro"].Inline()</p>
 
             <EditForm Model="Model!" FormName="donate" OnValidSubmit="SubmitAsync" OnInvalidSubmit="() => hasErrors = true" method="post" class="form" novalidate>
                 <DataAnnotationsValidator />
@@ -64,16 +65,14 @@
 
                 @if (error is not null) { <p class="alert" role="alert">@error</p> }
                 <button class="btn btn--accent btn--lg" type="submit">Continue to PayPal</button>
-                <p class="muted small">Card works too, no PayPal account needed.</p>
+                <p class="muted small">@c["card-note"].Inline()</p>
             </EditForm>
         </div>
 
         <aside class="checkout__summary donate-aside" aria-label="Where your gift goes">
-            <Photo Key="pool-jump" Sizes="(min-width: 56rem) 30vw, 100vw" Class="photo--frame" Ratio="4 / 3" />
+            <Photo Key="@(c["aside"].Value("photo") ?? "pool-jump")" Sizes="(min-width: 56rem) 30vw, 100vw" Class="photo--frame" Ratio="4 / 3" />
             <ul class="donate-aside__list">
-                <li><strong>$18,869</strong> got 13 students and two robots to the 2026 World Championship in Newfoundland.</li>
-                <li><strong>About $34,000</strong> was the total value of the 2026 season, counting donated and reused parts.</li>
-                <li><strong>Every dollar</strong> goes through a student purchase-request process: design, operations, then finance.</li>
+                @foreach (var li in c["aside"].ListHtml()) { <li>@li</li> }
             </ul>
         </aside>
     </div>
@@ -84,7 +83,12 @@
     private string? error;
     private bool hasErrors;
 
-    protected override void OnInitialized() => Model ??= new();
+    private PageCopy c = default!;
+    protected override void OnInitialized()
+    {
+        Model ??= new();
+        c = Copy.Page("pages/donate");
+    }
 
     private async Task SubmitAsync()
     {

@@ -1,78 +1,77 @@
 @page "/sms"
-@inject SmsUrls Links
+@* Copy: content/sms/home.md *@
 
-<PageTitle>Sequoia Marine Solutions · MATE ROV at Fresno State</PageTitle>
-<HeadContent><meta name="description" content="Sequoia Marine Solutions is AVI Robotics' MATE ROV company at Fresno State: builders of ROSIE and ADAM and winners of the 2026 World Championship Engineering Presentation award." /></HeadContent>
-
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+@{ var hero = c["hero"]; var hb = c["hero.buttons"].Links(); }
 <section class="sms-hero">
-    <Photo Key="sms-pool-pilot" Sizes="100vw" Eager="true" Class="sms-hero__bg" Focus="35% 75%" />
+    <Photo Key="@hero.Photo" Sizes="100vw" Eager="true" Class="sms-hero__bg" Focus="35% 75%" />
     <div class="wrap sms-hero__copy">
-        <p class="sms-kicker">MATE ROV company · Fresno State</p>
-        <h1 class="sms-hero__title">Sequoia Marine Solutions</h1>
-        <p class="sms-hero__lede">A student-run ocean technology company. In our first season we built an eight-thruster ROV and an autonomous profiling float, took them to the World Championship, and won the Engineering Presentation award.</p>
+        <p class="sms-kicker">@hero.Inline("kicker")</p>
+        <h1 class="sms-hero__title">@hero.Inline("title")</h1>
+        <p class="sms-hero__lede">@hero.Inline()</p>
         <div class="sms-hero__actions">
-            <a class="btn btn--sms" href="@Links.Sms("/rosie")">Meet ROSIE</a>
-            <a class="btn btn--ghost-on-ink" href="@Links.Sms("/2026")">The 2026 season</a>
+            @for (var i = 0; i < hb.Count; i++) { <CopyLink Link="@hb[i]" Class="@(i == 0 ? "btn btn--sms" : "btn btn--ghost-on-ink")" /> }
         </div>
     </div>
 </section>
-
+@{ var mission = c["mission"]; }
 <section class="sms-section" aria-labelledby="mission-title">
     <div class="wrap sms-mission reveal">
-        <p class="sms-kicker sms-kicker--dark" id="mission-title">Our mission</p>
-        <blockquote class="sms-mission__quote">
-            <p>To empower students through the MATE ROV International Competition by providing a collaborative environment to develop hands-on technical expertise, cultivate leadership, and unlock enriching academic and career opportunities.</p>
-        </blockquote>
-        <p class="sms-mission__source">From our 2026 marketing display · <a href="@AviSite.Web.Content.ClubFacts.MateUrl" target="_blank" rel="noopener">About the MATE ROV Competition</a></p>
+        <p class="sms-kicker sms-kicker--dark" id="mission-title">@mission.Inline("kicker")</p>
+        <blockquote class="sms-mission__quote">@mission.Html()</blockquote>
+        <p class="sms-mission__source">@mission.Inline("source")</p>
     </div>
 </section>
 
 <section class="sms-section sms-section--deep">
     <div class="wrap sms-machines">
-        <a class="sms-machine reveal" href="@Links.Sms("/rosie")">
-            <Photo Key="rosie-in-pool" Sizes="(min-width: 56rem) 45vw, 100vw" Class="sms-machine__photo no-zoom" Ratio="3 / 2" />
-            <span class="sms-machine__tag">ROV</span>
-            <span class="sms-machine__name">ROSIE</span>
-            <span class="sms-machine__full">Remotely Operated Submersible for Innovation and Exploration</span>
-        </a>
-        <a class="sms-machine reveal" href="@Links.Sms("/adam")">
-            <Photo Key="adam-water" Sizes="(min-width: 56rem) 45vw, 100vw" Class="sms-machine__photo no-zoom" Ratio="3 / 2" Focus="40% 80%" />
-            <span class="sms-machine__tag">Float</span>
-            <span class="sms-machine__name">ADAM</span>
-            <span class="sms-machine__full">Aquatic Drifter for Autonomous Monitoring</span>
-        </a>
+        @foreach (var m in c["machines"].Items)
+        {
+            <a class="sms-machine reveal" href="@Copy.Href(m.Value("href") ?? "sms:/")">
+                <Photo Key="@m.Photo" Sizes="(min-width: 56rem) 45vw, 100vw" Class="sms-machine__photo no-zoom" Ratio="3 / 2" Focus="@m.Value("focus")" />
+                <span class="sms-machine__tag">@m.Inline("tag")</span>
+                <span class="sms-machine__name">@m.Title</span>
+                <span class="sms-machine__full">@m.Inline()</span>
+            </a>
+        }
     </div>
 </section>
-
+@{ var rec = c["record"]; }
 <section class="sms-section">
     <div class="wrap sms-record">
         <div class="reveal">
-            <p class="sms-kicker sms-kicker--dark">2026 World Championship · St. John's, NL</p>
-            <p class="sms-record__score" aria-label="102 out of 100"><span aria-hidden="true">102/100</span></p>
-            <p class="sms-record__text">Engineering Presentation score. An all-time record for the Pioneer class, and the fourth-highest overall Pioneer score at Worlds.</p>
-            <a class="link-arrow" href="@Links.Sms("/2026")">How the season went</a>
+            <p class="sms-kicker sms-kicker--dark">@rec.Inline("kicker")</p>
+            <p class="sms-record__score" aria-label="@rec.Text("score-label")"><span aria-hidden="true">@rec.Inline("score")</span></p>
+            <p class="sms-record__text">@rec.Inline()</p>
+            <CopyLink Link="@rec.Link("link")" Class="link-arrow" />
         </div>
-        <Photo Key="worlds-award-screen" Sizes="(min-width: 56rem) 50vw, 100vw" Class="photo--frame reveal" />
+        <Photo Key="@rec.Photo" Sizes="(min-width: 56rem) 50vw, 100vw" Class="photo--frame reveal" />
     </div>
 </section>
 
 <section class="sms-section sms-section--cream" aria-labelledby="watch-title">
     <div class="wrap">
-        <p class="sms-kicker sms-kicker--dark">Watch</p>
-        <h2 class="sms-h2" id="watch-title">See it for yourself.</h2>
+        <p class="sms-kicker sms-kicker--dark">@c["watch"].Inline("kicker")</p>
+        <h2 class="sms-h2" id="watch-title">@c["watch"].Inline("title")</h2>
         <SmsVideos />
     </div>
 </section>
-
+@{ var sp = c["sponsors"]; }
 <section class="sms-section sms-section--deep" aria-labelledby="sms-sponsors-title">
     <div class="wrap">
         <div class="section__head">
             <div>
-                <p class="sms-kicker">2026 sponsors</p>
-                <h2 class="sms-h2" id="sms-sponsors-title">Built with help from</h2>
+                <p class="sms-kicker">@sp.Inline("kicker")</p>
+                <h2 class="sms-h2" id="sms-sponsors-title">@sp.Inline("title")</h2>
             </div>
-            <a class="btn btn--sms" href="@Links.Avi("/sponsors")">Sponsor the 2027 season</a>
+            <CopyLink Link="@sp.Link("button")" Class="btn btn--sms" />
         </div>
         <SponsorWall Class="sponsor-wall--sms" />
     </div>
 </section>
+
+@code {
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("sms/home");
+}

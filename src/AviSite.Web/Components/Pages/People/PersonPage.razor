@@ -1,0 +1,40 @@
+@page "/people/{Slug}"
+@* A member's page: the no-JS version of the name pop-up. Profile: content/people/<slug>.md *@
+@inject People PeopleDir
+@inject NavigationManager Nav
+
+@if (entry is { } e)
+{
+    <PageTitle>@e.Name · AVI Robotics</PageTitle>
+    <HeadContent><meta name="robots" content="noindex" /></HeadContent>
+    <section class="section">
+        <div class="wrap person-page">
+            <Avatar Name="@e.Name" Size="160" />
+            <div>
+                <p class="eyebrow">@(profile?.Pronouns ?? "Member")</p>
+                <h1 class="h1">@e.Name</h1>
+                @if (profile?.Headline is { } h) { <p class="lede">@Copy.Inline(h)</p> }
+                @if (profile?.Major is { } m) { <p class="muted">@m</p> }
+                @if (e.Roles.Count > 0)
+                {
+                    <ul class="person-page__roles">@foreach (var r in e.Roles) { <li>@Copy.Inline(r)</li> }</ul>
+                }
+                <ProfileLinks Slug="@Slug" />
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    private (string Name, List<string> Roles)? entry;
+    private Profile? profile;
+
+    protected override void OnParametersSet()
+    {
+        Slug = Slug.ToLowerInvariant();
+        entry = PeopleDir.Directory().TryGetValue(Slug, out var e) ? e : null;
+        profile = PeopleDir.Profile(Slug);
+        if (entry is null) Nav.NotFound();
+    }
+}

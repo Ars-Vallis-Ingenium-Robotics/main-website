@@ -1,51 +1,46 @@
 @page "/leadership"
-@using AviSite.Web.Content
+@* Copy: content/pages/leadership.md · people: content/roster.md *@
+@inject ClubData Data
 
-<PageTitle>Leadership · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="Meet AVI Robotics' faculty advisors, mentors, founders, and 2026–27 officers and leads." /></HeadContent>
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
 
-<PageHero Kicker="Leadership · 2026–27" Title="The people running the club.">
-    <p>Faculty advisors and mentors keep us pointed in the right direction. Officers are elected by members each spring, and leads guide each technical area. Officers can be reached at the addresses on their cards.</p>
+<PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
+    @c["hero"].Html()
 </PageHero>
 
 <section class="section">
     <div class="wrap">
-        <h2 class="h3 group-title">Faculty advisors</h2>
-        <ul class="people people--feature">
-            @foreach (var p in ClubFacts.Advisors) { <li class="reveal"><PersonCard Person="p" /></li> }
-        </ul>
-
-        <h2 class="h3 group-title">Mentors</h2>
-        <ul class="people people--feature">
-            @foreach (var p in ClubFacts.Mentors) { <li class="reveal"><PersonCard Person="p" /></li> }
-        </ul>
-
-        <h2 class="h3 group-title">Executive board</h2>
-        <ul class="people">
-            @foreach (var p in ClubFacts.Officers) { <li class="reveal"><PersonCard Person="p" /></li> }
-        </ul>
-
-        <h2 class="h3 group-title">Leads</h2>
-        <ul class="people">
-            @foreach (var p in ClubFacts.Leads) { <li class="reveal"><PersonCard Person="p" /></li> }
-        </ul>
+        @foreach (var g in c["groups"].Rows())
+        {
+            var feature = g[0] is "advisors" or "mentors";
+            <h2 class="h3 group-title">@Copy.Inline(g.ElementAtOrDefault(1) ?? g[0])</h2>
+            <ul class="people @(feature ? "people--feature" : "")">
+                @foreach (var p in Data.Roster(g[0])) { <li class="reveal"><PersonCard Person="p" /></li> }
+            </ul>
+        }
     </div>
 </section>
-
+@{ var f = c["founders"]; }
 <section class="section section--paper-2" aria-labelledby="founders-title">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow">Founders</p>
-            <h2 class="h2" id="founders-title">Started by three people in 2025.</h2>
-            <p class="lede">Robert Voss, Declan Doss and Timothy Cromwell first competed in <a href="@ClubFacts.MateUrl" target="_blank" rel="noopener">MATE ROV</a> with <a href="@ClubFacts.CrushDepthUrl" target="_blank" rel="noopener">Crush Depth</a> at Clovis Community College, then founded AVI at Fresno State in September 2025.</p>
-            <a class="link-arrow" href="/history">Read the history</a>
+            <p class="eyebrow">@f.Inline("eyebrow")</p>
+            <h2 class="h2" id="founders-title">@f.Inline("title")</h2>
+            <p class="lede">@f.Inline()</p>
+            <CopyLink Link="@f.Link("link")" Class="link-arrow" />
         </div>
         <ul class="people people--founders">
-            @foreach (var p in ClubFacts.Founders) { <li class="reveal"><PersonCard Person="p" /></li> }
+            @foreach (var p in Data.Roster("founders")) { <li class="reveal"><PersonCard Person="p" /></li> }
         </ul>
     </div>
 </section>
 
 <section class="section section--flush">
-    <Photo Key="fall-group-2026" Sizes="100vw" Class="crew__photo" Caption="AVI Robotics, fall 2026." />
+    <Photo Key="@(c["photo"].Value("photo") ?? "fall-group-2026")" Sizes="100vw" Class="crew__photo" Caption="@c["photo"].Text("caption")" />
 </section>
+
+@code {
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/leadership");
+}

@@ -1,6 +1,6 @@
 @*
-    The three 2026 videos in one big frame; arrows (and the list below) cycle which one is showing.
-    Order confirmed by Robert: hype, presentation, qualification. media.js does the swapping;
+    The 2026 videos in one big frame; arrows (and the list below) cycle which one is showing.
+    Videos and order: content/sms/season-2026.md → ## videos. media.js does the swapping;
     without JS the list items are plain links to YouTube.
 *@
 <div class="vcar" data-videos="@json">
@@ -31,13 +31,13 @@
 @code {
     private sealed record Video(string Id, string Title, string? Note = null);
 
-    private static readonly IReadOnlyList<Video> Videos =
-    [
-        new("3f_GGQt_6rs", "SMS 2026 hype video"),
-        new("THIZyHml-es", "2026 engineering presentation", "The presentation that scored 102 out of 100 at Worlds."),
-        new("xROInXXdaL8", "2026 MATE qualification video"),
-    ];
+    private IReadOnlyList<Video> Videos = [];
+    private string json = "[]";
 
-    private static readonly string json = System.Text.Json.JsonSerializer.Serialize(
-        Videos.Select(v => new { id = v.Id, title = v.Title, note = v.Note }));
+    protected override void OnInitialized()
+    {
+        Videos = Copy.Page("sms/season-2026")["videos"].Rows()
+            .Select(r => new Video(r[0], Copy.Plain(r.ElementAtOrDefault(1)), r.ElementAtOrDefault(2) is { Length: > 0 } n ? Copy.Plain(n) : null)).ToList();
+        json = System.Text.Json.JsonSerializer.Serialize(Videos.Select(v => new { id = v.Id, title = v.Title, note = v.Note }));
+    }
 }

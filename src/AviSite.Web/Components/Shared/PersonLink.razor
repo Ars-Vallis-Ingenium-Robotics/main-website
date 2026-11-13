@@ -1,0 +1,12 @@
+@*
+    A person's name that opens their pop-up (people.js) or, without JS, their /people page.
+    "Guillermo Prado (pilot)" links the name and keeps the note as plain text.
+*@
+@{ var (name, note) = People.SplitNote(Name); }
+<a class="person-link @Class" href="/people/@People.SlugOf(name)" data-person="@People.SlugOf(name)">@(Display ?? name)</a>@if (note is not null) {<text> (@note)</text>}
+
+@code {
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+    [Parameter] public string? Display { get; set; }
+    [Parameter] public string? Class { get; set; }
+}

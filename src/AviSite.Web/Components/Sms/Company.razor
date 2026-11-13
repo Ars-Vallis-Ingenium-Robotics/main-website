@@ -1,27 +1,28 @@
 @page "/sms/company"
-@inject SmsUrls Links
+@* Copy, leaders and crews: content/sms/company.md *@
+@inject ClubData Data
 
-<PageTitle>Company · Sequoia Marine Solutions</PageTitle>
-<HeadContent><meta name="description" content="How Sequoia Marine Solutions is organized: a C-suite, seven crews and 51 students from every major." /></HeadContent>
-
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
 <section class="sms-page-hero">
     <div class="wrap">
-        <p class="sms-kicker">Company</p>
-        <h1 class="sms-page-hero__title">Run like a real firm.</h1>
-        <p class="sms-page-hero__lede">51 students, a C-suite, seven crews with a lead each, and a purchase-request process that goes through design, operations and finance before anything gets ordered.</p>
+        <p class="sms-kicker">@c["hero.kicker"].Inline()</p>
+        <h1 class="sms-page-hero__title">@c["hero.title"].Inline()</h1>
+        <p class="sms-page-hero__lede">@c["hero.lede"].Inline()</p>
     </div>
 </section>
 
 <section class="sms-section" aria-labelledby="leaders-title">
     <div class="wrap">
-        <p class="sms-kicker sms-kicker--dark">2026 leadership</p>
-        <h2 class="sms-h2" id="leaders-title">The people in charge.</h2>
-        <p class="muted">Tap anyone to read what they did this season.</p>
+        <p class="sms-kicker sms-kicker--dark">@c["leaders.kicker"].Inline()</p>
+        <h2 class="sms-h2" id="leaders-title">@c["leaders.title"].Inline()</h2>
+        <p class="muted">@c["leaders.hint"].Inline()</p>
         <ul class="tiles tiles--people" role="list">
-            @foreach (var l in SmsCompany.Leadership)
+            @foreach (var l in Data.SmsLeaders)
             {
+                var slug = People.SlugOf(l.Name);
                 <li class="reveal">
-                    <a class="tile" id="open-@SmsCompany.Slug(l.Name)" href="#person-@SmsCompany.Slug(l.Name)" data-dialog>
+                    <a class="tile" id="open-@slug" href="#person-@slug" data-dialog>
                         <Avatar Name="@l.Name" Size="96" />
                         <span class="tile__name">@l.Name</span>
                         <span class="tile__role">@l.Role</span>
@@ -34,25 +35,25 @@
 
 <section class="sms-section sms-section--cream" aria-labelledby="crews-title">
     <div class="wrap">
-        <p class="sms-kicker sms-kicker--dark">Subsystems</p>
-        <h2 class="sms-h2" id="crews-title">Seven crews, one robot.</h2>
-        <p class="muted">Each crew owned one part of ROSIE or ADAM. Tap a crew for its lead, its members and what it built.</p>
+        <p class="sms-kicker sms-kicker--dark">@c["crews.kicker"].Inline()</p>
+        <h2 class="sms-h2" id="crews-title">@c["crews.title"].Inline()</h2>
+        <p class="muted">@c["crews.hint"].Inline()</p>
         <ul class="tiles tiles--crews" role="list">
-            @foreach (var c in SmsCompany.Crews)
+            @foreach (var cr in Data.SmsCrews)
             {
                 <li class="reveal">
-                    <a class="tile tile--crew" id="open-crew-@c.Id" href="#crew-@c.Id" data-dialog>
-                        @if (c.Photo is not null) { <Photo Key="@c.Photo" Sizes="(min-width: 56rem) 25vw, 50vw" Class="tile__photo" Ratio="4 / 3" Alt="" /> }
-                        <span class="tile__name">@c.Name</span>
-                        <span class="tile__role">Lead: @c.Lead · @(c.Members.Count + 1) people</span>
+                    <a class="tile tile--crew" id="open-crew-@cr.Id" href="#crew-@cr.Id" data-dialog>
+                        @if (cr.Photo is not null) { <Photo Key="@cr.Photo" Sizes="(min-width: 56rem) 25vw, 50vw" Class="tile__photo" Ratio="4 / 3" Alt="" /> }
+                        <span class="tile__name">@cr.Name</span>
+                        <span class="tile__role">Lead: @cr.Lead · @(cr.Members.Count + 1) people</span>
                     </a>
                 </li>
             }
         </ul>
         <p class="support-teams">
-            @foreach (var (team, members) in SmsCompany.Support)
+            @foreach (var t in Data.SmsSupport)
             {
-                <span><strong>@team:</strong> @string.Join(", ", members)</span>
+                <span><strong>@t.Team:</strong>@(" ")@for (var i = 0; i < t.Members.Count; i++) { @(i > 0 ? ", " : "")<PersonLink Name="@t.Members[i]" /> }</span>
             }
         </p>
     </div>
@@ -61,50 +62,57 @@
 <section class="sms-section">
     <div class="wrap split">
         <div class="split__head">
-            <p class="sms-kicker sms-kicker--dark">What we learned</p>
-            <h2 class="sms-h2">Communication, creativity, autonomy.</h2>
+            <p class="sms-kicker sms-kicker--dark">@c["learned.kicker"].Inline()</p>
+            <h2 class="sms-h2">@c["learned.title"].Inline()</h2>
         </div>
         <div class="prose reveal">
-            <p>From our 2026 company evaluation: with over fifty people involved, structure came first. Then the Chief Design Officer ran idea-generation workshops, which produced the harpoon manipulators. As the year went on, leads handed more ownership to individual members, and the chassis came together from many people's work: thruster shrouds, camera mounts, manipulators.</p>
-            <p><a class="btn btn--sms-dark" href="@Links.Avi("/join")">Join through AVI</a></p>
+            @c["learned.body"].Html()
+            <p><a class="btn btn--sms-dark" href="@Copy.Href("avi:/join")">@c["learned.button"].Inline()</a></p>
         </div>
     </div>
 </section>
 
-@foreach (var l in SmsCompany.Leadership)
+@foreach (var l in Data.SmsLeaders)
 {
-    <dialog class="sheet" id="person-@SmsCompany.Slug(l.Name)" aria-labelledby="person-@SmsCompany.Slug(l.Name)-name">
+    var slug = People.SlugOf(l.Name);
+    <dialog class="sheet" id="person-@slug" aria-labelledby="person-@slug-name">
         <div class="sheet__head">
             <Avatar Name="@l.Name" Size="120" />
             <div>
                 <p class="sms-kicker sms-kicker--dark">@l.Role</p>
-                <h3 class="sheet__title" id="person-@SmsCompany.Slug(l.Name)-name">@l.Name</h3>
+                <h3 class="sheet__title" id="person-@slug-name">@l.Name</h3>
                 <p class="muted">@l.Major</p>
             </div>
             <a class="sheet__close" href="#crews-title" data-dialog-close aria-label="Close">×</a>
         </div>
-        <ul class="sheet__list">@foreach (var d in l.Did) { <li>@d</li> }</ul>
+        <ul class="sheet__list">@foreach (var d in l.Did) { <li>@Copy.Inline(d)</li> }</ul>
+        <ProfileLinks Slug="@slug" />
     </dialog>
 }
 
-@foreach (var c in SmsCompany.Crews)
+@foreach (var cr in Data.SmsCrews)
 {
-    <dialog class="sheet" id="crew-@c.Id" aria-labelledby="crew-@c.Id-name">
+    <dialog class="sheet" id="crew-@cr.Id" aria-labelledby="crew-@cr.Id-name">
         <div class="sheet__head">
             <div>
                 <p class="sms-kicker sms-kicker--dark">Crew</p>
-                <h3 class="sheet__title" id="crew-@c.Id-name">@c.Name</h3>
-                <p>@c.Summary</p>
+                <h3 class="sheet__title" id="crew-@cr.Id-name">@cr.Name</h3>
+                <p>@Copy.Inline(cr.Summary)</p>
             </div>
             <a class="sheet__close" href="#crews-title" data-dialog-close aria-label="Close">×</a>
         </div>
-        @if (c.Photo is not null) { <Photo Key="@c.Photo" Sizes="(min-width: 56rem) 40rem, 100vw" Class="sheet__photo" Ratio="16 / 9" /> }
+        @if (cr.Photo is not null) { <Photo Key="@cr.Photo" Sizes="(min-width: 56rem) 40rem, 100vw" Class="sheet__photo" Ratio="16 / 9" /> }
         <h4 class="sheet__h">What they built</h4>
-        <ul class="sheet__list">@foreach (var b in c.Built) { <li>@b</li> }</ul>
+        <ul class="sheet__list">@foreach (var b in cr.Built) { <li>@Copy.Inline(b)</li> }</ul>
         <h4 class="sheet__h">Who</h4>
         <ul class="sheet__people" role="list">
-            <li class="sheet__lead"><Avatar Name="@c.Lead" Size="56" /><span><strong>@c.Lead</strong><br /><span class="muted">Lead</span></span></li>
-            @foreach (var m in c.Members) { <li>@m</li> }
+            <li class="sheet__lead"><Avatar Name="@cr.Lead" Size="56" /><span><strong><PersonLink Name="@cr.Lead" /></strong><br /><span class="muted">Lead</span></span></li>
+            @foreach (var m in cr.Members) { <li><PersonLink Name="@m" /></li> }
         </ul>
     </dialog>
+}
+
+@code {
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("sms/company");
 }

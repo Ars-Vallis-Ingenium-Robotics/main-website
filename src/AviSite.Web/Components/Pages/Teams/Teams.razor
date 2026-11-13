@@ -1,31 +1,37 @@
 @page "/teams"
-@inject SmsUrls SmsLinks
+@* Copy: content/pages/teams.md *@
 
-<PageTitle>Teams · AVI Robotics</PageTitle>
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
 
-<PageHero Kicker="Teams" Title="Where the robots get built.">
-    <p>AVI is the club. Competition teams form inside it around a specific challenge.</p>
+<PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
+    @c["hero"].Html()
 </PageHero>
-
+@{ var sms = c["sms"]; var mouse = c["micromouse"]; }
 <section class="section">
     <div class="wrap team-cards">
         <div class="team-card team-card--sms reveal">
-            <Photo Key="worlds-rosie-table" Sizes="(min-width: 56rem) 50vw, 100vw" Class="team-card__photo" />
+            <Photo Key="@sms.Photo" Sizes="(min-width: 56rem) 50vw, 100vw" Class="team-card__photo" />
             <div class="team-card__body">
                 <img class="team-card__logo" src="/img/brand/sms-logo.webp" alt="" width="72" height="72" loading="lazy" />
-                <span class="team-card__kicker">MATE ROV · since 2025</span>
-                <h2 class="team-card__name"><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></h2>
-                <span class="team-card__desc">AVI's underwater robotics company. In 2026 SMS built ROSIE, an eight-thruster ROV, and ADAM, an autonomous profiling float, then won the Engineering Presentation award at the World Championship.</span>
-                <span class="link-arrow" aria-hidden="true">Visit the SMS site</span>
+                <span class="team-card__kicker">@sms.Inline("kicker")</span>
+                <h2 class="team-card__name"><a href="@Copy.Href(sms.Value("href") ?? "sms:/")">@sms.Inline("title")</a></h2>
+                <span class="team-card__desc">@sms.Inline()</span>
+                <span class="link-arrow" aria-hidden="true">@sms.Inline("more")</span>
             </div>
         </div>
         <div class="team-card team-card--forming reveal">
             <div class="team-card__body">
-                <span class="team-card__kicker">Forming · 2026–27</span>
-                <h2 class="team-card__name">Micromouse</h2>
-                <span class="team-card__desc">A small autonomous robot that explores a maze, maps it, then races to the center. Great for programmers and embedded-systems folks. No name or roster yet: this is the time to shape it.</span>
-                <a class="link-arrow" href="/join">Come to a meeting</a>
+                <span class="team-card__kicker">@mouse.Inline("kicker")</span>
+                <h2 class="team-card__name">@mouse.Inline("title")</h2>
+                <span class="team-card__desc">@mouse.Inline()</span>
+                <CopyLink Link="@mouse.Link("link")" Class="link-arrow" />
             </div>
         </div>
     </div>
 </section>
+
+@code {
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/teams");
+}

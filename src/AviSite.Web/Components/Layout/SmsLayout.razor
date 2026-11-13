@@ -39,26 +39,25 @@
             <div>
                 <img src="/img/brand/sms-logo.webp" alt="" width="96" height="96" loading="lazy" />
                 <p class="sms-footer__name">Sequoia Marine Solutions</p>
-                <p>The MATE ROV company of <a href="@Links.Avi("/")">AVI Robotics</a> at Fresno State. @Nonprofit.Value.LegalName is a @Nonprofit.Value.Status nonprofit, <Ein />.</p>
+                <p>@site["sms.footer.about"].Inline()</p>
             </div>
             <nav aria-label="SMS footer">
                 <p class="sms-footer__label">SMS</p>
                 <ul>
-                    <li><a href="@Links.Sms("/rosie")">ROSIE (ROV)</a></li>
-                    <li><a href="@Links.Sms("/adam")">ADAM (float)</a></li>
-                    <li><a href="@Links.Sms("/2026")">2026 season</a></li>
-                    <li><a href="@Links.Sms("/company")">Company</a></li>
+                    @foreach (var l in site["sms.footer.sms"].Links()) { <li><CopyLink Link="l" /></li> }
                 </ul>
             </nav>
             <nav aria-label="AVI">
                 <p class="sms-footer__label">Part of AVI Robotics</p>
                 <ul>
-                    <li><a href="@Links.Avi("/")">AVI home</a></li>
-                    <li><a href="@Links.Avi("/join")">Join</a></li>
-                    <li><a href="@Links.Avi("/sponsors")">Sponsor or donate</a></li>
-                    <li><a href="@Links.Avi("/shop/sms-team-tee")">SMS Team Tee</a></li>
+                    @foreach (var l in site["sms.footer.avi"].Links()) { <li><CopyLink Link="l" /></li> }
                 </ul>
             </nav>
         </div>
     </footer>
 </div>
+
+@code {
+    private PageCopy site = default!;
+    protected override void OnInitialized() => site = Copy.Site;
+}

@@ -1,22 +1,22 @@
+@* Main menu. Labels and order: content/site.md → ## nav. *@
 <ul class="nav__list">
-    <li><NavLink class="nav__link" href="/about">About</NavLink></li>
-    <li><NavLink class="nav__link" href="/history">History</NavLink></li>
-    <li><NavLink class="nav__link" href="/leadership">Leadership</NavLink></li>
-    <li><NavLink class="nav__link" href="/teams">Teams</NavLink></li>
-    <li><NavLink class="nav__link" href="/projects">Projects</NavLink></li>
-    <li><NavLink class="nav__link" href="/sponsors">Support</NavLink></li>
-    <li>
-        <NavLink class="nav__link" href="/shop">
-            <span>Shop</span>
-            @if (CartCount > 0)
-            {
-                <span class="badge" aria-hidden="true">@CartCount</span><span class="visually-hidden">, @CartCount @(CartCount == 1 ? "item" : "items") in cart</span>
-            }
-        </NavLink>
-    </li>
-    <li><a class="btn btn--accent btn--sm" href="/join">Join the club</a></li>
+    @foreach (var l in site["nav"].Links())
+    {
+        <li>
+            <NavLink class="nav__link" href="@l.Href">
+                <span>@l.Text</span>
+                @if (l.Href == "/shop" && CartCount > 0)
+                {
+                    <span class="badge" aria-hidden="true">@CartCount</span><span class="visually-hidden">, @CartCount @(CartCount == 1 ? "item" : "items") in cart</span>
+                }
+            </NavLink>
+        </li>
+    }
+    <li><CopyLink Link="@site["nav.join"].Link()" Class="btn btn--accent btn--sm" /></li>
 </ul>
 
 @code {
     [Parameter] public int CartCount { get; set; }
+    private PageCopy site = default!;
+    protected override void OnInitialized() => site = Copy.Site;
 }

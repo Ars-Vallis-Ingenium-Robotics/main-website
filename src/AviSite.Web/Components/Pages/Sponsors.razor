@@ -1,85 +1,82 @@
 @page "/sponsors"
-@using AviSite.Web.Content
+@* Copy: content/pages/sponsors.md · logos: content/sponsors.md *@
 @inject IOptions<SiteOptions> Site
-@inject IOptions<NonprofitOptions> Nonprofit
 
-<PageTitle>Support AVI · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="Sponsor or donate to AVI Robotics, a 501(c)(3) nonprofit at Fresno State. EIN 39-4775163. Gifts are tax-deductible." /></HeadContent>
-
-<PageHero Kicker="@($"Support · {Nonprofit.Value.Status}")" Title="Put your name on the robot.">
-    <p>Every dollar goes into parts, pool time and getting students to competition. AVI is a registered @Nonprofit.Value.Status, so your gift is tax-deductible.</p>
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+@{ var hb = c["hero.buttons"].Links(); }
+<PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
+    @c["hero"].Html()
     <div class="actions">
-        <a class="btn btn--accent btn--lg" href="/donate">Donate now</a>
-        <a class="btn btn--ghost-on-ink" href="@Site.Value.SponsorPacketPath" target="_blank" rel="noopener">Sponsorship packet (PDF)</a>
+        @for (var i = 0; i < hb.Count; i++) { <CopyLink Link="@hb[i]" Class="@(i == 0 ? "btn btn--accent btn--lg" : "btn btn--ghost-on-ink")" /> }
     </div>
 </PageHero>
-
+@{ var uses = c["uses"]; }
 <section class="section">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow">Where it goes</p>
-            <h2 class="h2">A real season costs real money.</h2>
-            <p class="lede">The 2026 season had a total value of about $34,000, including donated and reused parts. The biggest line was getting 13 students and two robots to Newfoundland.</p>
+            <p class="eyebrow">@uses.Inline("eyebrow")</p>
+            <h2 class="h2">@uses.Inline("title")</h2>
+            <p class="lede">@uses.Inline()</p>
         </div>
         <div class="reveal">
-            <SpecSheet Rows="@uses" />
-            <p class="muted small">From the Sequoia Marine Solutions 2026 technical documentation, accounting section.</p>
+            <SpecSheet Rows="@c["uses.spec"].Pairs()" />
+            <p class="muted small">@uses.Inline("note")</p>
         </div>
     </div>
 </section>
-
+@{ var thanks = c["thanks"]; var tp = c["thanks.photos"].Rows(); }
 <section class="section section--ink sponsors-hall" aria-labelledby="thanks-title">
     <div class="wrap">
         <div class="section__head">
             <div>
-                <p class="eyebrow eyebrow--on-ink">2026 sponsors</p>
-                <h2 class="h2" id="thanks-title">Thank you.</h2>
-                <p class="lede-on-ink">These are the companies and organizations that got a first-year club to the World Championship. Their logos were on the back of every shirt we wore in St. John's.</p>
+                <p class="eyebrow eyebrow--on-ink">@thanks.Inline("eyebrow")</p>
+                <h2 class="h2" id="thanks-title">@thanks.Inline("title")</h2>
+                <p class="lede-on-ink">@thanks.Inline()</p>
             </div>
         </div>
         <SponsorWall />
         <div class="sponsors-hall__photos">
-            <Photo Key="worlds-shirt-back" Sizes="(min-width: 56rem) 30vw, 70vw" Class="photo--frame" Ratio="4 / 5" Caption="The sponsor shirt at Worlds, June 2026." />
-            <Photo Key="pool-guest-visit" Sizes="(min-width: 56rem) 45vw, 100vw" Class="photo--frame" Ratio="4 / 5" Focus="62% 40%" Caption="Guests at our June 4 pool test." />
+            @if (tp.Count > 0) { <Photo Key="@tp[0][0]" Sizes="(min-width: 56rem) 30vw, 70vw" Class="photo--frame" Ratio="4 / 5" Caption="@Copy.Plain(tp[0].ElementAtOrDefault(1))" /> }
+            @if (tp.Count > 1) { <Photo Key="@tp[1][0]" Sizes="(min-width: 56rem) 45vw, 100vw" Class="photo--frame" Ratio="4 / 5" Focus="62% 40%" Caption="@Copy.Plain(tp[1].ElementAtOrDefault(1))" /> }
         </div>
     </div>
 </section>
-
+@{ var levels = c["levels"]; }
 <section class="section" aria-labelledby="levels-title">
     <div class="wrap">
         <div class="section__head">
             <div>
-                <p class="eyebrow">Sponsorship levels · 2025–26 packet</p>
-                <h2 class="h2" id="levels-title">Pick a level.</h2>
+                <p class="eyebrow">@levels.Inline("eyebrow")</p>
+                <h2 class="h2" id="levels-title">@levels.Inline("title")</h2>
             </div>
-            <a class="link-arrow" href="@Site.Value.SponsorPacketPath" target="_blank" rel="noopener">Full packet (PDF)</a>
+            <CopyLink Link="@levels.Link("link")" Class="link-arrow" />
         </div>
         <ol class="levels" role="list">
-            @foreach (var (name, amount, perks) in levels)
+            @foreach (var l in levels.Items)
             {
                 <li class="level reveal">
-                    <span class="level__name">@name</span>
-                    <span class="level__amount mono">@amount</span>
-                    <ul class="level__perks">@foreach (var p in perks) { <li>@p</li> }</ul>
+                    <span class="level__name">@l.Title</span>
+                    <span class="level__amount mono">@l.Inline("amount")</span>
+                    <ul class="level__perks">@foreach (var p in l.ListHtml()) { <li>@p</li> }</ul>
                 </li>
             }
         </ol>
-        <p class="muted small">Every level includes the rewards of the levels below it. All sponsors are essential: we couldn't do this without any of you.</p>
+        <p class="muted small">@levels.Inline("note")</p>
     </div>
 </section>
-
+@{ var give = c["give"]; var gb = c["give.buttons"].Links(); }
 <section class="section section--ink">
     <div class="wrap split">
         <div class="split__head">
-            <p class="eyebrow eyebrow--on-ink">How to give</p>
-            <h2 class="h2">Sponsor a season, or just send us money.</h2>
+            <p class="eyebrow eyebrow--on-ink">@give.Inline("eyebrow")</p>
+            <h2 class="h2">@give.Inline("title")</h2>
         </div>
         <div class="reveal">
-            <p class="lede-on-ink">Sponsors get their logo on the robot, the team shirt and this site, plus mentions in our technical documentation and presentation. Download the packet for tiers, or email us.</p>
-            <SpecSheet Class="spec--on-ink" Rows="@nonprofitRows" />
+            <p class="lede-on-ink">@give.Inline()</p>
+            <SpecSheet Class="spec--on-ink" Rows="@c["give.spec"].Pairs()" />
             <div class="actions">
-                <a class="btn btn--accent" href="/donate">Donate</a>
-                <a class="btn btn--ghost-on-ink" href="@Site.Value.SponsorPacketPath" target="_blank" rel="noopener">Sponsorship packet (PDF)</a>
+                @for (var i = 0; i < gb.Count; i++) { <CopyLink Link="@gb[i]" Class="@(i == 0 ? "btn btn--accent" : "btn btn--ghost-on-ink")" /> }
                 @if (Site.Value.ContactEmail is { } email) { <a class="btn btn--ghost-on-ink" href="mailto:@email?subject=Supporting%20AVI%20Robotics">Email @email</a> }
             </div>
         </div>
@@ -87,27 +84,6 @@
 </section>
 
 @code {
-    private readonly IReadOnlyList<(string, string)> uses =
-    [
-        ("Competition travel", "$18,869 · flights and hotel for 13 students in St. John's"),
-        ("ROV electronics & controls", "Largest build category: thrusters, cameras, power"),
-        ("Fundraising operations", "$2,405 · Vintage Days booth supplies"),
-        ("Team operations", "$1,327 · shirts, booth, materials"),
-        ("Admin & registration", "$877 · 501(c)(3) filing, CA DOJ, MATE registration"),
-    ];
-
-    private static readonly (string, string, string[])[] levels =
-    [
-        ("Anchor", "$5,000", ["Your logo printed directly on the ROV we take to the World Championship", "A custom wooden plaque thanking your business", "A framed photo of the team from competition"]),
-        ("Hull", "$2,500", ["Large logo on team shirts and merchandise", "A verbal shoutout at the World Championship", "Logo on flyers and digital marketing"]),
-        ("Rudder", "$1,000", ["Medium logo on team shirts and merchandise", "A shoutout at the start and end of every AVI meeting"]),
-        ("Propeller", "$500", ["Small logo on team shirts and merchandise", "A printed photo of the team from competition"]),
-        ("Masthead", "$250", ["Company name on team shirts and merchandise", "Your logo shown at every AVI meeting", "Social media shoutouts"]),
-    ];
-
-    private IReadOnlyList<(string, string)> nonprofitRows => [
-        ("Organization", Nonprofit.Value.LegalName),
-        ("Status", $"{Nonprofit.Value.Status} · contributions tax-deductible"),
-        ("Tax ID", $"EIN {Nonprofit.Value.Ein}"),
-    ];
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/sponsors");
 }

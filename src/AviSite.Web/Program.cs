@@ -45,6 +45,11 @@ services.AddSingleton<IOrderStore, JsonOrderStore>();
 services.AddSingleton<Pricing>();
 services.AddSingleton<PaymentReconciler>();
 services.AddSingleton<PhotoCatalog>();
+// Site copy lives in content/*.md (see content/README.md).
+services.AddSingleton<AviSite.Web.Content.SiteContent>();
+services.AddSingleton<AviSite.Web.Content.ClubData>();
+services.AddSingleton<AviSite.Web.Content.People>();
+services.AddScoped<AviSite.Web.Content.Copy>();
 services.Configure<NonprofitOptions>(builder.Configuration.GetSection(NonprofitOptions.Section));
 services.Configure<SmsSiteOptions>(builder.Configuration.GetSection(SmsSiteOptions.Section));
 services.AddScoped<SmsUrls>();
@@ -134,6 +139,7 @@ app.MapHealthChecks("/healthz");
 app.MapCartEndpoints();
 app.MapPayPalEndpoints();
 app.MapAdminEndpoints();
+app.MapPeopleEndpoints();
 app.MapRazorComponents<App>();
 
 app.Logger.LogInformation("PayPal mode: {Mode}", payPalMode);

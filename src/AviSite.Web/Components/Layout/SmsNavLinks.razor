@@ -1,8 +1,9 @@
+@* SMS menu. Labels and order: content/site.md → ## sms.nav. *@
 @inject SmsUrls Links
 <ul class="nav__list">
-    <li><NavLink class="nav__link" href="@Links.Sms("/rosie")">ROSIE</NavLink></li>
-    <li><NavLink class="nav__link" href="@Links.Sms("/adam")">ADAM</NavLink></li>
-    <li><NavLink class="nav__link" href="@Links.Sms("/2026")">2026 season</NavLink></li>
-    <li><NavLink class="nav__link" href="@Links.Sms("/company")">Company</NavLink></li>
+    @foreach (var l in Copy.Site["sms.nav"].Links())
+    {
+        <li><NavLink class="nav__link" href="@l.Href">@l.Text</NavLink></li>
+    }
     <li><a class="sms-back" href="@Links.Avi("/")"><img src="/img/brand/avi-dog-sm.webp" alt="" width="16" height="20" />AVI Robotics <span aria-hidden="true">↗</span></a></li>
 </ul>

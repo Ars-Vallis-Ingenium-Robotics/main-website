@@ -1415,8 +1415,8 @@
   @media (max-width: 47.99rem) {
     .nav__sheet { position: fixed; inset: auto; top: var(--header-h, 4rem); left: 0; width: 100vw; height: calc(100dvh - var(--header-h, 4rem));
       overflow-y: auto; overscroll-behavior: contain; padding: var(--s-3) var(--gutter) calc(var(--s-7) + env(safe-area-inset-bottom)); border-top: 1px solid var(--line-on-ink); }
-    .nav--narrow[open] .nav__sheet { animation: sheet-in 220ms var(--ease); }
-    @keyframes sheet-in { from { opacity: 0; translate: 0 -0.75rem; } }
+    .nav--narrow[open] .nav__sheet { animation: navsheet-in 220ms var(--ease); }
+    @keyframes navsheet-in { from { opacity: 0; translate: 0 -0.75rem; } }
     .nav__sheet .nav__link { min-height: 3.5rem; padding: var(--s-3) 0; font-size: var(--step-1); }
     .nav__sheet .btn { min-height: 3.25rem; font-size: 1.05rem; }
     .nav__sheet .sms-back { margin: var(--s-5) 0 0; min-height: 3rem; justify-content: center; font-size: 1rem; }
@@ -1540,4 +1540,36 @@
 }
 @layer pages {
   @media (max-width: 47.99rem) { .nav__sheet .sms-back { margin: var(--s-5) 0 0; min-height: 3rem; padding-inline: 1.25rem; font-size: 1rem; } }
+}
+@layer components {
+  /* Sponsors: no boxes, just logos floating on the dark band. */
+  .sponsor-wall__tier, .sponsor-wall--sms .sponsor-wall__tier { background: none; border: 0; row-gap: var(--s-3); }
+  .sponsor-wall__item, .sponsor-wall--sms .sponsor-wall__item { outline: 0; background: none; }
+  .sponsor-wall__label { text-align: center; }
+}
+@layer components {
+  /* People: any name links to a pop-up card (people.js) or, without JS, /people/<slug>. */
+  .person-link { color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 0.2em; text-decoration-thickness: 1px; cursor: pointer; }
+  .person-link:hover { text-decoration-color: currentColor; }
+  .person__name .person-link { text-decoration-color: transparent; }
+  .person__name .person-link:hover { text-decoration-color: currentColor; }
+  button.sheet__close { background: none; cursor: pointer; font: inherit; font-size: 1.6rem; }
+  .person-sheet { width: min(30rem, calc(100vw - 2 * var(--gutter))); color: var(--ink); }
+  .person-sheet .sheet__head { grid-template-columns: auto 1fr auto; align-items: center; }
+  .person-sheet__photo { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: var(--paper-2); }
+  .person-sheet__photo--initials { display: grid; place-items: center; font-family: var(--font-mono); font-weight: 700; font-size: 1.6rem; color: var(--text-muted); }
+  .person-sheet__pronouns { font-size: 0.75rem; letter-spacing: 0.08em; color: var(--text-muted); }
+  .person-sheet__headline { font-weight: 600; }
+  .person-sheet__roles, .person-page__roles { list-style: none; display: grid; gap: var(--s-2); margin-bottom: var(--s-4); }
+  .person-sheet__roles li, .person-page__roles li { padding-left: var(--s-3); border-left: 3px solid var(--accent); font-size: 0.95rem; }
+  .person-sheet__more { margin-top: var(--s-4); font-size: 0.9rem; }
+  .profile { display: grid; gap: var(--s-4); margin-top: var(--s-4); }
+  .profile__bio { display: grid; gap: var(--s-3); margin-bottom: var(--s-4); }
+  .profile__links { list-style: none; display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .profile__link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s-4); border: 1px solid var(--line-strong); border-radius: 999px; text-decoration: none; font-weight: 600; font-size: 0.9rem; color: inherit; }
+  .profile__link:hover { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  .profile__link--linkedin:hover { background: #0a66c2; border-color: #0a66c2; }
+  .person-page { display: grid; gap: var(--s-6); align-items: start; }
+  @media (min-width: 40rem) { .person-page { grid-template-columns: auto 1fr; } }
+  .sms-site .person-sheet__roles li, .sms-site .person-page__roles li { border-left-color: var(--sms-teal-deep); }
 }

@@ -62,7 +62,7 @@
                 }
 
                 <div class="prose product__desc"><p>@product.Description</p></div>
-                <SpecSheet Rows="@details" />
+                <SpecSheet Rows="@(details.Select(d => (d.Item1, new MarkupString(System.Net.WebUtility.HtmlEncode(d.Item2)))).ToList())" />
             </div>
         </div>
     </section>

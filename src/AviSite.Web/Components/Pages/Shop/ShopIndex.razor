@@ -2,17 +2,18 @@
 @inject ICatalog Catalog
 @inject IOptions<StoreOptions> Store
 
-<PageTitle>Shop · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="AVI Robotics team shirts and gear. Every purchase funds the club." /></HeadContent>
+@* Copy: content/pages/shop.md (products: Store/catalog.seed.json) *@
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
 
-<PageHero Kicker="Shop" Title="Team gear.">
-    <p>Every shirt funds parts and pool time. @Store.Value.PickupNote</p>
+<PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
+    <p>@c["hero"].Inline() @Store.Value.PickupNote</p>
 </PageHero>
 
 <section class="section">
     <div class="wrap">
-        @if (Error == "unavailable") { <p class="alert" role="alert">That item isn't available right now.</p> }
-        @if (!Store.Value.OrdersOpen) { <p class="alert" role="status">Ordering is closed right now. Check back for the next run.</p> }
+        @if (Error == "unavailable") { <p class="alert" role="alert">@c["unavailable"].Inline()</p> }
+        @if (!Store.Value.OrdersOpen) { <p class="alert" role="status">@c["closed"].Inline()</p> }
         <ul class="product-grid">
             @foreach (var p in Catalog.Active) { <li><ProductCard Product="p" HeadingLevel="2" /></li> }
         </ul>
@@ -21,4 +22,6 @@
 
 @code {
     [SupplyParameterFromQuery] public string? Error { get; set; }
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/shop");
 }

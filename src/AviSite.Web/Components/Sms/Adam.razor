@@ -1,57 +1,53 @@
 @page "/sms/adam"
+@* Copy: content/sms/adam.md *@
 
-<PageTitle>ADAM · Sequoia Marine Solutions</PageTitle>
-<HeadContent><meta name="description" content="ADAM, Sequoia Marine Solutions' autonomous vertical profiling float: a peristaltic-pump buoyancy engine, Raspberry Pi Pico control and LoRa telemetry." /></HeadContent>
-
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+@{ var hero = c["hero"]; var spec = c["spec"]; var model = c["model"]; var poster = c["poster"]; }
 <section class="sms-page-hero">
     <div class="wrap sms-page-hero__grid">
         <div>
-            <p class="sms-kicker">Profiling float · 2026</p>
-            <h1 class="sms-page-hero__title">ADAM</h1>
-            <p class="sms-page-hero__lede">Aquatic Drifter for Autonomous Monitoring. It sinks and rises on its own, logging depth on the way, like the floats that measure the ocean's health.</p>
+            <p class="sms-kicker">@hero.Inline("kicker")</p>
+            <h1 class="sms-page-hero__title">@hero.Inline("title")</h1>
+            <p class="sms-page-hero__lede">@hero.Inline()</p>
         </div>
-        <Photo Key="adam-water" Sizes="(min-width: 56rem) 50vw, 100vw" Eager="true" Class="photo--frame" Ratio="4 / 5" />
+        <Photo Key="@hero.Photo" Sizes="(min-width: 56rem) 50vw, 100vw" Eager="true" Class="photo--frame" Ratio="4 / 5" />
     </div>
 </section>
 
 <section class="sms-section">
     <div class="wrap split">
         <div class="split__head">
-            <p class="sms-kicker sms-kicker--dark">How it works</p>
-            <h2 class="sms-h2">A buoyancy engine in a tube.</h2>
-            <p class="lede">A peristaltic pump moves water in and out of an internal bladder, changing ADAM's density so it can complete vertical profiles without a tether.</p>
+            <p class="sms-kicker sms-kicker--dark">@spec.Inline("kicker")</p>
+            <h2 class="sms-h2">@spec.Inline("title")</h2>
+            <p class="lede">@spec.ProseInline()</p>
         </div>
-        <SpecSheet Class="reveal" Rows="@spec" />
+        <SpecSheet Class="reveal" Rows="@spec.Pairs()" />
     </div>
 </section>
 
 <section class="sms-section sms-section--model">
     <div class="wrap split split--model">
         <div class="split__head">
-            <p class="sms-kicker sms-kicker--dark">In 3D</p>
-            <h2 class="sms-h2">Look inside the tube.</h2>
-            <p class="lede">ADAM's float CAD: end caps, recovery handles and the rails that carry the pump and electronics. Drag to orbit, pinch or scroll to zoom.</p>
+            <p class="sms-kicker sms-kicker--dark">@model.Inline("kicker")</p>
+            <h2 class="sms-h2">@model.Inline("title")</h2>
+            <p class="lede">@model.Inline()</p>
         </div>
-        <Model3D Name="adam" Alt="3D model of ADAM, the profiling float: a tall tube with end caps and two recovery handles" SizeLabel="1.3 MB" />
+        <Model3D Name="adam" Alt="@model.Text("alt")" SizeLabel="@model.Text("size")" />
     </div>
 </section>
 
 <section class="sms-section sms-section--deep">
     <div class="wrap sms-adam">
-        <Photo Key="poster-adam" Sizes="(min-width: 56rem) 30vw, 70vw" Class="sms-poster sms-poster--tall reveal" />
+        <Photo Key="@poster.Photo" Sizes="(min-width: 56rem) 30vw, 70vw" Class="sms-poster sms-poster--tall reveal" />
         <div class="sms-chapters sms-chapters--single">
-            <article class="sms-chapter reveal">
-                <h3>Seals that survive the cold</h3>
-                <p>Custom-machined end caps use internal O-rings. The team researched thermal expansion so the seals hold across the temperature swing from a warm deck to cold water.</p>
-            </article>
-            <article class="sms-chapter reveal">
-                <h3>Quiet power</h3>
-                <p>An independent NiMH pack with its own regulation feeds the logic and the pump separately, so motor noise doesn't corrupt the depth readings.</p>
-            </article>
-            <article class="sms-chapter reveal">
-                <h3>Long-range, low-power radio</h3>
-                <p>A LoRa module sends telemetry to the surface from a custom PCB built around a Raspberry Pi Pico running MicroPython.</p>
-            </article>
+            @foreach (var ch in c["chapters"].Items)
+            {
+                <article class="sms-chapter reveal">
+                    <h3>@ch.Title</h3>
+                    @ch.Html()
+                </article>
+            }
         </div>
     </div>
 </section>
@@ -59,22 +55,15 @@
 <section class="sms-section sms-section--flush">
     <p class="filmstrip-hint" aria-hidden="true">Scroll sideways →</p>
     <div class="filmstrip" tabindex="0" aria-label="ADAM photos, scroll sideways">
-        <Photo Key="pool-adam-deploy" Sizes="(min-width: 56rem) 30vw, 70vw" Class="filmstrip__item" Ratio="2 / 3" />
-        <Photo Key="adam-display" Sizes="(min-width: 56rem) 30vw, 70vw" Class="filmstrip__item" Ratio="2 / 3" />
-        <Photo Key="worlds-float-electronics" Sizes="(min-width: 56rem) 30vw, 70vw" Class="filmstrip__item" Ratio="2 / 3" />
-        <Photo Key="worlds-hallway" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="worlds-shirt-front" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        @foreach (var row in c["photos"].Rows())
+        {
+            var tall = row.ElementAtOrDefault(1) == "tall";
+            <Photo Key="@row[0]" Sizes="@(tall ? "(min-width: 56rem) 30vw, 70vw" : "(min-width: 56rem) 40vw, 85vw")" Class="filmstrip__item" Ratio="@(tall ? "2 / 3" : null)" />
+        }
     </div>
 </section>
 
 @code {
-    private readonly IReadOnlyList<(string, string)> spec =
-    [
-        ("Hull", "4 in polycarbonate tube, machined end caps, internal O-rings"),
-        ("Buoyancy", "Peristaltic pump + internal bladder"),
-        ("Control", "Custom PCB, Raspberry Pi Pico (MicroPython)"),
-        ("Sensing", "Blue Robotics depth sensor"),
-        ("Telemetry", "LoRa"),
-        ("Power", "Independent NiMH pack, isolated logic and pump rails"),
-    ];
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("sms/adam");
 }

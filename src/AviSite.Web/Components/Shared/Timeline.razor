@@ -1,4 +1,3 @@
-@using AviSite.Web.Content
 @*
     Vertical timeline. A block with moments opens into its own secondary timeline:
       - with JS (timeline.js) the clicked block morphs into the sub-timeline (View Transitions where supported);
@@ -15,8 +14,8 @@
             <li class="timeline__item reveal @(sub is null ? "" : "timeline__item--more")" id="@($"{Id}-{i}")">
                 <div class="timeline__when mono">@m.When</div>
                 <div class="timeline__body">
-                    <h2 class="timeline__title">@m.Title</h2>
-                    <p>@m.Body</p>
+                    <h2 class="timeline__title">@Copy.Inline(m.Title)</h2>
+                    <p>@Copy.Inline(m.Body)</p>
                     @if (sub is not null)
                     {
                         <a class="timeline__open" href="#@sub" data-sub="@sub">
@@ -28,7 +27,7 @@
                 {
                     @if (sub is not null)
                     {
-                        <a class="timeline__photo-link" href="#@sub" data-sub="@sub" aria-label="Open @m.Title">
+                        <a class="timeline__photo-link" href="#@sub" data-sub="@sub" aria-label="Open @Copy.Plain(m.Title)">
                             <Photo Key="@m.Photo" Sizes="(min-width: 56rem) 34vw, 100vw" Class="timeline__photo photo--frame no-zoom" />
                         </a>
                     }
@@ -54,7 +53,7 @@
         var m = Items[i];
         if (m.Moments is not { Count: > 0 }) { continue; }
         var sub = $"{Id}-sub-{i}";
-        <section class="subtl" id="@sub" aria-label="@m.Title, what happened">
+        <section class="subtl" id="@sub" aria-label="@Copy.Plain(m.Title), what happened">
             <header class="subtl__head">
                 <a class="subtl__back" href="#@($"{Id}-{i}")" data-sub-close>
                     <span aria-hidden="true">←</span> Back to the full timeline
@@ -66,8 +65,8 @@
                     }
                     <div>
                         <p class="subtl__when mono">@m.When</p>
-                        <h2 class="subtl__title">@m.Title</h2>
-                        <p class="subtl__lede">@m.Body</p>
+                        <h2 class="subtl__title">@Copy.Inline(m.Title)</h2>
+                        <p class="subtl__lede">@Copy.Inline(m.Body)</p>
                     </div>
                 </div>
             </header>
@@ -84,8 +83,8 @@
                             }
                             <span class="subtl__text">
                                 <span class="subtl__date mono">@mo.Date</span>
-                                <span class="subtl__name">@mo.Title</span>
-                                @if (mo.Body is not null) { <span class="subtl__body">@mo.Body</span> }
+                                <span class="subtl__name">@Copy.Inline(mo.Title)</span>
+                                @if (mo.Body is not null) { <span class="subtl__body">@Copy.Plain(mo.Body)</span> }
                             </span>
                             <span class="subtl__more" aria-hidden="true">+</span>
                         </a>
@@ -105,8 +104,8 @@
             <dialog class="sheet moment-sheet" id="@dlg" aria-labelledby="@(dlg)-title">
                 <div class="sheet__head">
                     <div>
-                        <p class="moment-sheet__date mono">@mo.Date · @m.Title</p>
-                        <h3 class="sheet__title" id="@(dlg)-title">@mo.Title</h3>
+                        <p class="moment-sheet__date mono">@mo.Date · @Copy.Plain(m.Title)</p>
+                        <h3 class="sheet__title" id="@(dlg)-title">@Copy.Inline(mo.Title)</h3>
                     </div>
                     <a class="sheet__close" href="#@sub" data-dialog-close aria-label="Close">×</a>
                 </div>
@@ -114,15 +113,15 @@
                 {
                     <Photo Key="@mo.Photo" Sizes="(min-width: 48rem) 44rem, 100vw" Class="sheet__photo" Caption="@mo.Caption" />
                 }
-                @if (mo.Body is not null) { <p class="moment-sheet__body">@mo.Body</p> }
-                @if (mo.Photo is null && mo.Body is null) { <p class="moment-sheet__body">Part of “@m.Title”, @m.When.</p> }
+                @if (mo.Body is not null) { <div class="moment-sheet__body">@Copy.Blocks(mo.Body)</div> }
+                @if (mo.Photo is null && mo.Body is null) { <p class="moment-sheet__body">Part of “@Copy.Plain(m.Title)”, @m.When.</p> }
             </dialog>
         }
     }
 </div>
 
 @code {
-    [Parameter, EditorRequired] public IReadOnlyList<ClubFacts.Milestone> Items { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<Milestone> Items { get; set; } = [];
     /// <summary>Prefix for element ids, unique per page (e.g. "history", "sms26").</summary>
     [Parameter] public string Id { get; set; } = "tl";
     [Parameter] public string? Class { get; set; }

@@ -1,87 +1,68 @@
 @page "/sms/2026"
-@inject SmsUrls Links
+@* Copy: content/sms/season-2026.md · timeline: content/timelines/sms-2026.md *@
+@inject ClubData Data
 
-<PageTitle>2026 Season · Sequoia Marine Solutions</PageTitle>
-<HeadContent><meta name="description" content="Sequoia Marine Solutions' first season: from PVC prototypes to the 2026 MATE ROV World Championship in St. John's and a record Engineering Presentation score." /></HeadContent>
-
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+@{ var hero = c["hero"]; }
 <section class="sms-page-hero sms-page-hero--photo">
-    <Photo Key="worlds-welcome" Sizes="100vw" Eager="true" Class="sms-hero__bg" />
+    <Photo Key="@hero.Photo" Sizes="100vw" Eager="true" Class="sms-hero__bg" />
     <div class="wrap sms-hero__copy">
-        <p class="sms-kicker">Season one</p>
-        <h1 class="sms-page-hero__title">2026: Fresno to Newfoundland</h1>
-        <p class="sms-page-hero__lede">The mission theme followed the UN Ocean Decade: invasive species detection, iceberg monitoring in the North Atlantic, and maintaining Blue Economy infrastructure.</p>
+        <p class="sms-kicker">@hero.Inline("kicker")</p>
+        <h1 class="sms-page-hero__title">@hero.Inline("title")</h1>
+        <p class="sms-page-hero__lede">@hero.Inline()</p>
     </div>
 </section>
-
+@{ var next = c["timeline.next"]; var nl = next.Link("link"); }
 <section class="sms-section">
     <div class="wrap">
-        <Timeline Items="ClubFacts.SmsSeason2026" Id="sms26" Class="timeline--sms" NextWhen="2027" NextTitle="Explorer class. In progress."
-                  NextBody="A bigger class, harder missions and a new robot. The 2027 build is happening right now on Friday nights."
-                  NextHref="@Links.Avi("/join")" NextLink="Join the build" />
+        <Timeline Items="@(Data.Timeline("sms-2026"))" Id="sms26" Class="timeline--sms" NextWhen="@next.Text("when")" NextTitle="@next.Text("title")"
+                  NextBody="@next.Text()" NextHref="@nl.Href" NextLink="@nl.PlainText" />
     </div>
 </section>
-
+@{ var rec = c["record"]; }
 <section class="sms-section sms-section--deep">
     <div class="wrap sms-record">
         <div class="reveal">
-            <p class="sms-kicker">Engineering Presentation Award · Pioneer class</p>
-            <p class="sms-record__score" aria-label="102 out of 100"><span aria-hidden="true">102/100</span></p>
-            <p class="sms-record__text">An all-time record for the class, plus the fourth-highest overall Pioneer score. For 2027, SMS moves up to Explorer.</p>
+            <p class="sms-kicker">@rec.Inline("kicker")</p>
+            <p class="sms-record__score" aria-label="@rec.Text("score-label")"><span aria-hidden="true">@rec.Inline("score")</span></p>
+            <p class="sms-record__text">@rec.Inline()</p>
         </div>
-        <Photo Key="worlds-award-stage" Sizes="(min-width: 56rem) 50vw, 100vw" Class="photo--frame reveal" />
+        <Photo Key="@rec.Photo" Sizes="(min-width: 56rem) 50vw, 100vw" Class="photo--frame reveal" />
     </div>
 </section>
 
 <section class="sms-section sms-section--cream" aria-labelledby="watch-title">
     <div class="wrap">
-        <p class="sms-kicker sms-kicker--dark">Watch</p>
-        <h2 class="sms-h2" id="watch-title">The season on video.</h2>
+        <p class="sms-kicker sms-kicker--dark">@c["watch"].Inline("kicker")</p>
+        <h2 class="sms-h2" id="watch-title">@c["watch"].Inline("title")</h2>
         <SmsVideos />
     </div>
 </section>
 
 <section class="sms-section sms-section--flush" aria-label="Photos from St. John's">
-    <div class="wrap"><p class="sms-kicker">St. John's, Newfoundland · June 2026</p></div>
-    <Collage Keys="@canada" Label="Photos from St. John's" Class="collage-band--sms" />
+    <div class="wrap"><p class="sms-kicker">@c["canada"].Inline("kicker")</p></div>
+    <Collage Keys="@c["canada"].List()" Label="Photos from St. John's" Class="collage-band--sms" />
 </section>
-
+@{ var docs = c["docs"]; }
 <section class="sms-section" aria-labelledby="docs-title">
     <div class="wrap split">
         <div class="split__head">
-            <p class="sms-kicker sms-kicker--dark">Submission documents</p>
-            <h2 class="sms-h2" id="docs-title">Read what we turned in.</h2>
-            <p>Everything SMS submitted to MATE for the 2026 World Championship. PDFs open in a new tab.</p>
-            <Photo Key="marketing-display" Sizes="(min-width: 56rem) 40vw, 100vw" Class="photo--frame docs__poster" />
+            <p class="sms-kicker sms-kicker--dark">@docs.Inline("kicker")</p>
+            <h2 class="sms-h2" id="docs-title">@docs.Inline("title")</h2>
+            @docs.Html()
+            <Photo Key="@docs.Photo" Sizes="(min-width: 56rem) 40vw, 100vw" Class="photo--frame docs__poster" />
         </div>
         <ul class="docs reveal" role="list">
-            @foreach (var (title, file, note) in docs)
+            @foreach (var row in c["docs.files"].Rows())
             {
-                <li><a class="docs__link" href="/files/sms-2026/@file" target="_blank" rel="noopener"><span class="docs__title">@title</span><span class="docs__note">@note</span></a></li>
+                <li><a class="docs__link" href="/files/sms-2026/@row[1]" target="_blank" rel="noopener"><span class="docs__title">@Copy.Inline(row[0])</span><span class="docs__note">@Copy.Inline(row.ElementAtOrDefault(2))</span></a></li>
             }
         </ul>
     </div>
 </section>
 
 @code {
-    private static readonly IReadOnlyList<string> canada =
-    [
-        "worlds-backdrop", "worlds-rosie-hall", "worlds-institute", "worlds-jump", "worlds-display", "worlds-wavetank",
-        "worlds-laugh", "worlds-hallway", "worlds-lifevest", "worlds-rosie-red", "worlds-auditorium", "worlds-captains",
-        "worlds-fix", "worlds-awards-crowd", "worlds-stjohns", "worlds-checkin", "worlds-group-outside", "worlds-team-rosie",
-        "worlds-badges", "worlds-table-crowd", "worlds-parts", "worlds-mingle", "worlds-badge-grin", "worlds-other-teams", "worlds-float-check", "worlds-inspection", "worlds-pilot", "worlds-lawn", "worlds-float-bench", "worlds-sunny", "worlds-stairs", "worlds-lobby", "worlds-cheer", "worlds-huddle", "worlds-selfie",
-    ];
-
-    private static readonly (string Title, string File, string Note)[] docs =
-    [
-        ("Technical documentation", "sms-2026-technical-documentation.pdf", "The full engineering write-up. PDF, 2.9 MB"),
-        ("Marketing display", "sms-2026-marketing-display.pdf", "Our poster: ROSIE, ADAM and the company. PDF, 1.9 MB"),
-        ("Spec sheet", "sms-2026-spec-sheet.pdf", "ROSIE at a glance. PDF"),
-        ("Float (non-ROV device) documentation", "sms-2026-float-documentation.pdf", "ADAM. PDF"),
-        ("Electrical SID: ROV", "sms-2026-electrical-sid-rov.pdf", "System interconnection diagram. PDF"),
-        ("Electrical SID: float", "sms-2026-electrical-sid-float.pdf", "PDF"),
-        ("Company safety review", "sms-2026-company-safety-review.pdf", "PDF"),
-        ("Job safety analysis", "sms-2026-job-safety-analysis.pdf", "PDF"),
-        ("Corporate responsibility", "sms-2026-corporate-responsibility.pdf", "PDF"),
-        ("Press release", "sms-2026-press-release.pdf", "PDF"),
-    ];
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("sms/season-2026");
 }

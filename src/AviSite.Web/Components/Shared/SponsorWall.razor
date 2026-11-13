@@ -1,12 +1,13 @@
-@using AviSite.Web.Content
 @*
     Sponsor logo wall, sized by how big each logo was on the 2026 team shirt.
+    Sponsors and level names: content/sponsors.md.
     Logos are white-on-transparent, so this always sits on a dark background.
 *@
+@inject ClubData Data
 <div class="sponsor-wall @Class">
-    @foreach (var tier in ClubFacts.Sponsors2026.Where(s => s.Tier <= MaxTier).GroupBy(s => s.Tier).OrderBy(g => g.Key))
+    @foreach (var tier in Data.Sponsors.Where(s => s.Tier <= MaxTier).GroupBy(s => s.Tier).OrderBy(g => g.Key))
     {
-        @if (ShowLabels) { <p class="sponsor-wall__label">@Labels[tier.Key]</p> }
+        @if (ShowLabels) { <p class="sponsor-wall__label">@Data.TierLabel(tier.Key)</p> }
         <ul class="sponsor-wall__tier sponsor-wall__tier--@tier.Key" role="list">
             @foreach (var s in tier)
             {
@@ -22,11 +23,4 @@
     [Parameter] public string? Class { get; set; }
     [Parameter] public int MaxTier { get; set; } = 4;
     [Parameter] public bool ShowLabels { get; set; } = true;
-
-    // Level names from the 2025/26 sponsorship packet. Which sponsor sits in which level is inferred
-    // from logo size on the Worlds shirt: TODO(confirm) with the treasurer.
-    private static readonly Dictionary<int, string> Labels = new()
-    {
-        [1] = "Anchor", [2] = "Hull", [3] = "Rudder", [4] = "Propeller & Masthead",
-    };
 }

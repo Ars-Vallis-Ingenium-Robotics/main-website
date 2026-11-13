@@ -1,28 +1,28 @@
-﻿@page "/"
-@using AviSite.Web.Content
+@page "/"
+@* Copy: content/pages/home.md *@
 @inject ICatalog Catalog
-@inject IOptions<SiteOptions> Site
-@inject IOptions<NonprofitOptions> Nonprofit
-@inject SmsUrls SmsLinks
+@inject ClubData Data
 
-<PageTitle>AVI Robotics · Fresno State's award-winning robotics club</PageTitle>
+<PageTitle>@c.Meta("title")</PageTitle>
 <HeadContent>
-    <meta name="description" content="AVI Robotics is a student-led 501(c)(3) engineering club at Fresno State. Our MATE ROV company, Sequoia Marine Solutions, won the 2026 World Championship Engineering Presentation award." />
+    <meta name="description" content="@c.Meta("description")" />
 </HeadContent>
 
 <section class="landing" aria-labelledby="hero-title">
     <div class="landing__stage">
-        <Photo Key="fall-group-2026" Sizes="100vw" Eager="true" Class="landing__photo no-zoom" Focus="50% 55%" Alt="About fifty AVI Robotics members in front of the Lyles College of Engineering, fall 2026" />
+        <Photo Key="@(c["landing"].Value("photo") ?? "fall-group-2026")" Sizes="100vw" Eager="true" Class="landing__photo no-zoom" Focus="50% 55%" Alt="@c["landing"].Text("photo-alt")" />
         <div class="landing__veil" aria-hidden="true"></div>
-        <h1 class="landing__mark" id="hero-title" aria-label="AVI Robotics: Ars Vallis Ingenium, the Valley of Artistic Ingenuity">
+        <h1 class="landing__mark" id="hero-title" aria-label="@c["landing"].Text("label")">
             <img class="landing__dog" src="/img/brand/avi-dog-480.webp" alt="" width="480" height="602" fetchpriority="high" />
             <span class="landing__words"><span class="landing__word">AVI</span><span class="landing__robotics">Robotics</span></span>
         </h1>
-        <p class="landing__sub" aria-hidden="true"><span class="scramble" data-scramble="Ars Vallis Ingenium|Valley of Artistic Ingenuity">Ars Vallis Ingenium</span></p>
+        @{ var phrases = c["landing.scramble"].List().Select(Copy.Plain).ToList(); }
+        <p class="landing__sub" aria-hidden="true"><span class="scramble" data-scramble="@string.Join('|', phrases)">@phrases.FirstOrDefault()</span></p>
         <div class="landing__actions">
-            <a class="btn btn--accent" href="/join">Join the club</a>
-            <a class="btn btn--ghost-on-ink" href="/history">Our story</a>
-            <a class="btn btn--ghost-on-ink" href="/projects">Projects &amp; workshops</a>
+            @foreach (var (b, i) in c["landing.buttons"].Links().Select((b, i) => (b, i)))
+            {
+                <a class="btn @(i == 0 ? "btn--accent" : "btn--ghost-on-ink")" href="@b.Href" target="@b.Target" rel="@b.Rel">@b.Text</a>
+            }
         </div>
         <a class="landing__cue" href="#intro"><span class="landing__cue-line" aria-hidden="true"></span><span class="mono">Scroll</span></a>
     </div>
@@ -30,21 +30,22 @@
 
 <section class="section intro" id="intro" aria-labelledby="intro-title">
     <div class="wrap intro__grid">
+        @{ var intro = c["intro"]; var news = c["news"]; }
         <div class="intro__copy reveal">
-            <p class="eyebrow">Fresno State · Student-led · 501(c)(3)</p>
-            <h2 class="h2" id="intro-title">The Valley of Artistic Ingenuity.</h2>
-            <p class="lede">Fresno State students from every major who design, build and pilot robots, run hands-on projects, and bring engineering to the Central Valley. In our first year our MATE ROV company won a world-championship award.</p>
+            <p class="eyebrow">@intro.Inline("eyebrow")</p>
+            <h2 class="h2" id="intro-title">@intro.Inline("title")</h2>
+            <p class="lede">@intro.Inline()</p>
             <div class="hero__actions">
-                <a class="btn btn--accent" href="/join">Join the club</a>
-                <a class="link-arrow" href="/about">About AVI</a>
+                <CopyLink Link="@intro.Link("button")" Class="btn btn--accent" />
+                <CopyLink Link="@intro.Link("link")" Class="link-arrow" />
             </div>
         </div>
         <aside class="news reveal" aria-labelledby="news-title">
-            <Photo Key="phantom-booth" Sizes="(min-width: 56rem) 30vw, 100vw" Class="news__photo" Ratio="4 / 3" />
+            <Photo Key="@news.Photo" Sizes="(min-width: 56rem) 30vw, 100vw" Class="news__photo" Ratio="4 / 3" />
             <div class="news__body">
-                <p class="news__tag mono">Just in · fall 2026</p>
-                <h3 class="news__title" id="news-title">We won the club booth decorating contest.</h3>
-                <p>Our Ars Vallis Ingenium booth took first place in Fresno State's club booth decorating contest.</p>
+                <p class="news__tag mono">@news.Inline("tag")</p>
+                <h3 class="news__title" id="news-title">@news.Inline("title")</h3>
+                <p>@news.Inline()</p>
             </div>
         </aside>
     </div>
@@ -52,87 +53,71 @@
 
 <section class="stats-band" aria-label="2026 season in numbers">
     <div class="wrap stats-band__grid">
-        @foreach (var s in ClubFacts.Season2026)
+        @foreach (var s in Data.Stats("pages/home", "stats"))
         {
             <div class="stat-big reveal">
-                <span class="stat-big__value">@s.Value</span>
-                <span class="stat-big__label">@s.Label</span>
+                <span class="stat-big__value">@Copy.Inline(s.Value)</span>
+                <span class="stat-big__label">@Copy.Inline(s.Label)</span>
             </div>
         }
     </div>
 </section>
+@{ var worlds = c["worlds"]; }
 <section class="section">
     <div class="wrap feature">
         <div class="feature__media reveal">
-            <Photo Key="worlds-award-stage" Sizes="(min-width: 56rem) 55vw, 100vw" Class="photo--frame parallax" />
+            <Photo Key="@worlds.Photo" Sizes="(min-width: 56rem) 55vw, 100vw" Class="photo--frame parallax" />
         </div>
         <div class="feature__copy reveal">
-            <p class="eyebrow">June 2026 · St. John's, Newfoundland</p>
-            <h2 class="h2">A first-year team, on the world stage.</h2>
-            <p class="lede">Sequoia Marine Solutions won the Engineering Presentation award at the MATE ROV World Championship, scoring 102 out of 100, an all-time record for the Pioneer class.</p>
-            <a class="link-arrow" href="@SmsLinks.Sms("/2026")">The 2026 season</a>
+            <p class="eyebrow">@worlds.Inline("eyebrow")</p>
+            <h2 class="h2">@worlds.Inline("title")</h2>
+            <p class="lede">@worlds.Inline()</p>
+            <CopyLink Link="@worlds.Link("link")" Class="link-arrow" />
         </div>
     </div>
 </section>
-
+@{ var what = c["what"]; }
 <section class="section section--ink" aria-labelledby="what-title">
     <div class="wrap">
         <div class="section__head">
             <div>
-                <p class="eyebrow eyebrow--on-ink">What we do</p>
-                <h2 class="h2" id="what-title">Build things. Learn by doing. Give back.</h2>
+                <p class="eyebrow eyebrow--on-ink">@what.Inline("eyebrow")</p>
+                <h2 class="h2" id="what-title">@what.Inline("title")</h2>
             </div>
-            <p class="lede-on-ink what__lede">AVI started with underwater robots, but it's here for any member who wants to make something real: robots, projects, workshops and outreach.</p>
+            <p class="lede-on-ink what__lede">@what.Inline()</p>
         </div>
         <ul class="what" role="list">
-            <li class="what__card what__card--wide reveal">
-                <Photo Key="worlds-display" Sizes="(min-width: 56rem) 50vw, 100vw" Class="what__photo" Ratio="16 / 9" Alt="" />
-                <div class="what__body">
-                    <h3 class="what__title">Robots and teams</h3>
-                    <p>Our teams compete and build year-round. Sequoia Marine Solutions builds underwater robots for MATE ROV, and a Micromouse team is forming.</p>
-                    <a class="link-arrow link-arrow--on-ink" href="/teams">Our teams</a>
-                </div>
-            </li>
-            <li class="what__card reveal">
-                <Photo Key="bcp-build" Sizes="(min-width: 56rem) 25vw, 100vw" Class="what__photo" Ratio="4 / 3" Alt="" />
-                <div class="what__body">
-                    <h3 class="what__title">Blank Check Projects</h3>
-                    <p>Four weeks, a small team and a theme: design and build an interactive display with moving parts, electronics and code. Blank check, because we're broke.</p>
-                    <a class="link-arrow link-arrow--on-ink" href="/projects">How it works</a>
-                </div>
-            </li>
-            <li class="what__card reveal">
-                <Photo Key="workshop-code" Sizes="(min-width: 56rem) 25vw, 100vw" Class="what__photo" Ratio="4 / 3" Alt="" />
-                <div class="what__body">
-                    <h3 class="what__title">Workshops</h3>
-                    <p>Friday nights in EE 389: programming, electronics, CAD and design, taught by members who learned it the same way.</p>
-                    <a class="link-arrow link-arrow--on-ink" href="/projects">The tracks</a>
-                </div>
-            </li>
-            <li class="what__card what__card--wide reveal">
-                <Photo Key="pi-day-group" Sizes="(min-width: 56rem) 50vw, 100vw" Class="what__photo" Ratio="16 / 9" Alt="" />
-                <div class="what__body">
-                    <h3 class="what__title">Outreach</h3>
-                    <p>MESA events, runs, regional competitions and open houses. Robots are a great way to start a conversation about engineering.</p>
-                    <a class="link-arrow link-arrow--on-ink" href="#outreach-title">Where we've been</a>
-                </div>
-            </li>
+            @foreach (var card in what.Items)
+            {
+                var wide = card.Value("wide") is "yes" or "true";
+                <li class="what__card @(wide ? "what__card--wide" : "") reveal">
+                    @if (card.Value("photo") is { } ph)
+                    {
+                        <Photo Key="@ph" Sizes="@(wide ? "(min-width: 56rem) 50vw, 100vw" : "(min-width: 56rem) 25vw, 100vw")" Class="what__photo" Ratio="@(wide ? "16 / 9" : "4 / 3")" Alt="" />
+                    }
+                    <div class="what__body">
+                        <h3 class="what__title">@card.Title</h3>
+                        <p>@card.Inline()</p>
+                        <CopyLink Link="@card.Link("link")" Class="link-arrow link-arrow--on-ink" />
+                    </div>
+                </li>
+            }
         </ul>
     </div>
 </section>
-
+@{ var projects = c["projects"]; var pp = c["projects.photos"].List(); }
 <section class="section" aria-labelledby="projects-title">
     <div class="wrap projects-band">
         <div class="projects-band__copy reveal">
-            <p class="eyebrow">Projects &amp; workshops</p>
-            <h2 class="h2" id="projects-title">No experience? Good. Start here.</h2>
-            <p class="lede">Friday workshops teach programming, electronics and CAD from zero. Then every fall, new members team up for a Blank Check Project: four weeks to build an interactive display that moves, lights up and runs code.</p>
-            <a class="btn btn--accent" href="/projects">Projects &amp; workshops</a>
+            <p class="eyebrow">@projects.Inline("eyebrow")</p>
+            <h2 class="h2" id="projects-title">@projects.Inline("title")</h2>
+            <p class="lede">@projects.Inline()</p>
+            <CopyLink Link="@projects.Link("button")" Class="btn btn--accent" />
         </div>
         <div class="projects-band__photos">
-            <Photo Key="bcp-kit" Sizes="(min-width: 56rem) 26vw, 60vw" Class="projects-band__a reveal" />
-            <Photo Key="bcp-solder" Sizes="(min-width: 56rem) 22vw, 50vw" Class="projects-band__b reveal" />
-            <Photo Key="workshop-cad" Sizes="(min-width: 56rem) 22vw, 50vw" Class="projects-band__c reveal" />
+            @if (pp.Count > 0) { <Photo Key="@pp[0]" Sizes="(min-width: 56rem) 26vw, 60vw" Class="projects-band__a reveal" /> }
+            @if (pp.Count > 1) { <Photo Key="@pp[1]" Sizes="(min-width: 56rem) 22vw, 50vw" Class="projects-band__b reveal" /> }
+            @if (pp.Count > 2) { <Photo Key="@pp[2]" Sizes="(min-width: 56rem) 22vw, 50vw" Class="projects-band__c reveal" /> }
         </div>
     </div>
 </section>
@@ -140,78 +125,73 @@
 <section class="section section--flush" aria-label="Photos">
     <p class="filmstrip-hint" aria-hidden="true">Scroll sideways →</p>
     <div class="filmstrip" tabindex="0" aria-label="Photo highlights, scroll sideways">
-        <Photo Key="worlds-rosie-table" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="monterey-group" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="pool-guests" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="pool-jump" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="traditions-booth" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="worlds-shirt-front" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="mesa-outreach" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="bcp-workshop" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="phantom-booth" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        @foreach (var key in c["filmstrip"].List())
+        {
+            <Photo Key="@key" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        }
     </div>
 </section>
-
+@{ var outreach = c["outreach"]; }
 <section class="section section--paper-2 section--outreach" aria-labelledby="outreach-title">
     <div class="wrap outreach">
         <div class="outreach__copy reveal">
-            <p class="eyebrow">Outreach</p>
-            <h2 class="h2" id="outreach-title">Out in the Valley.</h2>
-            <p class="lede">We volunteer wherever students and families are learning about science and engineering: MESA events on campus, the Pi Day Run and the UHC Foundation Fun Run, and the MATE regional in Monterey, where our members judged and helped run the day.</p>
+            <p class="eyebrow">@outreach.Inline("eyebrow")</p>
+            <h2 class="h2" id="outreach-title">@outreach.Inline("title")</h2>
+            <p class="lede">@outreach.Inline()</p>
             <ul class="outreach__dates mono" role="list">
-                <li>Feb 7, 2026 · MESA volunteering</li>
-                <li>Mar 14, 2026 · Pi Day Run</li>
-                <li>Mar 28, 2026 · UHC Foundation Fun Run</li>
-                <li>Apr 11, 2026 · MESA volunteering</li>
-                <li>Apr 25, 2026 · MATE Monterey regional (judges and volunteers)</li>
-                <li>Oct 3, 2026 · MESA Saturday Academy</li>
-                <li>Nov 7, 2026 · MESA, with Sundog</li>
+                @foreach (var d in c["outreach.dates"].ListHtml()) { <li>@d</li> }
             </ul>
         </div>
     </div>
-    <Collage Keys="@outreach" Label="Outreach photos" />
+    <Collage Keys="@c["outreach.photos"].List()" Label="Outreach photos" />
 </section>
-
+@{ var teams = c["teams"]; var sms = teams.Items.FirstOrDefault(); var mouse = teams.Items.Skip(1).FirstOrDefault(); }
 <section class="section">
     <div class="wrap">
         <div class="section__head">
             <div>
-                <p class="eyebrow">Teams</p>
-                <h2 class="h2">Where the robots get built.</h2>
+                <p class="eyebrow">@teams.Inline("eyebrow")</p>
+                <h2 class="h2">@teams.Inline("title")</h2>
             </div>
-            <a class="link-arrow" href="/teams">All teams</a>
+            <CopyLink Link="@teams.Link("link")" Class="link-arrow" />
         </div>
         <div class="team-cards">
-            <div class="team-card team-card--sms reveal">
-                <Photo Key="sms-pool-pilot" Sizes="(min-width: 56rem) 50vw, 100vw" Class="team-card__photo" />
-                <div class="team-card__body">
-                    <img class="team-card__logo" src="/img/brand/sms-logo.webp" alt="" width="72" height="72" loading="lazy" />
-                    <span class="team-card__kicker">MATE ROV · Explorer class</span>
-                    <h3 class="team-card__name"><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></h3>
-                    <span class="team-card__desc">Our underwater robotics company. Builders of ROSIE and ADAM.</span>
-                    <span class="link-arrow" aria-hidden="true">Visit the SMS site</span>
+            @if (sms is not null)
+            {
+                <div class="team-card team-card--sms reveal">
+                    <Photo Key="@sms.Photo" Sizes="(min-width: 56rem) 50vw, 100vw" Class="team-card__photo" />
+                    <div class="team-card__body">
+                        <img class="team-card__logo" src="/img/brand/sms-logo.webp" alt="" width="72" height="72" loading="lazy" />
+                        <span class="team-card__kicker">@sms.Inline("kicker")</span>
+                        <h3 class="team-card__name"><a href="@Copy.Href(sms.Value("href") ?? "sms:/")">@sms.Title</a></h3>
+                        <span class="team-card__desc">@sms.Inline()</span>
+                        <span class="link-arrow" aria-hidden="true">@sms.Inline("more")</span>
+                    </div>
                 </div>
-            </div>
-            <div class="team-card team-card--forming reveal">
-                <div class="team-card__body">
-                    <span class="team-card__kicker">Forming · 2026–27</span>
-                    <h3 class="team-card__name">Micromouse</h3>
-                    <span class="team-card__desc">Small autonomous robots that map and solve a maze as fast as they can. No name yet, no members yet. Want in?</span>
-                    <a class="link-arrow" href="/join">Tell us at a meeting</a>
+            }
+            @if (mouse is not null)
+            {
+                <div class="team-card team-card--forming reveal">
+                    <div class="team-card__body">
+                        <span class="team-card__kicker">@mouse.Inline("kicker")</span>
+                        <h3 class="team-card__name">@mouse.Title</h3>
+                        <span class="team-card__desc">@mouse.Inline()</span>
+                        <CopyLink Link="@mouse.Link("link")" Class="link-arrow" />
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     </div>
 </section>
-
+@{ var shop = c["shop"]; }
 <section class="section section--paper-2">
     <div class="wrap">
         <div class="section__head">
             <div>
-                <p class="eyebrow">Shop</p>
-                <h2 class="h2">Wear the club.</h2>
+                <p class="eyebrow">@shop.Inline("eyebrow")</p>
+                <h2 class="h2">@shop.Inline("title")</h2>
             </div>
-            <a class="link-arrow" href="/shop">All gear</a>
+            <CopyLink Link="@shop.Link("link")" Class="link-arrow" />
         </div>
         <ul class="product-row">
             @foreach (var p in Catalog.Active.Take(3))
@@ -221,43 +201,39 @@
         </ul>
     </div>
 </section>
-
+@{ var sp = c["sponsors"]; }
 <section class="section section--ink sponsors-band" aria-labelledby="sponsors-title">
     <div class="wrap">
         <div class="section__head">
             <div>
-                <p class="eyebrow eyebrow--on-ink">2026 sponsors</p>
-                <h2 class="h2" id="sponsors-title">They got us to Worlds.</h2>
+                <p class="eyebrow eyebrow--on-ink">@sp.Inline("eyebrow")</p>
+                <h2 class="h2" id="sponsors-title">@sp.Inline("title")</h2>
             </div>
-            <a class="link-arrow link-arrow--on-ink" href="/sponsors">All sponsors</a>
+            <CopyLink Link="@sp.Link("link")" Class="link-arrow link-arrow--on-ink" />
         </div>
         <SponsorWall Class="sponsor-wall--compact" />
     </div>
 </section>
-
+@{ var support = c["support"]; var sb = c["support.buttons"].Links(); }
 <section class="section section--accent">
     <div class="wrap support">
         <div>
-            <p class="eyebrow eyebrow--on-accent">Support · @Nonprofit.Value.Status nonprofit</p>
-            <h2 class="h2">Help us get back in the water.</h2>
+            <p class="eyebrow eyebrow--on-accent">@support.Inline("eyebrow")</p>
+            <h2 class="h2">@support.Inline("title")</h2>
         </div>
         <div class="support__body">
-            <p>Sponsors and donors cover parts, pool time and travel to competition. AVI is a @Nonprofit.Value.Status, so gifts are tax-deductible. <Ein />.</p>
+            <p>@support.Inline()</p>
             <div class="support__actions">
-                <a class="btn btn--ink" href="/donate">Donate</a>
-                <a class="btn btn--ghost-on-accent" href="/sponsors">Become a sponsor</a>
-                <a class="link-arrow link-arrow--on-accent" href="@Site.Value.SponsorPacketPath" target="_blank" rel="noopener">Sponsorship packet (PDF)</a>
+                @for (var i = 0; i < sb.Count; i++)
+                {
+                    <CopyLink Link="@sb[i]" Class="@(i == 0 ? "btn btn--ink" : i == 1 ? "btn btn--ghost-on-accent" : "link-arrow link-arrow--on-accent")" />
+                }
             </div>
         </div>
     </div>
 </section>
 
 @code {
-    private static readonly IReadOnlyList<string> outreach =
-    [
-        "uhc-crowd", "pi-day-group", "uhc-kid", "monterey-crew", "mesa-feb-fun", "pi-day-demo",
-        "uhc-tent", "monterey-pool", "mesa-outreach", "uhc-kids", "mesa-nov", "pi-day-booth",
-        "monterey-volunteers", "mesa-apr", "traditions-demo",
-        "mesa-oct-lawn", "traditions-crowd", "uhc-table", "traditions-float", "mesa-feb", "pool-day-crowd",
-    ];
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/home");
 }

@@ -14,6 +14,8 @@
     <None Remove="App_Data\**" />
     <Content Update="Store\catalog.seed.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="legacy-static\**" CopyToPublishDirectory="PreserveNewest" />
+    <!-- Site copy (Markdown) lives at the repo root in content/; ship it next to the app. -->
+    <None Include="..\..\content\**\*.md" LinkBase="content" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

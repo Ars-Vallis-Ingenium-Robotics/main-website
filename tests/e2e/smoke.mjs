@@ -418,6 +418,48 @@ await test("Worlds chapter has the three-team stage photo", async () => {
   }
 });
 
+await test("all copy comes from content/*.md (no missing sections)", async () => {
+  const bad = [];
+  for (const r of [...routes, "/people/robert-voss"]) {
+    await page.goto(BASE + r);
+    const html = await page.content();
+    if (html.includes("⟦missing")) bad.push(`${r}: ${html.match(/⟦missing[^⟧]*⟧/)[0]}`);
+  }
+  assert.deepEqual(bad, [], bad.slice(0, 5).join(" | "));
+});
+
+await test("editing a content file shows up on refresh, no restart", async () => {
+  const fs = await import("node:fs");
+  const file = new URL("../../content/pages/teams.md", import.meta.url);
+  const original = fs.readFileSync(file, "utf8");
+  try {
+    fs.writeFileSync(file, original.replace("Where the robots get built.", "Where the robots get built (edited)."));
+    await page.waitForTimeout(50);
+    await page.goto(BASE + "/teams");
+    assert.match(await page.locator("h1").textContent(), /\(edited\)/);
+  } finally {
+    fs.writeFileSync(file, original);
+  }
+  await page.goto(BASE + "/teams");
+  assert.doesNotMatch(await page.locator("h1").textContent(), /\(edited\)/);
+});
+
+await test("names open a person pop-up; profiles show only what's shared", async () => {
+  await page.goto(BASE + "/leadership");
+  await page.locator('a[data-person="declan-doss"]').first().click();
+  const sheet = page.locator(".person-sheet[open]");
+  await sheet.waitFor();
+  assert.match(await sheet.innerText(), /President · AVI Robotics/);
+  assert.match(await sheet.innerText(), /Chief Technical Officer · Sequoia Marine Solutions/);
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator(".person-sheet[open]").count(), 0);
+  const people = await (await page.request.get(BASE + "/people.json")).json();
+  assert.ok(Object.keys(people).length > 50, "everyone named on the site is in /people.json");
+  assert.ok(Object.values(people).every((p) => !p.links || p.links.every((l) => l.href)), "links are complete");
+  assert.equal((await page.goto(BASE + "/people/robert-voss")).status(), 200);
+  assert.equal((await page.goto(BASE + "/people/not-a-member")).status(), 404);
+});
+
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });
 
 await browser.close();

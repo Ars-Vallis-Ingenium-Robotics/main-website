@@ -1,4 +1,3 @@
-@using AviSite.Web.Content
 @inherits LayoutComponentBase
 @inject IOptions<SiteOptions> Site
 @inject IOptions<NonprofitOptions> Nonprofit
@@ -34,9 +33,7 @@
             <nav class="nav__sheet" aria-label="Main (menu)">
                 <NavLinks CartCount="cartCount" />
                 <ul class="nav__more">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></li>
-                    <li><a href="/donate">Donate</a></li>
+                    @foreach (var l in site["nav.more"].Links()) { <li><CopyLink Link="l" /></li> }
                 </ul>
             </nav>
         </details>
@@ -52,36 +49,21 @@
         <div class="site-footer__about">
             <img class="site-footer__letters" src="/img/brand/avi-letters-white.webp" alt="" width="153" height="120" loading="lazy" />
             <p class="site-footer__name">@Site.Value.LongName</p>
-            <p class="muted">A student-led engineering club at Fresno State and home of Sequoia Marine Solutions, our MATE ROV company.</p>
-            <p class="site-footer__legal">
-                @Nonprofit.Value.LegalName is a @Nonprofit.Value.Status nonprofit organization.
-                <Ein />. Donations are tax-deductible to the extent allowed by law.
-            </p>
+            <p class="muted">@site["footer.about"].Inline()</p>
+            <p class="site-footer__legal">@site["footer.legal"].Inline()</p>
         </div>
         <div class="site-footer__col">
             <nav class="site-footer__links" aria-label="Footer">
                 <p class="eyebrow eyebrow--plain">Club</p>
                 <ul>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/history">History</a></li>
-                    <li><a href="/leadership">Leadership</a></li>
-                    <li><a href="/teams">Teams</a></li>
-                    <li><a href="/projects">Projects &amp; workshops</a></li>
-                    <li><a href="/join">Join</a></li>
-                </ul>
+                @foreach (var l in site["footer.club"].Links()) { <li><CopyLink Link="l" /></li> }
+            </ul>
             </nav>
             <nav class="site-footer__links" aria-label="More">
                 <p class="eyebrow eyebrow--plain">More</p>
                 <ul>
-                    <li><a href="@SmsLinks.Sms()">Sequoia Marine Solutions</a></li>
-                    <li><a href="/sponsors">Sponsor or donate</a></li>
-                    <li><a href="@ClubFacts.MateUrl" target="_blank" rel="noopener">MATE ROV Competition</a></li>
-                    <li><a href="/shop">Shop</a></li>
-                    @if (Site.Value.DiscordInviteUrl is { } d) { <li><a href="@d" rel="noopener">Discord</a></li> }
-                    @if (Site.Value.YouTubeUrl is { } yt) { <li><a href="@yt" rel="noopener">YouTube</a></li> }
-                    @if (Site.Value.LinktreeUrl is { } lt) { <li><a href="@lt" rel="noopener">Linktree</a></li> }
-                    @if (Site.Value.PortalUrl is { } p) { <li><a href="@p">Member portal</a></li> }
-                </ul>
+                @foreach (var l in site["footer.more"].Links()) { <li><CopyLink Link="l" /></li> }
+            </ul>
             </nav>
         </div>
     </div>
@@ -93,5 +75,10 @@
 
 @code {
     private int cartCount;
-    protected override void OnInitialized() => cartCount = Cart.Count();
+    private PageCopy site = default!;
+    protected override void OnInitialized()
+    {
+        cartCount = Cart.Count();
+        site = Copy.Site;
+    }
 }

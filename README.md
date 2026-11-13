@@ -17,6 +17,13 @@ dotnet run --project src/AviSite.Web        # http://localhost:5002, Development
 Development uses a **fake PayPal** (click "Simulate PayPal payment"). Admin dashboard:
 `/admin`, dev password `avi-dev-password` (Development only; never published).
 
+## Editing the words
+
+All copy lives in Markdown under [`content/`](content/README.md): one file per page, plus the roster,
+sponsors, timelines and member profiles. Edit with any editor and refresh: running locally, changes show
+without a restart. Product prices and sizes stay in `src/AviSite.Web/Store/catalog.seed.json`, and form
+labels and errors stay in the Razor pages.
+
 ## SMS microsite
 
 Served at `/sms` and, by host, at the root of `sms.avirobotics.org` (`SmsSite:Host`). Test the host

@@ -1,15 +1,18 @@
 @page "/not-found"
+@* Copy: content/pages/not-found.md *@
 
-<PageTitle>Not found · AVI Robotics</PageTitle>
+<PageTitle>@c.Meta("title")</PageTitle>
 
-<PageHero Kicker="404" Title="Lost signal.">
-    <p>That page doesn't exist (or it sank). Try the <a class="on-ink-link" href="/">home page</a> or the <a class="on-ink-link" href="/shop">shop</a>.</p>
+<PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
+    <p>@c["hero"].Inline()</p>
 </PageHero>
 
 @code {
     [CascadingParameter] private HttpContext? HttpContext { get; set; }
+    private PageCopy c = default!;
     protected override void OnInitialized()
     {
+        c = Copy.Page("pages/not-found");
         if (HttpContext is { Response.HasStarted: false }) HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
     }
 }

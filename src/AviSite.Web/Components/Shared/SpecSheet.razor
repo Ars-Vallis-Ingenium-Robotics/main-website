@@ -1,12 +1,13 @@
-@* Two-column definition list styled like a drawing's title block. *@
+@* Two-column definition list styled like a drawing's title block. Rows usually come from a
+   "- Term: value" list in content/*.md (SectionCopy.Pairs()). *@
 <dl class="spec @Class">
     @foreach (var (term, value) in Rows)
     {
-        <div class="spec__row"><dt>@term</dt><dd>@if (value.StartsWith("EIN ")) { <span class="ein">@value</span> } else { @value }</dd></div>
+        <div class="spec__row"><dt>@term</dt><dd>@value</dd></div>
     }
 </dl>
 
 @code {
-    [Parameter, EditorRequired] public IReadOnlyList<(string Term, string Value)> Rows { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyList<(string Term, MarkupString Value)> Rows { get; set; } = [];
     [Parameter] public string? Class { get; set; }
 }

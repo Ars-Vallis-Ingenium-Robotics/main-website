@@ -1,94 +1,73 @@
 @page "/sms/rosie"
+@* Copy: content/sms/rosie.md *@
 
-<PageTitle>ROSIE · Sequoia Marine Solutions</PageTitle>
-<HeadContent><meta name="description" content="ROSIE, Sequoia Marine Solutions' 2026 ROV: eight vectored thrusters, a 3D-printed PETG and T-slot frame, a rotating claw and harpoon manipulators." /></HeadContent>
-
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+@{ var hero = c["hero"]; var spec = c["spec"]; var model = c["model"]; var poster = c["poster"]; }
 <section class="sms-page-hero">
     <div class="wrap sms-page-hero__grid">
         <div>
-            <p class="sms-kicker">ROV · 2026</p>
-            <h1 class="sms-page-hero__title">ROSIE</h1>
-            <p class="sms-page-hero__lede">Remotely Operated Submersible for Innovation and Exploration. Modular, compact, under the 18 kg weight limit, and built around the pressure hull MATE provided.</p>
+            <p class="sms-kicker">@hero.Inline("kicker")</p>
+            <h1 class="sms-page-hero__title">@hero.Inline("title")</h1>
+            <p class="sms-page-hero__lede">@hero.Inline()</p>
         </div>
-        <Photo Key="rosie-underwater" Sizes="(min-width: 56rem) 50vw, 100vw" Eager="true" Class="photo--frame" />
+        <Photo Key="@hero.Photo" Sizes="(min-width: 56rem) 50vw, 100vw" Eager="true" Class="photo--frame" />
     </div>
 </section>
 
 <section class="sms-section">
     <div class="wrap split">
         <div class="split__head">
-            <p class="sms-kicker sms-kicker--dark">Spec sheet</p>
-            <h2 class="sms-h2">The short version.</h2>
+            <p class="sms-kicker sms-kicker--dark">@spec.Inline("kicker")</p>
+            <h2 class="sms-h2">@spec.Inline("title")</h2>
         </div>
-        <SpecSheet Class="reveal" Rows="@spec" />
+        <SpecSheet Class="reveal" Rows="@spec.Pairs()" />
     </div>
 </section>
 
 <section class="sms-section sms-section--model">
     <div class="wrap split split--model">
         <div class="split__head">
-            <p class="sms-kicker sms-kicker--dark">In 3D</p>
-            <h2 class="sms-h2">Turn ROSIE around.</h2>
-            <p class="lede">This is our competition CAD, simplified so it loads in a browser. Drag to orbit, pinch or scroll to zoom.</p>
+            <p class="sms-kicker sms-kicker--dark">@model.Inline("kicker")</p>
+            <h2 class="sms-h2">@model.Inline("title")</h2>
+            <p class="lede">@model.Inline()</p>
         </div>
-        <Model3D Name="rosie" Alt="3D model of ROSIE: T-slot frame, pressure hull, eight thrusters and the claw" SizeLabel="6 MB" />
+        <Model3D Name="rosie" Alt="@model.Text("alt")" SizeLabel="@model.Text("size")" />
     </div>
 </section>
 
 <section class="sms-section sms-section--deep">
     <div class="wrap">
-        <p class="sms-kicker">Exploded view</p>
-        <h2 class="sms-h2">Every part has a job.</h2>
-        <Photo Key="poster-rosie" Sizes="(min-width: 56rem) 70vw, 100vw" Class="sms-poster reveal" />
+        <p class="sms-kicker">@poster.Inline("kicker")</p>
+        <h2 class="sms-h2">@poster.Inline("title")</h2>
+        <Photo Key="@poster.Photo" Sizes="(min-width: 56rem) 70vw, 100vw" Class="sms-poster reveal" />
     </div>
 </section>
 
 <section class="sms-section">
     <div class="wrap sms-chapters">
-        <article class="sms-chapter reveal">
-            <h3>Five frames before the final one</h3>
-            <p>Version 0 was a foamboard octagon. Version 1 used PVC pipe so we could test layouts before cutting any aluminum. The final frame uses T-slot rail for modularity, with 3D-printed PETG parts at 35% infill and five walls. PETG won our decision matrix because it doesn't warp in Central Valley heat the way PLA does.</p>
-        </article>
-        <article class="sms-chapter reveal">
-            <h3>Stacked thrusters, six degrees of freedom</h3>
-            <p>Eight Blue Robotics T200 thrusters in stacked mounts give full 6-DOF control and keep thruster wash off the hull. The layout came from studying MATE's top ten product-demonstration teams.</p>
-        </article>
-        <article class="sms-chapter reveal">
-            <h3>Harpoons and a rotating claw</h3>
-            <p>Four rigid harpoons grab samples on a drive-by; on the qualification run ROSIE surfaced a basket star, the eDNA sensor, a cap and a coral sample at once. The claw rotates through two 4:1 planetary gearboxes (16:1 total) on plastic bushings that won't rust.</p>
-        </article>
-        <article class="sms-chapter reveal">
-            <h3>Jigs that saved hours</h3>
-            <p>Loose T-nuts in the rail turned every rebuild into a fight. Thin printed jigs hold them in place, cutting thruster and manipulator setup from about two hours to 30 minutes.</p>
-        </article>
+        @foreach (var ch in c["chapters"].Items)
+        {
+            <article class="sms-chapter reveal">
+                <h3>@ch.Title</h3>
+                @ch.Html()
+            </article>
+        }
     </div>
 </section>
 
 <section class="sms-section sms-section--flush">
     <p class="filmstrip-hint" aria-hidden="true">Scroll sideways →</p>
     <div class="filmstrip" tabindex="0" aria-label="ROSIE photos, scroll sideways">
-        <Photo Key="rosie-in-pool" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="sms-underwater" Sizes="(min-width: 56rem) 30vw, 70vw" Class="filmstrip__item" Ratio="2 / 3" />
-        <Photo Key="rosie-poolside" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="rosie-backyard" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="rosie-deep" Sizes="(min-width: 56rem) 30vw, 70vw" Class="filmstrip__item" Ratio="2 / 3" />
-        <Photo Key="worlds-rosie-feed" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="worlds-rosie-station" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="pool-rosie-dive" Sizes="(min-width: 56rem) 30vw, 70vw" Class="filmstrip__item" Ratio="2 / 3" />
-        <Photo Key="pool-proto" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
-        <Photo Key="showcase-build" Sizes="(min-width: 56rem) 40vw, 85vw" Class="filmstrip__item" />
+        @foreach (var row in c["photos"].Rows())
+        {
+            var tall = row.ElementAtOrDefault(1) == "tall";
+            <Photo Key="@row[0]" Sizes="@(tall ? "(min-width: 56rem) 30vw, 70vw" : "(min-width: 56rem) 40vw, 85vw")" Class="filmstrip__item" Ratio="@(tall ? "2 / 3" : null)" />
+        }
     </div>
 </section>
 
 @code {
-    private readonly IReadOnlyList<(string, string)> spec =
-    [
-        ("Propulsion", "8 × Blue Robotics T200, vectored, 6-DOF"),
-        ("Frame", "Aluminum T-slot + 3D-printed PETG, TPU feet, PVC legs"),
-        ("Power", "48 V / 30 A tether, buck converters to 12 V and 5 V"),
-        ("Compute", "Raspberry Pi 4B, Ethernet to a custom surface GUI"),
-        ("Vision", "Front, rear and downward cameras; IMU for stability"),
-        ("Tools", "Rotating claw (16:1 gearbox), four harpoons, eDNA sampling"),
-        ("Mass", "Under 18 kg"),
-    ];
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("sms/rosie");
 }

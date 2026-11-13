@@ -1,0 +1,7 @@
+@* A link written in content/*.md as [text](where). External links open in a new tab. *@
+<a class="@Class" href="@Link.Href" target="@Link.Target" rel="@Link.Rel">@Link.Text</a>
+
+@code {
+    [Parameter, EditorRequired] public LinkCopy Link { get; set; } = default!;
+    [Parameter] public string? Class { get; set; }
+}
