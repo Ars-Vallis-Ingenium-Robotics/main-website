@@ -29,8 +29,10 @@ public sealed class SiteContent
     {
         if (!string.IsNullOrWhiteSpace(configured)) return Path.GetFullPath(Path.Combine(contentRoot, configured));
         // Published: content/ sits next to the app. Running from the repo: it's at the repo root.
+        // Check for site.md, not just the folder: on Windows (case-insensitive) the C# "Content"
+        // folder in the project would otherwise match "content".
         foreach (var candidate in new[] { Path.Combine(contentRoot, "content"), Path.Combine(contentRoot, "..", "..", "content") })
-            if (Directory.Exists(candidate)) return Path.GetFullPath(candidate);
+            if (File.Exists(Path.Combine(candidate, "site.md"))) return Path.GetFullPath(candidate);
         return Path.GetFullPath(Path.Combine(contentRoot, "content"));
     }
 
