@@ -1,16 +1,5 @@
 [
  {
-  "slug": "declan-doss",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-03-28 Water Testing/RAV00011.JPG",
-  "box": [
-   4210,
-   2103,
-   6380,
-   4273
-  ],
-  "note": "best match by face embedding (sim 0.64), Marketing Worthy"
- },
- {
   "slug": "dottie-gunn",
   "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 2 - Opening Ceremonies/Marketing Worthy/Copy of RAV01045.JPG",
   "box": [
@@ -20,17 +9,6 @@
    4009
   ],
   "note": "best match by face embedding (sim 0.70), 2026-02-07 MESA Volunteering"
- },
- {
-  "slug": "sam-heinrichs",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00716.JPG",
-  "box": [
-   2940,
-   1952,
-   5243,
-   4753
-  ],
-  "note": "best match by face embedding (sim 0.68), Marketing Worthy"
  },
  {
   "slug": "matthew-sedano",
@@ -55,28 +33,6 @@
   "note": "best match by face embedding (sim 0.96), 2026-10-09 AVI Meeting 6"
  },
  {
-  "slug": "robert-voss",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-02 Traditions Day/RAV03560.JPG",
-  "box": [
-   7230,
-   2930,
-   8150,
-   3850
-  ],
-  "note": "best match by face embedding (sim 0.77), Marketing Worthy"
- },
- {
-  "slug": "caleb-bahne",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01480.JPG",
-  "box": [
-   4497,
-   3989,
-   6004,
-   5808
-  ],
-  "note": "best match by face embedding (sim 0.79), Marketing Worthy"
- },
- {
   "slug": "ansh-josan",
   "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00639.JPG",
   "box": [
@@ -86,28 +42,6 @@
    4680
   ],
   "note": "best match by face embedding (sim 0.59), Marketing Worthy"
- },
- {
-  "slug": "timothy-cromwell",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-02-07 MESA Volunteering/DSC02293.JPG",
-  "box": [
-   3337,
-   1765,
-   4089,
-   2555
-  ],
-  "note": "best match by face embedding (sim 0.91), 2026-02-07 MESA Volunteering"
- },
- {
-  "slug": "jaime-jaurigue",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01751.JPG",
-  "box": [
-   499,
-   2806,
-   3619,
-   5927
-  ],
-  "note": "best match by face embedding (sim 0.73), 2026-02-07 MESA Volunteering"
  },
  {
   "slug": "arshiro-vang",
@@ -132,17 +66,6 @@
   "note": "best match by face embedding (sim 1.00), 2026-04-25 Monterey Regional"
  },
  {
-  "slug": "santiago-flores",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00669.JPG",
-  "box": [
-   2262,
-   233,
-   4758,
-   3008
-  ],
-  "note": "best match by face embedding (sim 0.61), Marketing Worthy"
- },
- {
   "slug": "dalton-cowin",
   "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-25 Monterey Regional/RAV00005.JPG",
   "box": [
@@ -154,17 +77,6 @@
   "note": "best match by face embedding (sim 0.88), 2026-04-25 Monterey Regional"
  },
  {
-  "slug": "cal-limdren",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00645.JPG",
-  "box": [
-   3077,
-   3183,
-   4247,
-   4603
-  ],
-  "note": "best match by face embedding (sim 0.84), Marketing Worthy"
- },
- {
   "slug": "adam-garabedian",
   "src": "tools/images/people-src/garabedian-linkedin.png",
   "box": [
@@ -174,18 +86,6 @@
    336
   ],
   "note": "Screenshot of his LinkedIn photo, sent by Robert (low-res; replace with the original)"
- },
- {
-  "slug": "matthias-cockrum",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026-06-04 Water Testing FS Pool/RAV00308.JPG",
-  "box": [
-   2230,
-   4330,
-   3030,
-   5130
-  ],
-  "note": "June 4, 2026 FS pool water test (Robert pointed him out)",
-  "rotate": -35
  },
  {
   "slug": "alaeddin-bani-milhim",
@@ -208,5 +108,104 @@
    343
   ],
   "note": "LinkedIn photo, sent by Robert"
+ },
+ {
+  "slug": "cal-limdren",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 4 - Awards/Marketing Worthy/Copy of RAV01782.JPG",
+  "box": [
+   2568,
+   1663,
+   3851,
+   2946
+  ],
+  "note": "candid pick, Robert Nov 12 2026"
+ },
+ {
+  "slug": "caleb-bahne",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-24 AVI Meeting - Elections/RAV00067.JPG",
+  "box": [
+   2714,
+   1817,
+   4239,
+   3342
+  ],
+  "note": "candid pick, Robert Nov 12 2026"
+ },
+ {
+  "slug": "declan-doss",
+  "src": "/mnt/user-data/uploads/Shared drives/AVI General/AVI General (2025-2026)/Pictures/Marketing Worthy/IMG_0843.jpg",
+  "box": [
+   3950,
+   1262,
+   4625,
+   1937
+  ],
+  "note": "candid pick, Robert Nov 12 2026"
+ },
+ {
+  "slug": "jaime-jaurigue",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 4 - Awards/Marketing Worthy/Copy of RAV01782.JPG",
+  "box": [
+   3523,
+   1410,
+   4792,
+   2678
+  ],
+  "note": "candid pick, Robert Nov 12 2026"
+ },
+ {
+  "slug": "matthias-cockrum",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-24 AVI Meeting - Elections/RAV00004.JPG",
+  "box": [
+   8128,
+   2027,
+   9026,
+   2925
+  ],
+  "note": "candid pick, Robert Nov 12 2026"
+ },
+ {
+  "slug": "robert-voss",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026-04-24 AVI Meeting - Elections/RAV00064.JPG",
+  "box": [
+   2825,
+   3711,
+   5020,
+   5907
+  ],
+  "note": "candid pick, Robert Nov 12 2026"
+ },
+ {
+  "slug": "sam-heinrichs",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-18 AVI Meeting 3/RAV03780.JPG",
+  "box": [
+   2579,
+   2602,
+   3192,
+   3215
+  ],
+  "note": "candid pick, Robert Nov 12 2026"
+ },
+ {
+  "slug": "santiago-flores",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-09-09 AVI Meeting 1/RAV03754.JPG",
+  "box": [
+   5364,
+   1944,
+   6890,
+   3469
+  ],
+  "note": "candid pick, Robert Nov 12 2026"
+ },
+ {
+  "slug": "timothy-cromwell",
+  "src": "/mnt/user-data/uploads/Shared drives/AVI General/AVI General (2025-2026)/Pictures/Marketing Worthy/IMG_7249.JPG",
+  "box": [
+   936,
+   586,
+   2557,
+   2206
+  ],
+  "note": "candid pick, Robert Nov 12 2026"
  }
 ]
