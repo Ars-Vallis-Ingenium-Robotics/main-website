@@ -12,3 +12,9 @@ tests/e2e/test-results/
 tests/e2e/playwright-report/
 .DS_Store
 Thumbs.db
+
+# Editor backup/swap files (vim)
+*~
+*.un~
+.*.swp
+.*.swo

@@ -33,17 +33,6 @@
   "note": "best match by face embedding (sim 0.96), 2026-10-09 AVI Meeting 6"
  },
  {
-  "slug": "ansh-josan",
-  "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 1 - Check-In and Group Pictures/Marketing Worthy/Copy of RAV00639.JPG",
-  "box": [
-   5559,
-   2755,
-   7312,
-   4680
-  ],
-  "note": "best match by face embedding (sim 0.59), Marketing Worthy"
- },
- {
   "slug": "arshiro-vang",
   "src": "/mnt/user-data/uploads/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-09 AVI Meeting 6/RAV04261.JPG",
   "box": [
@@ -205,6 +194,17 @@
    586,
    2557,
    2206
+  ],
+  "note": "candid pick, Robert Nov 12 2026"
+ },
+ {
+  "slug": "ansh-josan",
+  "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2025 - 2026)/2026 MATE ROV World Championships - St Johns/Day 3 - Float and Wave Tank/Marketing Worthy/Copy of RAV01680.JPG",
+  "box": [
+   6780,
+   2129,
+   7850,
+   3198
   ],
   "note": "candid pick, Robert Nov 12 2026"
  }
