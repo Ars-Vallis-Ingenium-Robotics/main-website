@@ -18,10 +18,11 @@ title: AVI Robotics leadership roster
 - Dr. Alaeddin Bani Milhim | Faculty Advisor
 - Dr. Shuo Wu | Faculty Advisor
 
-<!-- Source: Robert Voss (Nov 2026). Adam renewed for 2027; Dalton joins for 2026–27. -->
+<!-- Source: Robert Voss (Nov 2026). Adam renewed for 2027; Dalton and Timothy join for 2026–27. -->
 ## mentors
 - Adam Garabedian | Mentor · 2026 and 2027 seasons
 - Dalton Cowin | Mentor · 2027 season
+- Timothy Cromwell | Mentor · 2027 season
 
 <!-- Source: Meeting Minutes (10/9/26), officer roll call. Role addresses: Robert (Nov 2026). -->
 ## officers

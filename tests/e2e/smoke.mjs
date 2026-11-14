@@ -283,8 +283,8 @@ await test("timelines open into chapters, moments pop up, and the story ends unf
     await page.locator(".tl > .timeline").waitFor({ state: "visible" });
   }
   // without JS the chapter is still reachable through its #anchor
-  await page.goto(BASE + "/history#history-sub-1");
-  assert.equal(await page.locator("#history-sub-1").isVisible(), true, "deep link opens a chapter");
+  await page.goto(BASE + "/history#history-sub-2");
+  assert.equal(await page.locator("#history-sub-2").isVisible(), true, "deep link opens a chapter");
 });
 
 await test("photos open in a lightbox", async () => {
@@ -506,6 +506,23 @@ await test("join button never wraps: full label when roomy, \"Join\" when tight"
       assert.equal(await j.getAttribute("aria-label"), "Join the club");
       assert.ok((await j.boundingBox()).height < 48, `join button stays one line at ${w}px`);
       assert.equal(await page.evaluate(() => { const b = document.querySelector(".site-header__bar"); return b.scrollWidth <= b.clientWidth + 1; }), true, `header fits at ${w}px`);
+    }
+  } finally {
+    await page.setViewportSize({ width: 1280, height: 900 });
+  }
+});
+
+await test("leadership cards in a row match heights; emails stay on one line, uncut", async () => {
+  try {
+    for (const w of [1280, 1024, 768, 390]) {
+      await page.setViewportSize({ width: w, height: 900 });
+      await page.goto(BASE + "/leadership");
+      const r = await page.evaluate(() => ({
+        cut: [...document.querySelectorAll(".person__email")].filter((e) => e.scrollWidth > e.clientWidth + 1 || e.clientHeight - parseFloat(getComputedStyle(e).paddingTop) > 2 * parseFloat(getComputedStyle(e).fontSize)).map((e) => e.textContent),
+        uneven: [...document.querySelectorAll("ul.people")].flatMap((u) => { const rows = {}; u.querySelectorAll(":scope > li > .person").forEach((a) => { const b = a.getBoundingClientRect(); (rows[Math.round(b.top)] ??= []).push(Math.round(b.height)); }); return Object.values(rows).filter((h) => new Set(h).size > 1); }),
+      }));
+      assert.deepEqual(r.cut, [], `emails cut or wrapped at ${w}px`);
+      assert.deepEqual(r.uneven, [], `uneven card heights at ${w}px`);
     }
   } finally {
     await page.setViewportSize({ width: 1280, height: 900 });

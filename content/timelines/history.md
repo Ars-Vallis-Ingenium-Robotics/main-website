@@ -14,6 +14,12 @@ when: Before AVI
 
 AVI's founders first competed in MATE ROV with Engineering Renaissance's Crush Depth team at Clovis Community College. [Robert Voss](person:robert-voss), [Declan Doss](person:declan-doss) and [Timothy Cromwell](person:timothy-cromwell) brought that experience to Fresno State.
 
+<!-- Source: Robert (Nov 14, 2026). Check the "when" line. -->
+## Getting it off the ground
+when: Spring – Summer 2025
+
+[Adam Garabedian](person:adam-garabedian) helped us get started fast. He coordinated with our two faculty advisors, [Dr. Alaeddin Bani Milhim](person:alaeddin-bani-milhim) and [Dr. Shuo Wu](person:shuo-wu), and with Fresno State, and made the first connections that let AVI start so quickly.
+
 ## AVI Robotics is founded
 when: Fall 2025
 photo: fall-2025-group

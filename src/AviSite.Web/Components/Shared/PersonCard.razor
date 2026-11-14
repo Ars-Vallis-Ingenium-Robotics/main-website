@@ -12,7 +12,7 @@
     <span class="person__name"><PersonLink Name="@Person.Name" /></span>
     <span class="person__role">@Copy.Inline(Person.Role)</span>
     @if (Person.Group is not null) { <span class="person__group">@Person.Group</span> }
-    @if (Person.Email is not null) { <a class="person__email mono" href="mailto:@Person.Email">@Person.Email</a> }
+    @if (Person.Email is not null) { <a class="person__email mono" href="mailto:@Person.Email" title="@Person.Email">@Person.Email</a> }
 </article>
 
 @code {

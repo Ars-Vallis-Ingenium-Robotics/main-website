@@ -839,7 +839,9 @@
 
   /* Sponsor wall: white logos on dark, sized by tier */
   .sponsor-wall { display: grid; gap: var(--s-3); }
-  .sponsor-wall__label { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--on-ink-muted); margin-top: var(--s-5); }
+  /* Tier names use the heading face, same as the level cards on /sponsors (SMS: the SMS heading face). */
+  .sponsor-wall__label { font-family: var(--font-display); font-size: var(--step-0); letter-spacing: 0.04em; text-transform: uppercase; color: var(--on-ink); margin-top: var(--s-6); }
+  .sponsor-wall--sms .sponsor-wall__label { font-family: var(--font-sms); font-weight: 800; font-stretch: 125%; letter-spacing: 0.02em; }
   .sponsor-wall__label:first-child { margin-top: 0; }
   .sponsor-wall__tier { list-style: none; display: grid; gap: 1px; background: var(--line-on-ink); border: 1px solid var(--line-on-ink); }
   .sponsor-wall__item { display: grid; place-items: center; background: var(--ink); padding: var(--s-5); transition: background 0.3s var(--ease); }
@@ -1329,9 +1331,14 @@
   .sponsor-wall__item img { transition: none; }
 
   /* People: contact address */
-  .person { grid-auto-rows: auto; }
-  .person__photo, .person__mono { grid-row: 1 / span 4; }
-  .person__email { grid-column: 2; font-size: 0.74rem; overflow-wrap: anywhere; color: var(--accent); text-decoration: none; margin-top: var(--s-1); }
+  /* Every card in a row is the same height; the address sits on its own full-width line at the bottom. */
+  .people > li { display: flex; }
+  .people > li > .person { flex: 1; container-type: inline-size; } /* email shrinks a touch to fit one line (cqi) */
+  .person { grid-template-rows: auto auto auto 1fr; align-content: center; }
+  .person:has(.person__email) { align-content: stretch; }
+  .person__photo, .person__mono { grid-row: 1 / span 3; align-self: center; }
+  .person__name, .person__role, .person__group { grid-column: 2; }
+  .person__email { grid-column: 1 / -1; grid-row: 4; align-self: end; margin-top: var(--s-3); padding-top: var(--s-2); border-top: 1px solid var(--line); font-size: min(0.72rem, calc(100cqi / 17.8)); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--accent); text-decoration: none; }
   .person__email:hover { text-decoration: underline; }
   .sms-site .person__email { color: var(--sms-teal-deep); }
 
