@@ -1338,7 +1338,7 @@
   .person:has(.person__email) { align-content: stretch; }
   .person__photo, .person__mono { grid-row: 1 / span 3; align-self: center; }
   .person__name, .person__role, .person__group { grid-column: 2; }
-  .person__email { grid-column: 1 / -1; grid-row: 4; align-self: end; margin-top: var(--s-3); padding-top: var(--s-2); border-top: 1px solid var(--line); font-size: min(0.72rem, calc(100cqi / 17.8)); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--accent); text-decoration: none; }
+  .person__email { grid-column: 1 / -1; grid-row: 4; align-self: end; margin-top: var(--s-3); padding-top: var(--s-2); border-top: 1px solid var(--line); font-size: min(0.72rem, calc(100cqi / 20)); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--accent); text-decoration: none; }
   .person__email:hover { text-decoration: underline; }
   .sms-site .person__email { color: var(--sms-teal-deep); }
 
