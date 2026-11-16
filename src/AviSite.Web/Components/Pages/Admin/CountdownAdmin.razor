@@ -1,0 +1,184 @@
+@page "/admin/countdowns"
+@page "/admin/countdowns/{Id}"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.Policy)]
+@using System.ComponentModel.DataAnnotations
+@inject ICountdownStore Store
+@inject TimeProvider Clock
+@inject NavigationManager Nav
+
+<PageTitle>Countdowns · AVI Robotics admin</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin">
+    <div class="wrap">
+        <AdminNav Current="countdowns" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Admin</p>
+                <h1 class="h1">Countdowns</h1>
+                <p class="muted">What shows on <a href="/countdown">/countdown</a>. Finished events move to "Done" by themselves (the latest six are shown).</p>
+            </div>
+        </div>
+
+        @if (Saved is not null) { <p class="alert alert--ok" role="status">@Saved</p> }
+
+        <div class="table-scroll">
+            <table class="table">
+                <thead><tr><th scope="col">Event</th><th scope="col">When</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+                <tbody>
+                    @foreach (var e in events)
+                    {
+                        <tr class="@(e.Id == Id ? "is-editing" : "")">
+                            <th scope="row"><strong>@e.Title</strong><div class="small muted">@CountdownZones.Types.FirstOrDefault(t => t.Id == e.Type).Label@(e.Team is null ? "" : " · " + e.Team.ToUpperInvariant())@(e.Where is null ? "" : " · " + e.Where)</div></th>
+                            <td class="small">@e.StartLocal.ToString("MMM d, yyyy h:mm tt")@(e.EndLocal is { } en ? " – " + en.ToString(en.Date == e.StartLocal.Date ? "h:mm tt" : "MMM d, h:mm tt") : "") <span class="muted">@CountdownZones.Label(e.TimeZone)</span></td>
+                            <td class="small">@Status(e)</td>
+                            <td class="qr-admin__actions"><a class="btn btn--ghost btn--sm" href="/admin/countdowns/@e.Id#edit">Edit</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="h3" id="edit">@(editing is null ? "Add an event" : $"Edit “{editing.Title}”")</h2>
+        <EditForm Model="Form!" FormName="countdown" OnValidSubmit="SaveAsync" method="post" class="form" novalidate>
+            <DataAnnotationsValidator />
+            <div class="qr-admin__grid">
+                <div class="field">
+                    <label class="label" for="cd-title">Name</label>
+                    <InputText id="cd-title" @bind-Value="Form!.Title" placeholder="e.g. Monterey Regional" />
+                    <ValidationMessage For="() => Form!.Title" class="field__error" />
+                </div>
+                <div class="field">
+                    <label class="label" for="cd-type">Type</label>
+                    <InputSelect id="cd-type" @bind-Value="Form!.Type">
+                        @foreach (var (id, label) in CountdownZones.Types) { <option value="@id">@label</option> }
+                    </InputSelect>
+                </div>
+                <div class="field">
+                    <label class="label" for="cd-team">Team</label>
+                    <InputSelect id="cd-team" @bind-Value="Form!.Team">
+                        <option value="">Club-wide</option><option value="avi">AVI</option><option value="sms">SMS</option>
+                    </InputSelect>
+                </div>
+                <div class="field">
+                    <label class="label" for="cd-zone">Time zone</label>
+                    <InputSelect id="cd-zone" @bind-Value="Form!.TimeZone">
+                        @foreach (var (id, label) in CountdownZones.All) { <option value="@id">@label</option> }
+                    </InputSelect>
+                </div>
+                <div class="field">
+                    <label class="label" for="cd-start">Starts</label>
+                    <InputDate Type="InputDateType.DateTimeLocal" id="cd-start" @bind-Value="Form!.Start" />
+                    <ValidationMessage For="() => Form!.Start" class="field__error" />
+                </div>
+                <div class="field">
+                    <label class="label" for="cd-end">Ends <span class="muted">(leave empty for a deadline)</span></label>
+                    <InputDate Type="InputDateType.DateTimeLocal" id="cd-end" @bind-Value="Form!.End" />
+                </div>
+                <div class="field">
+                    <label class="label" for="cd-where">Where <span class="muted">(optional)</span></label>
+                    <InputText id="cd-where" @bind-Value="Form!.Where" placeholder="Watsonville, CA" />
+                </div>
+                <div class="field">
+                    <label class="label" for="cd-url">Link <span class="muted">(optional)</span></label>
+                    <InputText id="cd-url" @bind-Value="Form!.LinkUrl" placeholder="https://…" inputmode="url" />
+                </div>
+                <div class="field">
+                    <label class="label" for="cd-label">Link text</label>
+                    <InputText id="cd-label" @bind-Value="Form!.LinkLabel" placeholder="Event info" />
+                </div>
+            </div>
+            @if (error is not null) { <p class="alert" role="alert">@error</p> }
+            <div class="actions">
+                <button class="btn btn--accent" type="submit">@(editing is null ? "Add event" : "Save")</button>
+                @if (editing is not null) { <a class="btn btn--ghost" href="/admin/countdowns">Cancel</a> }
+            </div>
+        </EditForm>
+
+        @if (editing is not null)
+        {
+            <EditForm Model="Remove!" FormName="countdown-delete" OnValidSubmit="DeleteAsync" method="post" class="form countdown-admin__delete" novalidate>
+                <label class="check"><InputCheckbox @bind-Value="Remove!.Confirm" /> Yes, delete “@editing.Title” for good</label>
+                <div><button class="btn btn--ghost btn--sm" type="submit">Delete event</button></div>
+            </EditForm>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [SupplyParameterFromQuery] public string? Saved { get; set; }
+    [SupplyParameterFromForm(FormName = "countdown")] public EventForm? Form { get; set; }
+    [SupplyParameterFromForm(FormName = "countdown-delete")] public DeleteForm? Remove { get; set; }
+    private List<CountdownEvent> events = [];
+    private CountdownEvent? editing;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var now = Clock.GetUtcNow();
+        events = (await Store.ListAsync())
+            .OrderBy(e => (e.End ?? e.Start) <= now ? 1 : 0)
+            .ThenBy(e => (e.End ?? e.Start) <= now ? -(e.Start.ToUnixTimeSeconds()) : e.Start.ToUnixTimeSeconds()).ToList();
+        if (Id is not null)
+        {
+            editing = events.FirstOrDefault(e => e.Id == Id);
+            if (editing is null) { Nav.NotFound(); return; }
+        }
+        Remove ??= new();
+        Form ??= editing is null ? new() : new()
+        {
+            Title = editing.Title, Type = editing.Type, Team = editing.Team ?? "", TimeZone = editing.TimeZone,
+            Start = editing.StartLocal, End = editing.EndLocal, Where = editing.Where, LinkUrl = editing.LinkUrl, LinkLabel = editing.LinkLabel,
+        };
+    }
+
+    private string Status(CountdownEvent e)
+    {
+        var now = Clock.GetUtcNow();
+        return (e.End ?? e.Start) <= now ? "Done" : e.Start <= now ? "Happening now" : "Upcoming";
+    }
+
+    private async Task SaveAsync()
+    {
+        var f = Form!;
+        if (f.End is { } end && end < f.Start) { error = "It can't end before it starts."; return; }
+        if (!string.IsNullOrWhiteSpace(f.LinkUrl) && DynamicQrRules.CheckTarget(f.LinkUrl) is { } bad) { error = "Link: " + bad; return; }
+        var e = editing ?? new CountdownEvent();
+        e.Title = f.Title!.Trim();
+        e.Type = CountdownZones.Types.Any(t => t.Id == f.Type) ? f.Type : "event";
+        e.Team = f.Team is "avi" or "sms" ? f.Team : null;
+        e.TimeZone = CountdownZones.All.Any(z => z.Id == f.TimeZone) ? f.TimeZone : CountdownZones.Default;
+        e.StartLocal = f.Start!.Value;
+        e.EndLocal = f.End;
+        e.Where = Blank(f.Where);
+        e.LinkUrl = Blank(f.LinkUrl);
+        e.LinkLabel = Blank(f.LinkLabel);
+        await Store.SaveAsync(e);
+        Nav.NavigateTo($"/admin/countdowns?saved={Uri.EscapeDataString($"Saved “{e.Title}”.")}");
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (!Remove!.Confirm) { error = "Tick the box to confirm the delete."; return; }
+        await Store.DeleteAsync(editing!.Id);
+        Nav.NavigateTo($"/admin/countdowns?saved={Uri.EscapeDataString($"Deleted “{editing.Title}”.")}");
+    }
+
+    private static string? Blank(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
+    public sealed class EventForm
+    {
+        [Required(ErrorMessage = "Give it a name."), StringLength(80)] public string? Title { get; set; }
+        public string Type { get; set; } = "event";
+        public string Team { get; set; } = "";
+        public string TimeZone { get; set; } = CountdownZones.Default;
+        [Required(ErrorMessage = "When does it start?")] public DateTime? Start { get; set; }
+        public DateTime? End { get; set; }
+        [StringLength(100)] public string? Where { get; set; }
+        [StringLength(300)] public string? LinkUrl { get; set; }
+        [StringLength(40)] public string? LinkLabel { get; set; }
+    }
+
+    public sealed class DeleteForm { public bool Confirm { get; set; } }
+}

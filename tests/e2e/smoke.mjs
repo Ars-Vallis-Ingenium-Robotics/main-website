@@ -534,10 +534,18 @@ await test("tools: QR maker draws a code from ?url and offers PNG/SVG", async ()
   await page.goto(BASE + "/tools/qr?url=" + encodeURIComponent("https://avirobotics.org/join") + "&style=sms");
   await page.locator("[data-qr-preview] svg").waitFor();
   assert.match(await page.locator("[data-qr-status]").innerText(), /squares/);
-  assert.equal(await page.locator('input[name="qr-style"][value="sms"]').isChecked(), true);
+  assert.equal(await page.locator('[data-qr-theme="sms"]').getAttribute("aria-pressed"), "true");
   const [dl] = await Promise.all([page.waitForEvent("download"), page.click('[data-qr-download="svg"]')]);
   assert.match(dl.suggestedFilename(), /^qr-avirobotics-org-join\.svg$/);
-  await page.fill('[data-qr="text"]', "");
+  for (const d of ["fluid", "vertical", "star"]) { await page.check(`input[name="qr-dot"][value="${d}"]`); await page.locator("[data-qr-preview] svg").waitFor(); }
+  await page.check('input[name="qr-frame"][value="below"]');
+  assert.match(await page.locator("[data-qr-preview] svg").innerHTML(), /SCAN ME/);
+  await page.check('input[name="qr-kind"][value="wifi"]');
+  assert.equal(await page.locator('[data-qr-download="png"]').isDisabled(), true, "Wi-Fi needs a network name");
+  await page.fill("#qr-ssid", "AVI Lab");
+  assert.equal(await page.locator('[data-qr-download="png"]').isDisabled(), false);
+  await page.check('input[name="qr-kind"][value="url"]');
+  await page.fill('[data-qr="url"]', "");
   assert.equal(await page.locator('[data-qr-download="png"]').isDisabled(), true, "nothing to download without text");
   await page.goto(BASE + "/tools");
   assert.match(await page.locator("main").innerText(), /QR code maker[\s\S]*Countdowns/);

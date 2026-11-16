@@ -12,17 +12,26 @@
     </div>
 </PageHero>
 @{ var uses = c["uses"]; }
-<section class="section">
-    <div class="wrap split">
-        <div class="split__head">
-            <p class="eyebrow">@uses.Inline("eyebrow")</p>
-            <h2 class="h2">@uses.Inline("title")</h2>
+<section class="section money" aria-labelledby="uses-title">
+    <div class="wrap">
+        <div class="money__intro">
+            <div>
+                <p class="eyebrow">@uses.Inline("eyebrow")</p>
+                <h2 class="h2" id="uses-title">@uses.Inline("title")</h2>
+            </div>
             <p class="lede">@uses.Inline()</p>
         </div>
-        <div class="reveal">
-            <SpecSheet Rows="@c["uses.spec"].Pairs()" />
-            <p class="muted small">@uses.Inline("note")</p>
+        <dl class="money__stats">
+            @foreach (var st in c["uses.stats"].Rows())
+            {
+                <div class="money__stat reveal"><dt class="money__stat-label">@Copy.Inline(st.ElementAtOrDefault(1))</dt><dd class="money__stat-value">@st[0]</dd></div>
+            }
+        </dl>
+        <div class="money__charts">
+            <MoneyBars Title="Where it went" Rows="@c["uses.spent"].Rows()" />
+            <MoneyBars Title="Where it came from" Rows="@c["uses.raised"].Rows()" Total="@(decimal.TryParse(c["uses.raised"].Value("total"), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var rt) ? rt : null)" />
         </div>
+        <p class="muted small money__note">@uses.Inline("note")</p>
     </div>
 </section>
 @{ var thanks = c["thanks"]; var tp = c["thanks.photos"].Rows(); }

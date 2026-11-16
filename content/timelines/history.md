@@ -75,11 +75,14 @@ At the general meeting we put our first sponsors on the big screen.
 ### First MESA volunteering day
 date: Feb 7
 photo: mesa-feb
+photos: mesa-feb-fun
 
 The first of many MESA events.
 
 ### Parts ordered, prototypes built
 date: Feb 2026
+photo: thruster-bench
+photos: workshop-mar
 
 ROV and float electronics are ordered, the tether is finished, and the first chassis and manipulator prototypes come together.
 
@@ -92,24 +95,28 @@ The robot gets wet for the first time. Weeks of leak hunting end with a successf
 ### Pi Day Run
 date: Mar 14
 photo: pi-day-demo
+photos: pi-day-group, pi-day-booth
 
 Tabling and volunteering at the Pi Day Run.
 
 ### First water test
 date: Mar 21
 photo: first-water-night
+photos: first-water, water-test-assembly, pvc-frame
 
 The PVC prototype goes in the pool for the first time, and someone has to go in after it.
 
 ### UHC Foundation Fun Run
 date: Mar 28
 photo: uhc-crowd
+photos: uhc-kids, uhc-kid, uhc-table, uhc-tent, uhc-fun-run
 
 Showing an early ROV to runners and families at the UHC Foundation's 2026 Fun Run.
 
 ### It stays dry
 date: Apr 4
 photo: pool-proto
+photos: sms-pool-pilot
 
 The water test that finally works.
 
@@ -126,6 +133,7 @@ We didn't compete at the MATE Monterey regional. We went to help run it: judging
 ### MATE Monterey regional
 date: Apr 25
 photo: monterey-volunteers
+photos: monterey-crew, monterey-pool, monterey-group
 
 AVI members volunteer as judges and event helpers.
 
@@ -143,6 +151,8 @@ Pilots are chosen, the technical documentation goes in, and on June 4 we run bot
 
 ### Pilot selection and flight sticks
 date: May 2 – 3
+photo: rosie-backyard
+photos: pilot-station
 
 Two water tests pick the pilots and tune the controls.
 
@@ -153,12 +163,14 @@ date: May 21
 date: June 4
 photo: pool-guests
 caption: Robert Voss with water polo coach Ed Dunkel and Ashley Stiles.
+photos: pool-guest-visit, pool-day-crowd, pool-tent, pool-rosie-dive
 
 Guests watched ROSIE dive and the team lower ADAM into the water.
 
 ### Deploying ADAM
 date: June 4
 photo: pool-adam-deploy
+photos: adam-water
 
 ## World Championship, St. John's
 when: June 2026
@@ -169,32 +181,38 @@ Thirteen students and two robots fly to Newfoundland. SMS wins the Engineering P
 ### Arrival and check-in
 date: June 22
 photo: worlds-checkin
+photos: worlds-badges, worlds-badge-grin, worlds-laugh, worlds-welcome, worlds-captains
 
 ### Safety inspections and the marketing display
 date: June 23 – 24
 photo: worlds-display
+photos: worlds-inspection, worlds-fix, marketing-display, worlds-table-crowd, adam-display
 
 ### Competition days
 date: June 25 – 27
 photo: worlds-rosie-feed
+photos: worlds-pilot, worlds-wavetank, worlds-float-check, worlds-float-bench, worlds-lifevest, worlds-rosie-station
 
 Float deployment, the wave tank and the engineering presentation.
 
 ### 102 out of 100
 date: June 27
 photo: worlds-award-screen
+photos: worlds-award-stage, worlds-cheer, worlds-huddle
 
 The Engineering Presentation award.
 
 ### Three California teams, one stage
 date: June 27
 photo: worlds-stage-friends
+photos: worlds-awards-crowd, worlds-lobby, worlds-stairs
 
 Sequoia Marine Solutions, Clovis Community College's Crush Depth and Cal Poly Pomona's Pomona Subsea Initiative together on stage when Pomona took second place in the Pioneer class.
 
 ### The team in St. John's
 date: June 2026
 photo: worlds-backdrop
+photos: worlds-group-outside, worlds-lawn, worlds-sunny, worlds-jump, worlds-institute, worlds-mingle, worlds-selfie, worlds-puffins
 
 ## Year two
 when: Fall 2026
@@ -202,15 +220,30 @@ photo: fall-group-2026
 
 A new officer board, workshops every Friday, a second Blank Check Project, more outreach, and our first trophy on campus: we won the club booth decorating contest. SMS moves up to the Explorer class for 2027 and a Micromouse team starts forming.
 
+### Fall kickoff
+date: Aug 28 – Sept 9
+photo: meeting1-room
+photos: meeting0-friends, meeting0-smiles, meeting1-table
+
+The first meetings of year two: a packed room and a lot of new faces.
+
 ### Traditions Day
 date: Sept 2
 photo: traditions-booth
+photos: traditions-crowd, traditions-demo, traditions-float, traditions-rosie
 
 Recruiting with ROSIE on the table.
+
+### New team leads
+date: Sept 18
+photo: meeting3-leads
+
+The new team leads introduce themselves to the club.
 
 ### MESA Saturday Academy
 date: Oct 3
 photo: mesa-outreach
+photos: mesa-oct-lawn
 
 ### Club photo
 date: Oct 9
@@ -218,9 +251,17 @@ photo: fall-group-2026
 
 About fifty of us in front of the Lyles College of Engineering.
 
+### Friday workshops
+date: Fall 2026
+photo: workshop-pcb
+photos: workshop-cad, workshop-rosie-cad, workshop-safety, workshop-code, workshop-help, workshop-laptop
+
+Programming, circuit boards, CAD and design for manufacturing, taught by members who learned it the same way.
+
 ### Blank Check Project, round two
 date: Oct 16 – Nov 13
 photo: bcp-build
+photos: bcp-intro, bcp-team, bcp-solder, bcp-laptops, bcp-kit, bcp-workshop
 
 New members learn by building in teams, with a technical lead for each group.
 
@@ -233,6 +274,7 @@ Our Ars Vallis Ingenium booth took first place in the club booth decorating cont
 ### Phantom Bash
 date: Oct 30
 photo: phantom-costumes
+photos: phantom-contest
 
 Costumes, a decorated booth and a Blank Check Project work night.
 

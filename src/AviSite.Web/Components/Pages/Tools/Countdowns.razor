@@ -1,7 +1,7 @@
 @page "/countdown"
 @page "/countdowns"
-@* Events: content/countdowns.md. Copy: content/pages/tools.md (## countdown). Live ticking: wwwroot/js/countdown.js *@
-@inject ClubData Data
+@* Events: managed in /admin/countdowns (App_Data/countdowns.json). Copy: content/pages/tools.md (## countdown). Live ticking: wwwroot/js/countdown.js *@
+@inject ICountdownStore Store
 @inject TimeProvider Clock
 
 <PageTitle>Countdowns · AVI Robotics</PageTitle>
@@ -38,7 +38,7 @@
 
 @code {
     private PageCopy c = default!;
-    private List<Countdown> live = [], done = [];
+    private List<CountdownEvent> live = [], done = [];
     private DateTimeOffset now;
     private static readonly TimeZoneInfo Pacific = TimeZoneInfo.FindSystemTimeZoneById("America/Los_Angeles");
     private static readonly Dictionary<string, string> TypeLabels = new()
@@ -47,17 +47,17 @@
         ["worlds"] = "Worlds", ["outreach"] = "Outreach", ["meeting"] = "Meeting",
     };
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         c = Copy.Page("pages/tools");
         now = Clock.GetUtcNow();
-        var all = Data.Countdowns;
+        var all = await Store.ListAsync();
         live = all.Where(e => (e.End ?? e.Start) > now)
             .OrderBy(e => e.Start <= now ? 0 : 1).ThenBy(e => e.Start).ToList();
         done = all.Where(e => (e.End ?? e.Start) <= now).OrderByDescending(e => e.End ?? e.Start).Take(6).ToList();
     }
 
-    private RenderFragment Card(Countdown e, bool isDone) => __builder =>
+    private RenderFragment Card(CountdownEvent e, bool isDone) => __builder =>
     {
         var now2 = now;
         var state = isDone ? "done" : e.Start <= now2 ? "now" : "soon";
@@ -80,11 +80,11 @@
                     <span data-s>@Part(e, 3)</span><small>s</small>
                 </p>
             }
-            @if (e.Link is not null && c["countdown"].LinkFrom(e.Link) is { } link) { <CopyLink Link="link" Class="link-arrow countdown__link" /> }
+            @if (!string.IsNullOrWhiteSpace(e.LinkUrl)) { <a class="link-arrow countdown__link" href="@e.LinkUrl" target="@(e.LinkUrl.StartsWith("http") ? "_blank" : null)" rel="@(e.LinkUrl.StartsWith("http") ? "noopener" : null)">@(e.LinkLabel ?? "Details")</a> }
         </article>
     };
 
-    private string Part(Countdown e, int i)
+    private string Part(CountdownEvent e, int i)
     {
         var target = e.Start > now ? e.Start : e.End ?? e.Start;
         var left = target - now;
@@ -92,12 +92,11 @@
         return i switch { 0 => ((int)left.TotalDays).ToString(), 1 => left.Hours.ToString("00"), 2 => left.Minutes.ToString("00"), _ => left.Seconds.ToString("00") };
     }
 
-    /// <summary>"Sat, Apr 25 · 9:00 AM – 5:00 PM", "Apr 17 – 19", or "Thu, May 21 · 3:00 AM (UTC−10:00)" for non-Pacific events.</summary>
-    private static string When(Countdown e)
+  
+    private static string When(CountdownEvent e)
     {
-        var pacific = e.Start.Offset == Pacific.GetUtcOffset(e.Start);
         var s = e.Start; var en = e.End;
-        var zone = pacific ? "" : $" (UTC{(s.Offset < TimeSpan.Zero ? "−" : "+")}{s.Offset:hh\\:mm})";
+        var zone = e.TimeZone == CountdownZones.Default ? "" : $" ({CountdownZones.Label(e.TimeZone)} time)";
         string T(DateTimeOffset d) => d.ToString(d.Minute == 0 ? "h tt" : "h:mm tt");
         if (en is null) return $"{s:ddd, MMM d, yyyy} · {T(s)}{zone}";
         if (s.Date == en.Value.Date) return $"{s:ddd, MMM d, yyyy} · {T(s)} – {T(en.Value)}{zone}";

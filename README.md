@@ -80,7 +80,7 @@ PayPal webhook URL to register: `https://avirobotics.org/api/paypal/webhook`
 - `/tools/qr`: public QR code maker (all in the browser; `wwwroot/js/qr-tool.js` + `wwwroot/lib/qrcode-generator.js`, MIT).
 - `/dynamicqr/{name}`: printed dynamic codes. Redirect + scan count (`App_Data/dynamic-qr.json`) + Google Sheet row in prod.
   Officers change targets and add codes at `/admin/qr` (same admin password as orders). `one`–`four` are seeded from the old site.
-- `/countdown`: events from `content/countdowns.md`.
+- `/countdown`: events managed by officers at `/admin/countdowns` (`App_Data/countdowns.json`).
 
 ## Environments
 

@@ -18,16 +18,42 @@ Every dollar goes into parts, pool time and getting students to competition. AVI
 ## uses
 eyebrow: Where it goes
 title: A real season costs real money.
-note: From the Sequoia Marine Solutions 2026 technical documentation, accounting section.
+note: From the Sequoia Marine Solutions 2026 technical documentation (accounting section and Appendix C). Season value counts donated, reused and member-made parts at their value.
 
-The 2026 season had a total value of about $34,000, including donated and reused parts. The biggest line was getting 13 students and two robots to Newfoundland.
+Our first MATE ROV season was worth about $34,000 once you count donated and reused parts. We raised $31,565 to cover it, and more than half of every dollar went to one thing: getting 13 students and two robots to the World Championship in Newfoundland.
 
-## uses.spec
-- Competition travel: $18,869 · flights and hotel for 13 students in St. John's
-- ROV electronics & controls: Largest build category: thrusters, cameras, power
-- Fundraising operations: $2,405 · Vintage Days booth supplies
-- Team operations: $1,327 · shirts, booth, materials
-- Admin & registration: $877 · 501(c)(3) filing, CA DOJ, MATE registration
+<!-- The three big numbers above the charts: value | label -->
+## uses.stats
+- $31,565 | raised from sponsors, grants, fundraisers and members
+- $34,224 | total season value, including donated and reused parts
+- 13 | students and two robots flown to St. John's
+
+<!-- "Where it went": Category | amount (USD) | what it bought. Longest bar first. -->
+## uses.spent
+- Competition travel | 18869 | 13 round-trip flights, LAX to St. John's (cheaper than flying from Fresno by over $3,000), and 6 nights in 5 hotel rooms
+- ROV controls & electronics | 7452.09 | Eight Blue Robotics T200 thrusters, speed controllers, power converters, sensors, cameras and the tether
+- Vintage Days & fundraising | 2405.17 | Food, booth fee and serving supplies for our Vintage Days pop-up (which brought in $3,937)
+- ROV chassis | 1471.64 | T-slot frame, pressure hull, WetLink penetrators, fasteners and PETG prototype parts
+- Team operations | 1327.47 | Club shirts made in-house, booth materials and general supplies
+- Admin & registration | 877.15 | 501(c)(3) filing, California DOJ registration and MATE registration
+- Float chassis | 871.32 | Blue Robotics enclosure, end caps, pump and tubing, custom sheet metal
+- ROV manipulators | 450.03 | Waterproof motors, servo, lead-screw hardware and printed prototypes
+- Competition logistics | 300 | Airport parking and a small travel buffer
+- Float controls & electronics | 200 | Raspberry Pi 5, LoRa radio and float control electronics
+
+<!-- "Where it came from": Source | amount (USD) | details. -->
+## uses.raised
+<!-- The documented total (the line items round to a few cents less). -->
+total: 31564.77
+
+- Company sponsorships | 11900 | Our 2026 sponsors (below)
+- University support | 9500 | IEEE, the university president's office and the Lyles College of Engineering
+- MESA program funding | 4100 | MESA at Fresno State, for our volunteer and program work
+- Vintage Days pop-up | 3936.74 | Food and drink sales at our Vintage Days booth
+- GoFundMe sponsor payouts | 970.40 | Sponsor and community gifts through GoFundMe, after fees
+- Panda Express fundraiser | 509.70 | Our Panda Express fundraiser night
+- Member contributions | 330 | Voluntary contributions and the opening deposit
+- Community gifts | 317.37 | General GoFundMe gifts and our Pi Day Run booth award
 
 ## thanks
 eyebrow: 2026 sponsors

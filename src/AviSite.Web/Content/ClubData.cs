@@ -21,8 +21,6 @@ public sealed record Sponsor(string Name, string Logo, int Tier, int W, int H);
 public sealed record Leader(string Name, string Role, string Major, IReadOnlyList<string> Did);
 public sealed record Crew(string Id, string Name, string Lead, string Summary, IReadOnlyList<string> Built, IReadOnlyList<string> Members, string? Photo = null);
 public sealed record SupportTeam(string Team, IReadOnlyList<string> Members);
-/// <summary>An event on /countdown. Start/End are absolute instants; End is null for a single moment (a deadline).</summary>
-public sealed record Countdown(string Title, string Type, DateTimeOffset Start, DateTimeOffset? End, string? Team, string? Where, string? Link);
 
 /// <summary>Typed views over the content files. Each is cached per file version.</summary>
 public sealed class ClubData(SiteContent content)
@@ -50,29 +48,6 @@ public sealed class ClubData(SiteContent content)
         (IReadOnlyList<Milestone>)d.Sections.Select(s => new Milestone(
             s.Field("when") ?? "", s.Key, s.Body, s.Field("photo"),
             s.Items.Select(m => MakeMoment(m)).ToList())).ToList());
-
-    /// <summary>content/countdowns.md: "## Event" + type/start/end/team/where/link. Events with an unreadable start are skipped.</summary>
-    public IReadOnlyList<Countdown> Countdowns => From("countdowns", "countdowns", d =>
-        (IReadOnlyList<Countdown>)d.Sections.Select(s =>
-        {
-            if (ParseWhen(s.Field("start")) is not { } start) return null;
-            return new Countdown(s.Key, (s.Field("type") ?? "event").ToLowerInvariant(), start, ParseWhen(s.Field("end")),
-                s.Field("team")?.ToLowerInvariant(), s.Field("where"), s.Field("link"));
-        }).OfType<Countdown>().ToList());
-
-    private static readonly TimeZoneInfo Pacific = TimeZoneInfo.FindSystemTimeZoneById("America/Los_Angeles");
-
-    /// <summary>"2027-04-24 09:00" (Pacific) or "2027-04-24 09:00 -02:30" (explicit offset).</summary>
-    private static DateTimeOffset? ParseWhen(string? v)
-    {
-        if (string.IsNullOrWhiteSpace(v)) return null;
-        var parts = v.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (!DateTime.TryParse(parts[0] + " " + (parts.ElementAtOrDefault(1) ?? "00:00"), System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out var local)) return null;
-        if (parts.Length > 2 && TimeSpan.TryParse(parts[2].TrimStart('+'), System.Globalization.CultureInfo.InvariantCulture, out var off))
-            return new DateTimeOffset(local, parts[2].StartsWith('-') ? off : off);
-        return new DateTimeOffset(local, Pacific.GetUtcOffset(local));
-    }
 
     /// <summary>content/sponsors.md: "## Name" + logo, tier, size (WxH of the logo file).</summary>
     public IReadOnlyList<Sponsor> Sponsors => From("sponsors", "sponsors", d =>

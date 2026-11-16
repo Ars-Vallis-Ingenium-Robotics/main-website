@@ -46,6 +46,8 @@ services.AddSingleton<IOrderStore, JsonOrderStore>();
 services.Configure<DynamicQrOptions>(builder.Configuration.GetSection(DynamicQrOptions.Section));
 services.AddSingleton<IDynamicQrStore, JsonDynamicQrStore>();
 services.AddHttpClient("google-sheet");
+// Countdowns (/countdown, edited in /admin/countdowns)
+services.AddSingleton<ICountdownStore, JsonCountdownStore>();
 services.AddSingleton<Pricing>();
 services.AddSingleton<PaymentReconciler>();
 services.AddSingleton<PhotoCatalog>();
