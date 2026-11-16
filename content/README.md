@@ -51,6 +51,7 @@ with its own settings and text. Add one by copying another; reorder by moving th
   anything you add to `site.md` → `## tokens`.
 - `<!-- notes like this -->` on their own lines are for editors and never show on the site.
 - Photo names (`photo: …`, collage lists) are keys from `tools/images/photos.manifest.json`.
+- Timeline moments can have more than one picture: keep `photo:` for the main one and add `photos: key-two, key-three` (comma-separated). They show as a small gallery in the pop-up.
 
 If you break something, the page still loads. Locally you'll see a red-ish `⟦missing …⟧`
 marker where a section is missing; on the live site that spot is just empty.

@@ -51,6 +51,7 @@ A student-led engineering club at Fresno State and home of Sequoia Marine Soluti
 <!-- Links that aren't configured yet (discord, portal…) are skipped automatically. -->
 ## footer.more
 - [Sequoia Marine Solutions](sms:/)
+- [Tools: QR maker, countdowns](/tools)
 - [Sponsor or donate](/sponsors)
 - [MATE ROV Competition](mate)
 - [Shop](/shop)

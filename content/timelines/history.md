@@ -7,6 +7,7 @@ title: History timeline (the /history page)
   meeting minutes, SMS Master Timeline, BCP rules doc, sponsorship packet, Robert (Nov 2026).
   ## Chapter title, then "when:" and "photo:", then the chapter text.
   ### Moment title, then "date:", optional "photo:" and "caption:", then its text (optional).
+  More pictures: "photos: key-one, key-two, key-three" (shown under the main photo in the pop-up).
 -->
 
 ## Where it started
@@ -243,5 +244,6 @@ photo: mesa-nov
 date: Nov 14
 photo: hornet-booth
 caption: ROSIE's table on the USS Hornet's hangar deck.
+photos: hornet-visitors, hornet-rosie-riveter, hornet-apollo, hornet-seaking, hornet-night
 
 [Robert](person:robert-voss), [Matthew](person:matthew-sedano), [Matthias](person:matthias-cockrum) and [Ansh](person:ansh-josan) took ROSIE to Alameda for Techs on Decks, a youth STEM day aboard the historic USS Hornet, with help from Maria and Victoria. Hundreds of students from around the Bay Area stopped by, and plenty of them got to pilot ROSIE (on dry land). We met the other exhibitors, including other robotics teams, and ROSIE got to meet her namesake, Rosie the Riveter. Two of us spent the night aboard the ship.

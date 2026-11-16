@@ -79,7 +79,7 @@
         </div>
 
         <aside class="checkout__summary donate-aside" aria-label="Where your gift goes">
-            <Photo Key="@(c["aside"].Value("photo") ?? "pool-jump")" Sizes="(min-width: 56rem) 30vw, 100vw" Class="photo--frame" Ratio="4 / 3" />
+            <Photo Key="@(c["aside"].Value("photo") ?? "worlds-backdrop")" Sizes="(min-width: 56rem) 30vw, 100vw" Class="photo--frame" Ratio="4 / 3" />
             <ul class="donate-aside__list">
                 @foreach (var li in c["aside"].ListHtml()) { <li>@li</li> }
             </ul>

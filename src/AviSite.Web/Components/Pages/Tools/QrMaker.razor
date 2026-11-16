@@ -1,0 +1,90 @@
+@page "/tools/qr"
+@* Copy: content/pages/tools.md (## qr). Logic: wwwroot/js/qr-tool.js (runs entirely in the browser). *@
+
+<PageTitle>QR code maker · AVI Robotics</PageTitle>
+<HeadContent><meta name="description" content="Free QR code maker from AVI Robotics: any link or text, AVI, SMS or custom colors, optional logo, PNG or SVG." /></HeadContent>
+
+<PageHero Kicker="@c["qr"].Text("kicker")" Title="@c["qr"].Text("title")">
+    <p>@c["qr"].Inline()</p>
+</PageHero>
+
+<section class="section">
+    <div class="wrap qr-tool" data-qr-tool>
+        <form class="form qr-tool__form" onsubmit="return false" novalidate>
+            <div class="field">
+                <label class="label" for="qr-text">Link or text</label>
+                <textarea id="qr-text" rows="2" data-qr="text" placeholder="https://avirobotics.org" aria-describedby="qr-text-hint">@Url</textarea>
+                <span id="qr-text-hint" class="field__hint">Links work best with https:// at the front.</span>
+            </div>
+
+            <fieldset class="field">
+                <legend class="label">Style</legend>
+                <div class="qr-tool__styles">
+                    @foreach (var (v, label) in Styles)
+                    {
+                        <label class="chip chip--sm"><input type="radio" name="qr-style" value="@v" data-qr="style" checked="@(v == StyleOrDefault)" /><span>@label</span></label>
+                    }
+                </div>
+            </fieldset>
+
+            <div class="qr-tool__custom" data-qr-custom hidden>
+                <div class="field field--inline">
+                    <label class="label" for="qr-fg">Dots</label>
+                    <input id="qr-fg" type="color" value="#101011" data-qr="fg" />
+                </div>
+                <div class="field field--inline">
+                    <label class="label" for="qr-eye">Corners</label>
+                    <input id="qr-eye" type="color" value="#0c63e6" data-qr="eye" />
+                </div>
+                <div class="field">
+                    <label class="label" for="qr-logo">Logo (optional)</label>
+                    <input id="qr-logo" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-qr="logo" />
+                    <span class="field__hint">Stays on your computer. Square logos look best.</span>
+                </div>
+            </div>
+
+            <fieldset class="field">
+                <legend class="label">Dots</legend>
+                <div class="qr-tool__styles">
+                    <label class="chip chip--sm"><input type="radio" name="qr-shape" value="rounded" data-qr="shape" checked /><span>Rounded</span></label>
+                    <label class="chip chip--sm"><input type="radio" name="qr-shape" value="square" data-qr="shape" /><span>Square</span></label>
+                    <label class="chip chip--sm"><input type="radio" name="qr-shape" value="dots" data-qr="shape" /><span>Dots</span></label>
+                </div>
+            </fieldset>
+
+            <div class="qr-tool__row">
+                <label class="check"><input type="checkbox" data-qr="uselogo" checked /> Logo in the middle</label>
+                <label class="check"><input type="checkbox" data-qr="transparent" /> Transparent background</label>
+            </div>
+
+            <div class="field">
+                <label class="label" for="qr-size">PNG size: <output data-qr-size-out>1200</output> px</label>
+                <input id="qr-size" type="range" min="300" max="3000" step="100" value="1200" data-qr="size" />
+            </div>
+        </form>
+
+        <div class="qr-tool__out">
+            <div class="qr-tool__preview" data-qr-preview role="img" aria-label="QR code preview"></div>
+            <p class="qr-tool__status small muted" data-qr-status aria-live="polite"></p>
+            <div class="actions">
+                <button class="btn btn--accent" type="button" data-qr-download="png">Download PNG</button>
+                <button class="btn btn--ghost" type="button" data-qr-download="svg">Download SVG</button>
+            </div>
+            <ul class="qr-tool__tips small">@foreach (var tip in c["qr.tips"].ListHtml()) { <li>@tip</li> }</ul>
+        </div>
+        <noscript><p class="alert">The QR maker needs JavaScript turned on.</p></noscript>
+    </div>
+</section>
+
+<script src="/lib/qrcode-generator.js" defer></script>
+<script src="/js/qr-tool.js" defer></script>
+
+@code {
+    /// <summary>Prefill, e.g. /tools/qr?url=https://avirobotics.org/dynamicqr/one&style=avi (used by the admin page).</summary>
+    [SupplyParameterFromQuery] public string? Url { get; set; }
+    [SupplyParameterFromQuery] public string? Style { get; set; }
+    private static readonly (string, string)[] Styles = [("avi", "AVI"), ("sms", "SMS"), ("plain", "Plain"), ("custom", "Custom")];
+    private string StyleOrDefault => Styles.Any(s => s.Item1 == Style) ? Style! : "avi";
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/tools");
+}

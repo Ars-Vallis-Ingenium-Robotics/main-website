@@ -40,7 +40,8 @@ await test("unknown URLs and /not-found return 404", async () => {
 await test("legacy URLs from the old site still work (QR codes)", async () => {
   for (const r of ["/showcase/", "/countdown/", "/vintagedays/", "/dynamicqr/one/", "/dynamicqr/two/", "/dynamicqr/three/", "/dynamicqr/four/", "/Files/aviSponsorship.pdf", "/Logos/aviDogDefault.png"]) {
     const res = await page.request.get(BASE + r, { maxRedirects: 0 });
-    assert.equal(res.status(), 200, r);
+    // Printed dynamic QR codes are now server redirects (302); everything else is served as-is.
+    assert.equal(res.status(), r.startsWith("/dynamicqr/") ? 302 : 200, r);
   }
   const res = await page.request.get(BASE + "/showcase", { maxRedirects: 0 });
   assert.ok([301, 302].includes(res.status()), "/showcase should redirect to /showcase/");
@@ -527,6 +528,61 @@ await test("leadership cards in a row match heights; emails stay on one line, un
   } finally {
     await page.setViewportSize({ width: 1280, height: 900 });
   }
+});
+
+await test("tools: QR maker draws a code from ?url and offers PNG/SVG", async () => {
+  await page.goto(BASE + "/tools/qr?url=" + encodeURIComponent("https://avirobotics.org/join") + "&style=sms");
+  await page.locator("[data-qr-preview] svg").waitFor();
+  assert.match(await page.locator("[data-qr-status]").innerText(), /squares/);
+  assert.equal(await page.locator('input[name="qr-style"][value="sms"]').isChecked(), true);
+  const [dl] = await Promise.all([page.waitForEvent("download"), page.click('[data-qr-download="svg"]')]);
+  assert.match(dl.suggestedFilename(), /^qr-avirobotics-org-join\.svg$/);
+  await page.fill('[data-qr="text"]', "");
+  assert.equal(await page.locator('[data-qr-download="png"]').isDisabled(), true, "nothing to download without text");
+  await page.goto(BASE + "/tools");
+  assert.match(await page.locator("main").innerText(), /QR code maker[\s\S]*Countdowns/);
+});
+
+await test("dynamic QR: printed codes redirect and count; admin can repoint one", async () => {
+  const one = await page.request.get(BASE + "/dynamicqr/one", { maxRedirects: 0 });
+  assert.equal(one.status(), 302);
+  assert.equal(one.headers()["cache-control"], "no-store");
+  assert.equal((await page.request.get(BASE + "/dynamicqr/one/index.html", { maxRedirects: 0 })).status(), 302, "old index.html form still works");
+  assert.equal((await page.request.get(BASE + "/dynamicqr/not-a-code", { maxRedirects: 0 })).status(), 404);
+  assert.equal((await page.request.get(BASE + "/dynamicqr/DynamicQR/aviDynamicQR-one.png")).status(), 200, "old PNGs still served");
+  const anon = await browser.newContext(); const ap = await anon.newPage();
+  await ap.goto(BASE + "/admin/qr"); assert.match(ap.url(), /\/admin\/login/, "admin/qr needs login"); await anon.close();
+  await page.goto(BASE + "/admin/qr"); // signed in by the admin test above
+  const slug = "e2e-" + Date.now().toString(36);
+  await page.fill("#slug", slug); await page.fill("#target", "/join"); await page.fill("#campaign", "e2e");
+  await page.getByRole("button", { name: "Add code" }).click();
+  await page.waitForURL(/saved=/);
+  let r = await page.request.get(BASE + "/dynamicqr/" + slug, { maxRedirects: 0 });
+  assert.equal(r.headers().location, "/join");
+  await page.goto(BASE + "/admin/qr/" + slug);
+  await page.fill("#target", "https://avirobotics.org/sponsors"); await page.getByRole("button", { name: "Save" }).click();
+  await page.waitForURL(/saved=/);
+  r = await page.request.get(BASE + "/dynamicqr/" + slug, { maxRedirects: 0 });
+  assert.equal(r.headers().location, "https://avirobotics.org/sponsors");
+  assert.match(await page.locator(`[data-qr-row="${slug}"]`).innerText(), /\b1\b/, "scan counted");
+});
+
+await test("countdowns page renders from content/countdowns.md", async () => {
+  await page.goto(BASE + "/countdown");
+  assert.ok(await page.locator(".countdown").count() > 0);
+  assert.match(await page.locator("main").innerText(), /MATE ROV World Championship/);
+});
+
+await test("timeline moments can have several photos (gallery in the pop-up)", async () => {
+  await page.goto(BASE + "/history");
+  const open = page.locator(".timeline__open").last();
+  const sub = page.locator("#" + (await open.getAttribute("data-sub")));
+  await open.click();
+  await sub.locator(".subtl__card", { hasText: "Techs on Decks" }).click();
+  const dlg = page.locator("dialog.moment-sheet[open]");
+  await dlg.waitFor({ state: "visible" });
+  assert.equal(await dlg.locator(".moment-sheet__gallery .photo").count(), 5);
+  await page.keyboard.press("Escape");
 });
 
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });

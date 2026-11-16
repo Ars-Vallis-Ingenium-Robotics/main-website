@@ -70,9 +70,17 @@ admin pickup + CSV, phone layout, and the mobile menu.
 | `Store:OrdersOpen` | appsettings / env | Products visible, checkout closed |
 | `Store:ComingSoon` | appsettings / env | Between drops: /shop shows "next drop" (content/pages/shop.md › coming-soon); product/cart/checkout redirect to /shop |
 | `Site:NoIndex` | appsettings | Testing only: `X-Robots-Tag: noindex` |
+| `DynamicQr:GoogleScriptUrl` / `SendToGoogleSheet` | appsettings | Scan rows for the old Google Sheet. Only production sends (`appsettings.Production.json`) |
 
 PayPal webhook URL to register: `https://avirobotics.org/api/paypal/webhook`
 (events: `PAYMENT.CAPTURE.COMPLETED`, `.DENIED`, `.REFUNDED`, `.REVERSED`).
+
+## Tools
+
+- `/tools/qr`: public QR code maker (all in the browser; `wwwroot/js/qr-tool.js` + `wwwroot/lib/qrcode-generator.js`, MIT).
+- `/dynamicqr/{name}`: printed dynamic codes. Redirect + scan count (`App_Data/dynamic-qr.json`) + Google Sheet row in prod.
+  Officers change targets and add codes at `/admin/qr` (same admin password as orders). `one`–`four` are seeded from the old site.
+- `/countdown`: events from `content/countdowns.md`.
 
 ## Environments
 

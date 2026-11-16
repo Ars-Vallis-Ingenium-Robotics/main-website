@@ -21,7 +21,7 @@ Gifts are tax-deductible: AVI is a {status}, {ein}.
 Card works too, no PayPal account needed.
 
 ## aside
-photo: pool-jump
+photo: worlds-backdrop
 
 - **$18,869** got 13 students and two robots to the 2026 World Championship in Newfoundland.
 - **About $34,000** was the total value of the 2026 season, counting donated and reused parts.

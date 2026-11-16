@@ -1,0 +1,126 @@
+@page "/admin/qr"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.Policy)]
+@using System.ComponentModel.DataAnnotations
+@inject IDynamicQrStore Codes
+@inject IOptions<SmsSiteOptions> SiteUrls
+@inject NavigationManager Nav
+
+<PageTitle>Dynamic QR codes · AVI Robotics admin</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin">
+    <div class="wrap">
+        <AdminNav Current="qr" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Admin</p>
+                <h1 class="h1">Dynamic QR codes</h1>
+                <p class="muted">The printed code never changes. Change where it goes here, any time. Scans are counted here and sent to the Google Sheet.</p>
+            </div>
+        </div>
+
+        @if (Saved is not null) { <p class="alert alert--ok" role="status">Saved <strong>@Saved</strong>.</p> }
+
+        <div class="table-scroll">
+            <table class="table qr-admin">
+                <thead>
+                    <tr><th scope="col">Code</th><th scope="col">Goes to</th><th scope="col" class="num">Scans</th><th scope="col" class="num">Last 7 days</th><th scope="col">Last scan</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var q in codes)
+                    {
+                        var url = PrintUrl(q.Slug);
+                        <tr class="@(q.Active ? "" : "is-off")" data-qr-row="@q.Slug">
+                            <th scope="row">
+                                <a href="/admin/qr/@q.Slug"><strong>@q.Slug</strong></a>
+                                @if (!q.Active) { <span class="tag">Off</span> }
+                                <div class="mono small muted">@url</div>
+                                @if (q.Note is not null) { <div class="small">@q.Note</div> }
+                            </th>
+                            <td><a class="qr-admin__target" href="@q.Target" target="_blank" rel="noopener">@q.Target</a><div class="small muted">Sheet: @q.Campaign</div></td>
+                            <td class="num">@q.Scans</td>
+                            <td class="num">@Last7(q)</td>
+                            <td class="small">@(q.LastScanUtc is { } t ? Local(t) : "Never")</td>
+                            <td class="qr-admin__actions">
+                                <a class="btn btn--ghost btn--sm" href="/admin/qr/@q.Slug">Edit</a>
+                                <a class="btn btn--ghost btn--sm" href="/tools/qr?url=@Uri.EscapeDataString(url)&style=avi" target="_blank" rel="noopener">QR image</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="h3">Add a code</h2>
+        <EditForm Model="New!" FormName="qr-new" OnValidSubmit="CreateAsync" method="post" class="form qr-admin__form" novalidate>
+            <DataAnnotationsValidator />
+            <div class="qr-admin__grid">
+                <div class="field">
+                    <label class="label" for="slug">Name in the link</label>
+                    <InputText id="slug" @bind-Value="New!.Slug" placeholder="e.g. vintage-days" autocomplete="off" aria-describedby="slug-hint" />
+                    <span id="slug-hint" class="field__hint mono">@PrintUrl(string.IsNullOrWhiteSpace(New!.Slug) ? "…" : New.Slug.Trim().ToLowerInvariant())</span>
+                </div>
+                <div class="field">
+                    <label class="label" for="target">Goes to</label>
+                    <InputText id="target" @bind-Value="New!.Target" placeholder="https://…" inputmode="url" />
+                </div>
+                <div class="field">
+                    <label class="label" for="campaign">Name in the Google Sheet</label>
+                    <InputText id="campaign" @bind-Value="New!.Campaign" placeholder="e.g. Vintage Days 2027 flyer" />
+                </div>
+                <div class="field">
+                    <label class="label" for="note">Note <span class="muted">(optional)</span></label>
+                    <InputText id="note" @bind-Value="New!.Note" placeholder="Where it's printed" />
+                </div>
+            </div>
+            @if (error is not null) { <p class="alert" role="alert">@error</p> }
+            <div><button class="btn btn--accent" type="submit">Add code</button></div>
+        </EditForm>
+    </div>
+</section>
+
+@code {
+    [SupplyParameterFromForm(FormName = "qr-new")] public NewCode? New { get; set; }
+    [SupplyParameterFromQuery] public string? Saved { get; set; }
+    private IReadOnlyList<DynamicQr> codes = [];
+    private string? error;
+    private static readonly TimeZoneInfo Pacific = TimeZoneInfo.FindSystemTimeZoneById("America/Los_Angeles");
+
+    protected override async Task OnInitializedAsync()
+    {
+        New ??= new();
+        codes = await Codes.ListAsync();
+    }
+
+    private string PrintUrl(string slug) => $"{SiteUrls.Value.AviBaseUrl.TrimEnd('/')}/dynamicqr/{slug}";
+    private static int Last7(DynamicQr q)
+    {
+        var from = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, Pacific).Date.AddDays(-6).ToString("yyyy-MM-dd");
+        return q.Daily.Where(d => string.CompareOrdinal(d.Key, from) >= 0).Sum(d => d.Value);
+    }
+    private static string Local(DateTimeOffset t) => TimeZoneInfo.ConvertTime(t, Pacific).ToString("MMM d, h:mm tt");
+
+    private async Task CreateAsync()
+    {
+        var slug = New!.Slug!.Trim().ToLowerInvariant();
+        error = DynamicQrRules.CheckSlug(slug) ?? DynamicQrRules.CheckTarget(New.Target);
+        if (error is not null) return;
+        var ok = await Codes.CreateAsync(new DynamicQr
+        {
+            Slug = slug,
+            Target = New.Target!.Trim(),
+            Campaign = string.IsNullOrWhiteSpace(New.Campaign) ? slug : New.Campaign.Trim(),
+            Note = string.IsNullOrWhiteSpace(New.Note) ? null : New.Note.Trim(),
+        });
+        if (!ok) { error = $"There's already a code called {slug}."; return; }
+        Nav.NavigateTo($"/admin/qr?saved={Uri.EscapeDataString(slug)}");
+    }
+
+    public sealed class NewCode
+    {
+        [Required(ErrorMessage = "Give it a short name.")] public string? Slug { get; set; }
+        [Required(ErrorMessage = "Where should it go?")] public string? Target { get; set; }
+        [StringLength(80)] public string? Campaign { get; set; }
+        [StringLength(120)] public string? Note { get; set; }
+    }
+}

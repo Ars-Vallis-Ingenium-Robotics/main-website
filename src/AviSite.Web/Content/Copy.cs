@@ -169,6 +169,8 @@ public sealed partial class SectionCopy(Copy copy, MdSection section, string whe
     private static partial System.Text.RegularExpressions.Regex LinkMd();
 
     private LinkCopy ParseLink(string md) => ParseLink(md, false)!;
+    /// <summary>A "[text](where)" link written somewhere other than a section field (e.g. a countdown's link:).</summary>
+    public LinkCopy? LinkFrom(string md) => ParseLink(md, true);
     private LinkCopy? ParseLink(string md, bool skipUnresolved)
     {
         var m = LinkMd().Match(md);

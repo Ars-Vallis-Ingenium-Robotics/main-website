@@ -42,6 +42,10 @@ services.AddDataProtection()
 // Store
 services.AddSingleton<ICatalog, JsonCatalog>();
 services.AddSingleton<IOrderStore, JsonOrderStore>();
+// Dynamic QR codes (/dynamicqr/{slug}, edited in /admin/qr)
+services.Configure<DynamicQrOptions>(builder.Configuration.GetSection(DynamicQrOptions.Section));
+services.AddSingleton<IDynamicQrStore, JsonDynamicQrStore>();
+services.AddHttpClient("google-sheet");
 services.AddSingleton<Pricing>();
 services.AddSingleton<PaymentReconciler>();
 services.AddSingleton<PhotoCatalog>();
@@ -147,6 +151,7 @@ app.MapCartEndpoints();
 app.MapPayPalEndpoints();
 app.MapAdminEndpoints();
 app.MapPeopleEndpoints();
+app.MapDynamicQrEndpoints();
 // Browsers ask for /favicon.ico on their own (and for PDFs, feeds, etc.): answer with the right mark per host.
 app.MapGet("/favicon.ico", (HttpContext ctx, IWebHostEnvironment env) =>
 {

@@ -1,0 +1,94 @@
+@page "/admin/qr/{Slug}"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.Policy)]
+@using System.ComponentModel.DataAnnotations
+@inject IDynamicQrStore Codes
+@inject IOptions<SmsSiteOptions> SiteUrls
+@inject NavigationManager Nav
+
+<PageTitle>@Slug · Dynamic QR · AVI Robotics admin</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+@if (qr is not null)
+{
+    var url = $"{SiteUrls.Value.AviBaseUrl.TrimEnd('/')}/dynamicqr/{qr.Slug}";
+    <section class="section admin">
+        <div class="wrap narrow">
+            <AdminNav Current="qr" />
+            <p class="eyebrow"><a href="/admin/qr">Dynamic QR codes</a> / @qr.Slug</p>
+            <h1 class="h1">@qr.Slug</h1>
+            <p class="mono small">@url · <a href="/tools/qr?url=@Uri.EscapeDataString(url)&style=avi" target="_blank" rel="noopener">QR image</a></p>
+
+            <EditForm Model="Edit!" FormName="qr-edit" OnValidSubmit="SaveAsync" method="post" class="form" novalidate>
+                <DataAnnotationsValidator />
+                <div class="field">
+                    <label class="label" for="target">Goes to</label>
+                    <InputText id="target" @bind-Value="Edit!.Target" inputmode="url" />
+                    <span class="field__hint">Takes effect on the next scan. People who already scanned keep whatever page they opened.</span>
+                </div>
+                <div class="field">
+                    <label class="label" for="campaign">Name in the Google Sheet</label>
+                    <InputText id="campaign" @bind-Value="Edit!.Campaign" />
+                </div>
+                <div class="field">
+                    <label class="label" for="note">Note <span class="muted">(optional)</span></label>
+                    <InputText id="note" @bind-Value="Edit!.Note" />
+                </div>
+                <label class="check"><InputCheckbox @bind-Value="Edit!.Active" /> On (when off, scans go to the home page and aren't counted)</label>
+                @if (error is not null) { <p class="alert" role="alert">@error</p> }
+                <div class="actions"><button class="btn btn--accent" type="submit">Save</button><a class="btn btn--ghost" href="/admin/qr">Cancel</a></div>
+            </EditForm>
+
+            <h2 class="h3 qr-admin__h">Scans, last 30 days</h2>
+            <p class="muted small">@qr.Scans total@(qr.LastScanUtc is { } t ? $" · last {TimeZoneInfo.ConvertTime(t, Pacific):MMM d, h:mm tt}" : "").</p>
+            <ol class="qr-bars" aria-label="Scans per day, last 30 days">
+                @foreach (var (day, n) in days)
+                {
+                    <li style="--h: @(max == 0 ? 0 : n * 100 / max)%" title="@day: @n"><span class="visually-hidden">@day: @n</span></li>
+                }
+            </ol>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    [SupplyParameterFromForm(FormName = "qr-edit")] public EditModel? Edit { get; set; }
+    private DynamicQr? qr;
+    private string? error;
+    private List<(string Day, int N)> days = [];
+    private int max;
+    private static readonly TimeZoneInfo Pacific = TimeZoneInfo.FindSystemTimeZoneById("America/Los_Angeles");
+
+    protected override async Task OnInitializedAsync()
+    {
+        qr = await Codes.GetAsync(Slug);
+        if (qr is null) { Nav.NotFound(); return; }
+        Edit ??= new() { Target = qr.Target, Campaign = qr.Campaign, Note = qr.Note, Active = qr.Active };
+        var today = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, Pacific).Date;
+        days = Enumerable.Range(0, 30).Select(i => today.AddDays(i - 29).ToString("yyyy-MM-dd"))
+            .Select(d => (d, qr.Daily.GetValueOrDefault(d))).ToList();
+        max = days.Max(d => d.N);
+    }
+
+    private async Task SaveAsync()
+    {
+        error = DynamicQrRules.CheckTarget(Edit!.Target);
+        if (error is not null) return;
+        await Codes.UpdateAsync(qr!.Slug, c =>
+        {
+            c.Target = Edit.Target!.Trim();
+            c.Campaign = string.IsNullOrWhiteSpace(Edit.Campaign) ? c.Slug : Edit.Campaign.Trim();
+            c.Note = string.IsNullOrWhiteSpace(Edit.Note) ? null : Edit.Note.Trim();
+            c.Active = Edit.Active;
+        });
+        Nav.NavigateTo($"/admin/qr?saved={Uri.EscapeDataString(qr.Slug)}");
+    }
+
+    public sealed class EditModel
+    {
+        [Required(ErrorMessage = "Where should it go?")] public string? Target { get; set; }
+        [StringLength(80)] public string? Campaign { get; set; }
+        [StringLength(120)] public string? Note { get; set; }
+        public bool Active { get; set; } = true;
+    }
+}

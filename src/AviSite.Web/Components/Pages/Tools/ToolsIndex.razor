@@ -1,0 +1,30 @@
+@page "/tools"
+@* Copy: content/pages/tools.md *@
+
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+
+<PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
+    @c["hero"].Html()
+</PageHero>
+
+<section class="section">
+    <div class="wrap">
+        <ul class="tool-list" role="list">
+            @foreach (var t in c["list"].Items)
+            {
+                var link = t.Link("link");
+                <li class="tool-card reveal">
+                    <h2 class="h3"><a href="@link.Href">@t.Title</a></h2>
+                    @t.Html()
+                    <span class="link-arrow" aria-hidden="true">@link.PlainText</span>
+                </li>
+            }
+        </ul>
+    </div>
+</section>
+
+@code {
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/tools");
+}

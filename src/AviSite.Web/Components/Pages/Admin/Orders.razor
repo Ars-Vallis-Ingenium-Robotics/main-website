@@ -8,6 +8,7 @@
 
 <section class="section admin">
     <div class="wrap">
+        <AdminNav Current="orders" />
         <div class="section__head">
             <div>
                 <p class="eyebrow">Shop admin</p>
@@ -15,7 +16,6 @@
             </div>
             <div class="actions">
                 <a class="btn btn--ghost" href="/admin/orders.csv">Export CSV</a>
-                <form method="post" action="/admin/logout"><AntiforgeryToken /><button class="link-button" type="submit">Sign out</button></form>
             </div>
         </div>
 
