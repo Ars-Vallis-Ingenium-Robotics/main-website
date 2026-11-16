@@ -238,3 +238,10 @@ Costumes, a decorated booth and a Blank Check Project work night.
 ### MESA, with Sundog
 date: Nov 7
 photo: mesa-nov
+
+### Techs on Decks aboard the USS Hornet
+date: Nov 14
+photo: hornet-booth
+caption: ROSIE's table on the USS Hornet's hangar deck.
+
+[Robert](person:robert-voss), [Matthew](person:matthew-sedano), [Matthias](person:matthias-cockrum) and [Ansh](person:ansh-josan) took ROSIE to Alameda for Techs on Decks, a youth STEM day aboard the historic USS Hornet, with help from Maria and Victoria. Hundreds of students from around the Bay Area stopped by, and plenty of them got to pilot ROSIE (on dry land). We met the other exhibitors, including other robotics teams, and ROSIE got to meet her namesake, Rosie the Riveter. Two of us spent the night aboard the ship.

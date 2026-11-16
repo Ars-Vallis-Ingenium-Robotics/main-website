@@ -1658,5 +1658,95 @@
   "h": 1600,
   "focus": "50% 45%",
   "lqip": "data:image/webp;base64,UklGRpQAAABXRUJQVlA4IIgAAADwAwCdASoYABAAPu1iqU2ppaQiMAgBMB2JZQDCgB5wzH1U0HylyjAAAP6izKnxI8U2LyIFuk7dgMqxXGM/n8Azv7G4d2B9CAoFH7JnrP0aRKq32Y+NZZFlQ/C8MLpvx8kK1xPIqPv3OWTttuQVElw+99pNg/RpvLKGYFlwOuJxrHCANE1qeQAA"
+ },
+ "hornet-booth": {
+  "alt": "AVI members at the ROSIE table on the USS Hornet's hangar deck, with crowds of visitors behind them",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "45% 55%",
+  "lqip": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAAAQBACdASoYABAAPu1iqU2ppaQiMAgBMB2JZQC7ACPNjP6MKdWIk0TAAAD5LFtmgh4bckEsLrCxqcEKbj9kNVP+8JcW+LSL3Kr198JZdPSptroBEP7T8184GlW3l7yIW03Pcb/UYAA="
+ },
+ "hornet-visitors": {
+  "alt": "Students leaning over the table to drive ROSIE at Techs on Decks",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "50% 55%",
+  "lqip": "data:image/webp;base64,UklGRoYAAABXRUJQVlA4IHoAAAAQBACdASoYABAAPu1iqU2ppaQiMAgBMB2JZQC06B+MmgQAH6D5xk4bwAD+2rt02GN49johc1DMOa1sW1hYZreDaIJcLrYLD3pecetkohtEozeW1fVQGhKdggZZyApEWr+cYIjqvScDrle4aL+3cgb+XCk5z+atKumAAA=="
+ },
+ "hornet-rosie-riveter": {
+  "alt": "ROSIE parked in front of a \"We Can Do It!\" Rosie the Riveter display aboard the USS Hornet",
+  "widths": [
+   480,
+   960,
+   1600
+  ],
+  "w": 1600,
+  "h": 2400,
+  "focus": "50% 60%",
+  "lqip": "data:image/webp;base64,UklGRoAAAABXRUJQVlA4IHQAAAAwBACdASoQABgAPu1iqU2ppaOiMAgBMB2JbACdMvIC7dxyfj42yX0ExAAAzjzzw37dszklWxbxLeEUlF6z2vFY8rlZkQwBA2+B9Q+xBRyPgKRObPLnaZYoXhwhEkk0+6JR1QG5OTtzlsKrNtsdrIme0CMAAA=="
+ },
+ "hornet-apollo": {
+  "alt": "ROSIE beside an Apollo command module and a spacesuit on the USS Hornet's hangar deck",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "60% 55%",
+  "lqip": "data:image/webp;base64,UklGRnYAAABXRUJQVlA4IGoAAAAQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JYwCdMoAC6IPG4yLrhPh+AAD+QK/2+Ca8eMe7/vJTBZzQM/2aoSYmWuFNoV+x1vnExa8KWj8Lhetm9HtzlPcRaiUg39DYMgU0JBF64hmEncAA"
+ },
+ "hornet-seaking": {
+  "alt": "ROSIE next to a Navy Sea King helicopter on the hangar deck",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "55% 60%",
+  "lqip": "data:image/webp;base64,UklGRoQAAABXRUJQVlA4IHgAAACQBACdASoYABAAPu1iqU2ppaOiMAgBMB2JZQCsAywBrSz91abPleVgNKtColgA/rwZV3XXw8pO3MHlgGbiKPhWhmHAndPKt1BZZSZT6VZNKQSqsORciugoAPO06mblC+nTAfD9MnL27VLle4JV1Wds9C+vrtaAAAA="
+ },
+ "hornet-night": {
+  "alt": "The USS Hornet's flight deck lit up at night over the water in Alameda",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "40% 50%",
+  "lqip": "data:image/webp;base64,UklGRlQAAABXRUJQVlA4IEgAAADwAwCdASoYABAAPu1kq04ppaQiMAgBMB2JZwAAW+/ST7MlT7msw30AAP7ssisGmZYkImZmnfLEqecnBcaoE6iDX9e0qC9QcAA="
+ },
+ "hornet-crew": {
+  "alt": "Two AVI members smiling at the booth on the USS Hornet",
+  "widths": [
+   480,
+   960,
+   1600,
+   2400
+  ],
+  "w": 2400,
+  "h": 1600,
+  "focus": "55% 45%",
+  "lqip": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAADQAwCdASoYABAAPu1iqk2ppaQiMAgBMB2JQBOgBEMW7wyZXqWo4oAA/ltvsxqQzDThS62qnENrF8WJ0kqqfwBs5UOsRB1JlaV5twqWmkMShBjJgC5aj0NM1Nw3HVEq35X+j2pw8EExxmMGCsT33aRCchl8jZYR5qweAAAA"
  }
 }

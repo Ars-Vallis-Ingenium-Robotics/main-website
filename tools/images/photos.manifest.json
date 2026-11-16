@@ -715,5 +715,47 @@
   "src": "/mnt/user-data/uploads/Shared drives/Media & Marketing/Media & Marketing (2026 - 2027)/2026-10-30 AVI Meeting 9 - BCP and Phantom Bash/RAV04721.JPG",
   "alt": "Members on laptops working on their Blank Check Projects",
   "focus": "50% 45%"
+ },
+ {
+  "key": "hornet-booth",
+  "src": "/mnt/user-data/uploads/main-website/Claude outputs/hornet/RAV05082.JPG",
+  "alt": "AVI members at the ROSIE table on the USS Hornet's hangar deck, with crowds of visitors behind them",
+  "focus": "45% 55%"
+ },
+ {
+  "key": "hornet-visitors",
+  "src": "/mnt/user-data/uploads/main-website/Claude outputs/hornet/RAV05085.JPG",
+  "alt": "Students leaning over the table to drive ROSIE at Techs on Decks",
+  "focus": "50% 55%"
+ },
+ {
+  "key": "hornet-rosie-riveter",
+  "src": "/mnt/user-data/uploads/main-website/Claude outputs/hornet/RAV05114.JPG",
+  "alt": "ROSIE parked in front of a \"We Can Do It!\" Rosie the Riveter display aboard the USS Hornet",
+  "focus": "50% 60%"
+ },
+ {
+  "key": "hornet-apollo",
+  "src": "/mnt/user-data/uploads/main-website/Claude outputs/hornet/RAV05125.JPG",
+  "alt": "ROSIE beside an Apollo command module and a spacesuit on the USS Hornet's hangar deck",
+  "focus": "60% 55%"
+ },
+ {
+  "key": "hornet-seaking",
+  "src": "/mnt/user-data/uploads/main-website/Claude outputs/hornet/RAV05120.JPG",
+  "alt": "ROSIE next to a Navy Sea King helicopter on the hangar deck",
+  "focus": "55% 60%"
+ },
+ {
+  "key": "hornet-night",
+  "src": "/mnt/user-data/uploads/main-website/Claude outputs/hornet/RAV05137.JPG",
+  "alt": "The USS Hornet's flight deck lit up at night over the water in Alameda",
+  "focus": "40% 50%"
+ },
+ {
+  "key": "hornet-crew",
+  "src": "/mnt/user-data/uploads/main-website/Claude outputs/hornet/RAV05075.JPG",
+  "alt": "Two AVI members smiling at the booth on the USS Hornet",
+  "focus": "55% 45%"
  }
 ]

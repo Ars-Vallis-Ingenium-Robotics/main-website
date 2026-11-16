@@ -114,7 +114,7 @@ Friday workshops teach programming, electronics and CAD from zero. Then every fa
 eyebrow: Outreach
 title: Out in the Valley.
 
-We volunteer wherever students and families are learning about science and engineering: MESA events on campus, the Pi Day Run and the UHC Foundation Fun Run, and the MATE regional in Monterey, where our members judged and helped run the day.
+We volunteer wherever students and families are learning about science and engineering: MESA events on campus, the Pi Day Run and the UHC Foundation Fun Run, the MATE regional in Monterey, where our members judged and helped run the day, and Techs on Decks aboard the USS Hornet, where hundreds of Bay Area students got to drive ROSIE.
 
 ## outreach.dates
 - Feb 7, 2026 · MESA volunteering
@@ -124,9 +124,11 @@ We volunteer wherever students and families are learning about science and engin
 - Apr 25, 2026 · MATE Monterey regional (judges and volunteers)
 - Oct 3, 2026 · MESA Saturday Academy
 - Nov 7, 2026 · MESA, with Sundog
+- Nov 14, 2026 · Techs on Decks, USS Hornet (Alameda)
 
 <!-- Photo keys for the scrolling collage, in order. -->
 ## outreach.photos
+- hornet-booth
 - uhc-crowd
 - pi-day-group
 - uhc-kid
@@ -138,12 +140,15 @@ We volunteer wherever students and families are learning about science and engin
 - mesa-outreach
 - uhc-kids
 - mesa-nov
+- hornet-rosie-riveter
+- hornet-visitors
 - pi-day-booth
 - monterey-volunteers
 - mesa-apr
 - traditions-demo
 - mesa-oct-lawn
 - traditions-crowd
+- hornet-apollo
 - uhc-table
 - traditions-float
 - mesa-feb
