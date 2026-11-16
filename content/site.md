@@ -21,6 +21,7 @@ crush-depth: https://cloviscollege.edu/academics/guided-pathways/stem-computer-s
 - [Projects](/projects)
 - [Support](/sponsors)
 - [Shop](/shop)
+- [Tools](/tools)
 
 ## nav.join
 <!-- short: what the button says when the menu bar is tight. -->

@@ -499,7 +499,7 @@ await test("every pop-up keeps its close button in view while scrolling (sticky)
 
 await test("join button never wraps: full label when roomy, \"Join\" when tight", async () => {
   try {
-    for (const [w, label] of [[800, "Join"], [1280, "Join the club"]]) {
+    for (const [w, label] of [[920, "Join"], [1280, "Join the club"]]) {
       await page.setViewportSize({ width: w, height: 700 });
       await page.goto(BASE + "/about");
       const j = page.locator(".nav--wide .nav__join");
@@ -537,14 +537,24 @@ await test("tools: QR maker draws a code from ?url and offers PNG/SVG", async ()
   assert.equal(await page.locator('[data-qr-theme="sms"]').getAttribute("aria-pressed"), "true");
   const [dl] = await Promise.all([page.waitForEvent("download"), page.click('[data-qr-download="svg"]')]);
   assert.match(dl.suggestedFilename(), /^qr-avirobotics-org-join\.svg$/);
+  await page.click(".qr-custom > summary");
   for (const d of ["fluid", "vertical", "star"]) { await page.check(`input[name="qr-dot"][value="${d}"]`); await page.locator("[data-qr-preview] svg").waitFor(); }
+  await page.click('[data-qr-tab="label"]');
   await page.check('input[name="qr-frame"][value="below"]');
+  await page.fill("#qr-ftext", "SCAN ME");
   assert.match(await page.locator("[data-qr-preview] svg").innerHTML(), /SCAN ME/);
-  await page.check('input[name="qr-kind"][value="wifi"]');
+  await page.selectOption("#qr-kind", "wifi");
   assert.equal(await page.locator('[data-qr-download="png"]').isDisabled(), true, "Wi-Fi needs a network name");
   await page.fill("#qr-ssid", "AVI Lab");
   assert.equal(await page.locator('[data-qr-download="png"]').isDisabled(), false);
-  await page.check('input[name="qr-kind"][value="url"]');
+  // Many codes: a pasted list becomes a batch and zips
+  await page.click('[data-qr-mode="bulk"]');
+  await page.fill("#qr-bulktext", "Week 1, https://avirobotics.org/a\nWeek 2\thttps://avirobotics.org/b");
+  await page.waitForFunction(() => document.querySelector("[data-qr-bulkcount]").textContent.startsWith("2 codes"));
+  const [zip] = await Promise.all([page.waitForEvent("download"), page.click('[data-qr-zip="svg"]')]);
+  assert.match(zip.suggestedFilename(), /^qr-codes-2\.zip$/);
+  await page.click('[data-qr-mode="one"]');
+  await page.selectOption("#qr-kind", "url");
   await page.fill('[data-qr="url"]', "");
   assert.equal(await page.locator('[data-qr-download="png"]').isDisabled(), true, "nothing to download without text");
   await page.goto(BASE + "/tools");

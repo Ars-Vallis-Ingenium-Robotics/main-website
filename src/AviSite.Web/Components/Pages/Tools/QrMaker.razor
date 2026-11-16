@@ -1,221 +1,265 @@
 @page "/tools/qr"
-@* Copy: content/pages/tools.md (## qr). Logic: wwwroot/js/qr-tool.js (runs entirely in the browser). *@
+@* Copy: content/pages/tools.md (## qr). Logic: wwwroot/js/qr-tool.js (runs entirely in the browser).
+   Layout: quick path first (what + look + download); every other option sits in "Customize". "Many codes" makes a batch. *@
 
 <PageTitle>QR code maker · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="Free QR code maker from AVI Robotics: links, Wi-Fi, contacts and more. Custom dots, corners, colors, gradients, logos and frames. PNG, SVG or JPG." /></HeadContent>
+<HeadContent><meta name="description" content="Free QR code maker from AVI Robotics: links, Wi-Fi, contacts and more, one at a time or a whole batch. Custom dots, corners, colors, logos and frames." /></HeadContent>
 
 <PageHero Kicker="@c["qr"].Text("kicker")" Title="@c["qr"].Text("title")">
     <p>@c["qr"].Inline()</p>
 </PageHero>
 
-<section class="section">
+<section class="section qr-section">
     <div class="wrap qr-tool" data-qr-tool>
         <form class="qr-tool__form" onsubmit="return false" novalidate>
 
-            @* ---------- 1. What it opens ---------- *@
-            <section class="qr-panel" aria-labelledby="qrp-content">
-                <h2 class="qr-panel__title" id="qrp-content"><span class="mono">1</span> What it opens</h2>
-                <div class="qr-chips" role="radiogroup" aria-label="Kind of code">
-                    @foreach (var (v, label) in Kinds)
-                    {
-                        <label class="chip chip--sm"><input type="radio" name="qr-kind" value="@v" data-qr="kind" checked="@(v == "url")" /><span>@label</span></label>
-                    }
-                </div>
+            <div class="qr-modes" role="tablist" aria-label="How many codes">
+                <button type="button" role="tab" class="qr-mode" data-qr-mode="one" aria-selected="true" aria-controls="qr-one">One code</button>
+                <button type="button" role="tab" class="qr-mode" data-qr-mode="bulk" aria-selected="false" aria-controls="qr-bulk">Many codes</button>
+            </div>
 
-                <div class="qr-kind" data-kind="url">
-                    <div class="field"><label class="label" for="qr-url">Link</label>
-                        <input id="qr-url" type="url" inputmode="url" data-qr="url" value="@(Url ?? "https://avirobotics.org")" placeholder="https://" /></div>
-                </div>
-                <div class="qr-kind" data-kind="text" hidden>
-                    <div class="field"><label class="label" for="qr-text">Text</label>
-                        <textarea id="qr-text" rows="3" data-qr="text" placeholder="Anything you like"></textarea></div>
-                </div>
-                <div class="qr-kind" data-kind="wifi" hidden>
-                    <div class="qr-grid">
-                        <div class="field"><label class="label" for="qr-ssid">Network name</label><input id="qr-ssid" data-qr="ssid" autocomplete="off" /></div>
-                        <div class="field"><label class="label" for="qr-wpass">Password</label><input id="qr-wpass" data-qr="wpass" autocomplete="off" /></div>
-                        <div class="field"><label class="label" for="qr-wsec">Security</label>
-                            <select id="qr-wsec" data-qr="wsec"><option value="WPA">WPA / WPA2 / WPA3</option><option value="WEP">WEP</option><option value="nopass">None (open)</option></select></div>
-                        <label class="check"><input type="checkbox" data-qr="whidden" /> Hidden network</label>
+            @* ---------- One code: what it opens ---------- *@
+            <div id="qr-one" class="qr-step" data-qr-pane="one">
+                <div class="qr-what">
+                    <div class="field qr-what__kind">
+                        <label class="label" for="qr-kind">Type</label>
+                        <select id="qr-kind" data-qr="kind">
+                            @foreach (var (v, label) in Kinds) { <option value="@v">@label</option> }
+                        </select>
+                    </div>
+                    <div class="qr-what__fields">
+                        <div class="qr-kind" data-kind="url">
+                            <div class="field"><label class="label" for="qr-url">Link</label>
+                                <input id="qr-url" type="url" inputmode="url" data-qr="url" value="@(Url ?? "https://avirobotics.org")" placeholder="https://" /></div>
+                        </div>
+                        <div class="qr-kind" data-kind="text" hidden>
+                            <div class="field"><label class="label" for="qr-text">Text</label>
+                                <textarea id="qr-text" rows="2" data-qr="text" placeholder="Anything you like"></textarea></div>
+                        </div>
+                        <div class="qr-kind qr-grid" data-kind="wifi" hidden>
+                            <div class="field"><label class="label" for="qr-ssid">Network name</label><input id="qr-ssid" data-qr="ssid" autocomplete="off" /></div>
+                            <div class="field"><label class="label" for="qr-wpass">Password</label><input id="qr-wpass" data-qr="wpass" autocomplete="off" /></div>
+                            <div class="field"><label class="label" for="qr-wsec">Security</label>
+                                <select id="qr-wsec" data-qr="wsec"><option value="WPA">WPA / WPA2 / WPA3</option><option value="WEP">WEP</option><option value="nopass">None (open)</option></select></div>
+                            <label class="check"><input type="checkbox" data-qr="whidden" /> Hidden network</label>
+                        </div>
+                        <div class="qr-kind qr-grid" data-kind="email" hidden>
+                            <div class="field"><label class="label" for="qr-email">To</label><input id="qr-email" type="email" data-qr="email" placeholder="contact@avirobotics.org" /></div>
+                            <div class="field"><label class="label" for="qr-esub">Subject</label><input id="qr-esub" data-qr="esub" /></div>
+                            <div class="field qr-grid__wide"><label class="label" for="qr-ebody">Message</label><textarea id="qr-ebody" rows="2" data-qr="ebody"></textarea></div>
+                        </div>
+                        <div class="qr-kind" data-kind="tel" hidden>
+                            <div class="field"><label class="label" for="qr-tel">Phone number</label><input id="qr-tel" type="tel" data-qr="tel" placeholder="+1 559 555 0100" /></div>
+                        </div>
+                        <div class="qr-kind qr-grid" data-kind="sms" hidden>
+                            <div class="field"><label class="label" for="qr-smsto">Phone number</label><input id="qr-smsto" type="tel" data-qr="smsto" /></div>
+                            <div class="field"><label class="label" for="qr-smsbody">Message</label><input id="qr-smsbody" data-qr="smsbody" /></div>
+                        </div>
+                        <div class="qr-kind qr-grid" data-kind="vcard" hidden>
+                            <div class="field"><label class="label" for="qr-vname">Name</label><input id="qr-vname" data-qr="vname" autocomplete="off" /></div>
+                            <div class="field"><label class="label" for="qr-vorg">Organization</label><input id="qr-vorg" data-qr="vorg" placeholder="AVI Robotics" /></div>
+                            <div class="field"><label class="label" for="qr-vtitle">Title</label><input id="qr-vtitle" data-qr="vtitle" /></div>
+                            <div class="field"><label class="label" for="qr-vtel">Phone</label><input id="qr-vtel" type="tel" data-qr="vtel" /></div>
+                            <div class="field"><label class="label" for="qr-vemail">Email</label><input id="qr-vemail" type="email" data-qr="vemail" /></div>
+                            <div class="field"><label class="label" for="qr-vurl">Website</label><input id="qr-vurl" type="url" data-qr="vurl" /></div>
+                        </div>
                     </div>
                 </div>
-                <div class="qr-kind" data-kind="email" hidden>
-                    <div class="qr-grid">
-                        <div class="field"><label class="label" for="qr-email">To</label><input id="qr-email" type="email" data-qr="email" placeholder="contact@avirobotics.org" /></div>
-                        <div class="field"><label class="label" for="qr-esub">Subject</label><input id="qr-esub" data-qr="esub" /></div>
-                    </div>
-                    <div class="field"><label class="label" for="qr-ebody">Message</label><textarea id="qr-ebody" rows="2" data-qr="ebody"></textarea></div>
-                </div>
-                <div class="qr-kind" data-kind="tel" hidden>
-                    <div class="field"><label class="label" for="qr-tel">Phone number</label><input id="qr-tel" type="tel" data-qr="tel" placeholder="+1 559 555 0100" /></div>
-                </div>
-                <div class="qr-kind" data-kind="sms" hidden>
-                    <div class="qr-grid">
-                        <div class="field"><label class="label" for="qr-smsto">Phone number</label><input id="qr-smsto" type="tel" data-qr="smsto" /></div>
-                        <div class="field"><label class="label" for="qr-smsbody">Message</label><input id="qr-smsbody" data-qr="smsbody" /></div>
-                    </div>
-                </div>
-                <div class="qr-kind" data-kind="vcard" hidden>
-                    <div class="qr-grid">
-                        <div class="field"><label class="label" for="qr-vname">Name</label><input id="qr-vname" data-qr="vname" autocomplete="off" /></div>
-                        <div class="field"><label class="label" for="qr-vorg">Organization</label><input id="qr-vorg" data-qr="vorg" placeholder="AVI Robotics" /></div>
-                        <div class="field"><label class="label" for="qr-vtitle">Title</label><input id="qr-vtitle" data-qr="vtitle" /></div>
-                        <div class="field"><label class="label" for="qr-vtel">Phone</label><input id="qr-vtel" type="tel" data-qr="vtel" /></div>
-                        <div class="field"><label class="label" for="qr-vemail">Email</label><input id="qr-vemail" type="email" data-qr="vemail" /></div>
-                        <div class="field"><label class="label" for="qr-vurl">Website</label><input id="qr-vurl" type="url" data-qr="vurl" /></div>
-                    </div>
-                </div>
-            </section>
+            </div>
 
-            @* ---------- 2. Look ---------- *@
-            <section class="qr-panel" aria-labelledby="qrp-look">
-                <h2 class="qr-panel__title" id="qrp-look"><span class="mono">2</span> Start from a look</h2>
-                <div class="qr-themes">
+            @* ---------- Many codes ---------- *@
+            <div id="qr-bulk" class="qr-step" data-qr-pane="bulk" hidden>
+                <div class="qr-chips" role="radiogroup" aria-label="How to list them">
+                    <label class="chip chip--sm"><input type="radio" name="qr-bulkmode" value="list" data-qr="bulkmode" checked /><span>Paste a list</span></label>
+                    <label class="chip chip--sm"><input type="radio" name="qr-bulkmode" value="number" data-qr="bulkmode" /><span>Numbered</span></label>
+                </div>
+                <div data-bulk="list">
+                    <div class="field">
+                        <label class="label" for="qr-bulktext">One per line: label, then link</label>
+                        <textarea id="qr-bulktext" rows="7" data-qr="bulktext" spellcheck="false" placeholder="Meeting 1 sign-in, https://forms.gle/…&#10;Meeting 2 sign-in, https://forms.gle/…&#10;https://avirobotics.org/join"></textarea>
+                        <span class="field__hint">Commas or tabs both work, so you can paste two columns straight from a spreadsheet. A line with just a link uses the link as its name.</span>
+                    </div>
+                </div>
+                <div class="qr-grid" data-bulk="number" hidden>
+                    <div class="field qr-grid__wide"><label class="label" for="qr-nlink">Link, with {n} where the number goes</label>
+                        <input id="qr-nlink" data-qr="nlink" value="https://avirobotics.org/dynamicqr/sign-in-{n}" spellcheck="false" /></div>
+                    <div class="field"><label class="label" for="qr-nlabel">Label</label><input id="qr-nlabel" data-qr="nlabel" value="Week {n} sign-in" /></div>
+                    <div class="field"><label class="label" for="qr-nfrom">From</label><input id="qr-nfrom" type="number" inputmode="numeric" min="0" max="9999" data-qr="nfrom" value="1" /></div>
+                    <div class="field"><label class="label" for="qr-nto">To</label><input id="qr-nto" type="number" inputmode="numeric" min="0" max="9999" data-qr="nto" value="12" /></div>
+                </div>
+                <label class="check"><input type="checkbox" data-qr="bulklabels" checked /> Print each label on its code</label>
+            </div>
+
+            @* ---------- Look ---------- *@
+            <div class="qr-step">
+                <p class="label" id="qr-look-label">Look</p>
+                <div class="qr-themes" role="group" aria-labelledby="qr-look-label">
                     @foreach (var (v, label) in Themes)
                     {
-                        <button type="button" class="qr-theme qr-theme--@v" data-qr-theme="@v" aria-pressed="@(v == ThemeOrDefault ? "true" : "false")"><span class="qr-theme__swatch" aria-hidden="true"></span>@label</button>
+                        <button type="button" class="qr-theme" data-qr-theme="@v" aria-pressed="@(v == ThemeOrDefault ? "true" : "false")">
+                            <span class="qr-theme__art" data-qr-thumb="@v" aria-hidden="true"></span><span class="qr-theme__name">@label</span>
+                        </button>
                     }
                 </div>
-                <p class="field__hint">A look sets everything below. Then change whatever you like.</p>
-            </section>
+            </div>
 
-            @* ---------- 3. Dots ---------- *@
-            <section class="qr-panel" aria-labelledby="qrp-dots">
-                <h2 class="qr-panel__title" id="qrp-dots"><span class="mono">3</span> Dots</h2>
-                <div class="qr-shapes" role="radiogroup" aria-label="Dot shape">
-                    @foreach (var (v, label, icon) in DotShapes)
+            @* ---------- Customize (closed until wanted) ---------- *@
+            <details class="qr-custom" data-qr-custom>
+                <summary><span>Customize</span><span class="muted small">dots, corners, colors, logo, label, size</span></summary>
+                <div class="qr-tabs" role="tablist" aria-label="Customize">
+                    @foreach (var (v, label) in Tabs)
                     {
-                        <label class="qr-shape"><input type="radio" name="qr-dot" value="@v" data-qr="dot" /><span><svg viewBox="0 0 30 30" aria-hidden="true">@((MarkupString)icon)</svg>@label</span></label>
+                        <button type="button" role="tab" class="qr-tab" id="qr-tab-@v" data-qr-tab="@v" aria-selected="@(v == "dots" ? "true" : "false")" aria-controls="qr-panel-@v">@label</button>
                     }
                 </div>
-                <div class="qr-grid qr-grid--colors">
-                    <div class="field"><label class="label" for="qr-fill">Fill</label>
-                        <select id="qr-fill" data-qr="fill"><option value="solid">Solid</option><option value="linear">Gradient</option><option value="radial">Radial gradient</option></select></div>
-                    <div class="field field--color"><label class="label" for="qr-fg">Color</label><input id="qr-fg" type="color" data-qr="fg" value="#101011" /></div>
-                    <div class="field field--color" data-when="gradient"><label class="label" for="qr-fg2">To</label><input id="qr-fg2" type="color" data-qr="fg2" value="#0c63e6" /></div>
-                    <div class="field" data-when="linear"><label class="label" for="qr-angle">Angle: <output data-out="angle">45</output>°</label><input id="qr-angle" type="range" min="0" max="360" step="15" value="45" data-qr="angle" /></div>
-                </div>
-            </section>
 
-            @* ---------- 4. Corners ---------- *@
-            <section class="qr-panel" aria-labelledby="qrp-eyes">
-                <h2 class="qr-panel__title" id="qrp-eyes"><span class="mono">4</span> Corners</h2>
-                <p class="label">Outside</p>
-                <div class="qr-shapes qr-shapes--small" role="radiogroup" aria-label="Corner frame shape">
-                    @foreach (var (v, label, icon) in EyeFrames)
-                    {
-                        <label class="qr-shape"><input type="radio" name="qr-eyeframe" value="@v" data-qr="eyeframe" /><span><svg viewBox="0 0 30 30" aria-hidden="true">@((MarkupString)icon)</svg>@label</span></label>
-                    }
+                <div class="qr-panel" role="tabpanel" id="qr-panel-dots" aria-labelledby="qr-tab-dots" data-qr-panel="dots">
+                    <div class="qr-shapes" role="radiogroup" aria-label="Dot shape">
+                        @foreach (var (v, label, icon) in DotShapes)
+                        {
+                            <label class="qr-shape"><input type="radio" name="qr-dot" value="@v" data-qr="dot" /><span><svg viewBox="0 0 30 30" aria-hidden="true">@((MarkupString)icon)</svg>@label</span></label>
+                        }
+                    </div>
                 </div>
-                <p class="label">Inside</p>
-                <div class="qr-shapes qr-shapes--small" role="radiogroup" aria-label="Corner center shape">
-                    @foreach (var (v, label, icon) in EyeBalls)
-                    {
-                        <label class="qr-shape"><input type="radio" name="qr-eyeball" value="@v" data-qr="eyeball" /><span><svg viewBox="0 0 30 30" aria-hidden="true">@((MarkupString)icon)</svg>@label</span></label>
-                    }
-                </div>
-                <div class="qr-grid qr-grid--colors">
-                    <div class="field field--color"><label class="label" for="qr-eye">Outside color</label><input id="qr-eye" type="color" data-qr="eye" value="#0c63e6" /></div>
-                    <div class="field field--color"><label class="label" for="qr-eye2">Inside color</label><input id="qr-eye2" type="color" data-qr="eye2" value="#0c63e6" /></div>
-                </div>
-            </section>
 
-            @* ---------- 5. Background ---------- *@
-            <section class="qr-panel" aria-labelledby="qrp-bg">
-                <h2 class="qr-panel__title" id="qrp-bg"><span class="mono">5</span> Background</h2>
-                <div class="qr-grid qr-grid--colors">
-                    <div class="field"><label class="label" for="qr-bgmode">Type</label>
-                        <select id="qr-bgmode" data-qr="bgmode"><option value="solid">Solid</option><option value="linear">Gradient</option><option value="none">Transparent</option></select></div>
-                    <div class="field field--color" data-when="bg"><label class="label" for="qr-bg">Color</label><input id="qr-bg" type="color" data-qr="bg" value="#ffffff" /></div>
-                    <div class="field field--color" data-when="bggradient"><label class="label" for="qr-bg2">To</label><input id="qr-bg2" type="color" data-qr="bg2" value="#e8f0fe" /></div>
-                    <div class="field"><label class="label" for="qr-radius">Rounded corners: <output data-out="radius">0</output></label><input id="qr-radius" type="range" min="0" max="8" step="1" value="0" data-qr="radius" /></div>
+                <div class="qr-panel" role="tabpanel" id="qr-panel-corners" aria-labelledby="qr-tab-corners" data-qr-panel="corners" hidden>
+                    <p class="label">Outside</p>
+                    <div class="qr-shapes qr-shapes--small" role="radiogroup" aria-label="Corner frame shape">
+                        @foreach (var (v, label, icon) in EyeFrames)
+                        {
+                            <label class="qr-shape"><input type="radio" name="qr-eyeframe" value="@v" data-qr="eyeframe" /><span><svg viewBox="0 0 30 30" aria-hidden="true">@((MarkupString)icon)</svg>@label</span></label>
+                        }
+                    </div>
+                    <p class="label">Inside</p>
+                    <div class="qr-shapes qr-shapes--small" role="radiogroup" aria-label="Corner center shape">
+                        @foreach (var (v, label, icon) in EyeBalls)
+                        {
+                            <label class="qr-shape"><input type="radio" name="qr-eyeball" value="@v" data-qr="eyeball" /><span><svg viewBox="0 0 30 30" aria-hidden="true">@((MarkupString)icon)</svg>@label</span></label>
+                        }
+                    </div>
                 </div>
-                <div class="qr-swatches" aria-label="Quick background colors">
-                    @foreach (var hex in BgSwatches)
-                    {
-                        <button type="button" class="qr-swatch" style="--c: @hex" data-qr-bg="@hex" aria-label="Background @hex"></button>
-                    }
-                </div>
-            </section>
 
-            @* ---------- 6. Logo ---------- *@
-            <section class="qr-panel" aria-labelledby="qrp-logo">
-                <h2 class="qr-panel__title" id="qrp-logo"><span class="mono">6</span> Logo</h2>
-                <div class="qr-chips" role="radiogroup" aria-label="Logo">
-                    <label class="chip chip--sm"><input type="radio" name="qr-logo" value="none" data-qr="logo" /><span>None</span></label>
-                    <label class="chip chip--sm"><input type="radio" name="qr-logo" value="avi" data-qr="logo" /><span>AVI dog</span></label>
-                    <label class="chip chip--sm"><input type="radio" name="qr-logo" value="sms" data-qr="logo" /><span>SMS</span></label>
-                    <label class="chip chip--sm"><input type="radio" name="qr-logo" value="upload" data-qr="logo" /><span>Your own</span></label>
+                <div class="qr-panel" role="tabpanel" id="qr-panel-colors" aria-labelledby="qr-tab-colors" data-qr-panel="colors" hidden>
+                    <div class="qr-grid qr-grid--colors">
+                        <div class="field"><label class="label" for="qr-fill">Dots</label>
+                            <select id="qr-fill" data-qr="fill"><option value="solid">Solid</option><option value="linear">Gradient</option><option value="radial">Radial gradient</option></select></div>
+                        <div class="field field--color"><label class="label" for="qr-fg">Color</label><input id="qr-fg" type="color" data-qr="fg" value="#101011" /></div>
+                        <div class="field field--color" data-when="gradient"><label class="label" for="qr-fg2">To</label><input id="qr-fg2" type="color" data-qr="fg2" value="#0c63e6" /></div>
+                        <div class="field" data-when="linear"><label class="label" for="qr-angle">Angle: <output data-out="angle">45</output>°</label><input id="qr-angle" type="range" min="0" max="360" step="15" value="45" data-qr="angle" /></div>
+                    </div>
+                    <div class="qr-grid qr-grid--colors">
+                        <div class="field field--color"><label class="label" for="qr-eye">Corners outside</label><input id="qr-eye" type="color" data-qr="eye" value="#0c63e6" /></div>
+                        <div class="field field--color"><label class="label" for="qr-eye2">Corners inside</label><input id="qr-eye2" type="color" data-qr="eye2" value="#0c63e6" /></div>
+                    </div>
+                    <div class="qr-grid qr-grid--colors">
+                        <div class="field"><label class="label" for="qr-bgmode">Background</label>
+                            <select id="qr-bgmode" data-qr="bgmode"><option value="solid">Solid</option><option value="linear">Gradient</option><option value="none">Transparent</option></select></div>
+                        <div class="field field--color" data-when="bg"><label class="label" for="qr-bg">Color</label><input id="qr-bg" type="color" data-qr="bg" value="#ffffff" /></div>
+                        <div class="field field--color" data-when="bggradient"><label class="label" for="qr-bg2">To</label><input id="qr-bg2" type="color" data-qr="bg2" value="#e8f0fe" /></div>
+                        <div class="field"><label class="label" for="qr-radius">Round corners: <output data-out="radius">0</output></label><input id="qr-radius" type="range" min="0" max="8" step="1" value="0" data-qr="radius" /></div>
+                    </div>
+                    <div class="qr-swatches" aria-label="Quick background colors">
+                        @foreach (var hex in BgSwatches) { <button type="button" class="qr-swatch" style="--c: @hex" data-qr-bg="@hex" aria-label="Background @hex"></button> }
+                    </div>
                 </div>
-                <div class="field" data-when="upload"><label class="label" for="qr-file">Your logo</label>
-                    <input id="qr-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-qr-file />
-                    <span class="field__hint">Stays on your computer. Square logos look best.</span></div>
-                <div class="qr-grid" data-when="haslogo">
-                    <div class="field"><label class="label" for="qr-lsize">Size: <output data-out="lsize">22</output>%</label><input id="qr-lsize" type="range" min="12" max="30" step="1" value="22" data-qr="lsize" /></div>
-                    <div class="field"><label class="label" for="qr-plate">Behind the logo</label>
-                        <select id="qr-plate" data-qr="plate"><option value="square">Rounded square</option><option value="circle">Circle</option><option value="none">Nothing (just clear the dots)</option></select></div>
-                </div>
-            </section>
 
-            @* ---------- 7. Frame ---------- *@
-            <section class="qr-panel" aria-labelledby="qrp-frame">
-                <h2 class="qr-panel__title" id="qrp-frame"><span class="mono">7</span> Frame and label</h2>
-                <div class="qr-chips" role="radiogroup" aria-label="Frame">
-                    <label class="chip chip--sm"><input type="radio" name="qr-frame" value="none" data-qr="frame" checked /><span>None</span></label>
-                    <label class="chip chip--sm"><input type="radio" name="qr-frame" value="below" data-qr="frame" /><span>Label below</span></label>
-                    <label class="chip chip--sm"><input type="radio" name="qr-frame" value="above" data-qr="frame" /><span>Label above</span></label>
-                    <label class="chip chip--sm"><input type="radio" name="qr-frame" value="badge" data-qr="frame" /><span>Badge</span></label>
+                <div class="qr-panel" role="tabpanel" id="qr-panel-logo" aria-labelledby="qr-tab-logo" data-qr-panel="logo" hidden>
+                    <div class="qr-chips" role="radiogroup" aria-label="Logo">
+                        <label class="chip chip--sm"><input type="radio" name="qr-logo" value="none" data-qr="logo" /><span>None</span></label>
+                        <label class="chip chip--sm"><input type="radio" name="qr-logo" value="avi" data-qr="logo" /><span>AVI dog</span></label>
+                        <label class="chip chip--sm"><input type="radio" name="qr-logo" value="sms" data-qr="logo" /><span>SMS wave</span></label>
+                        <label class="chip chip--sm"><input type="radio" name="qr-logo" value="smsink" data-qr="logo" /><span>SMS wave, dark</span></label>
+                        <label class="chip chip--sm"><input type="radio" name="qr-logo" value="upload" data-qr="logo" /><span>Your own</span></label>
+                    </div>
+                    <div class="field" data-when="upload"><label class="label" for="qr-file">Your logo</label>
+                        <input id="qr-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-qr-file />
+                        <span class="field__hint">Stays on your computer. A transparent PNG looks best.</span></div>
+                    <div class="qr-grid" data-when="haslogo">
+                        <div class="field"><label class="label" for="qr-lsize">Size: <output data-out="lsize">24</output>%</label><input id="qr-lsize" type="range" min="12" max="30" step="1" value="24" data-qr="lsize" /></div>
+                        <div class="field"><label class="label" for="qr-plate">Behind the logo</label>
+                            <select id="qr-plate" data-qr="plate"><option value="none">Nothing (see-through)</option><option value="square">Rounded square</option><option value="circle">Circle</option></select></div>
+                    </div>
                 </div>
-                <div class="qr-grid qr-grid--colors" data-when="frame">
-                    <div class="field"><label class="label" for="qr-ftext">Label</label><input id="qr-ftext" data-qr="ftext" value="SCAN ME" maxlength="28" /></div>
-                    <div class="field field--color"><label class="label" for="qr-fcolor">Frame</label><input id="qr-fcolor" type="color" data-qr="fcolor" value="#101011" /></div>
-                    <div class="field field--color"><label class="label" for="qr-ftcolor">Text</label><input id="qr-ftcolor" type="color" data-qr="ftcolor" value="#ffffff" /></div>
-                </div>
-            </section>
 
-            @* ---------- 8. Size and fine print ---------- *@
-            <section class="qr-panel" aria-labelledby="qrp-adv">
-                <h2 class="qr-panel__title" id="qrp-adv"><span class="mono">8</span> Size and fine print</h2>
-                <div class="qr-grid">
-                    <div class="field"><label class="label" for="qr-size">Image size: <output data-out="size">1200</output> px</label><input id="qr-size" type="range" min="300" max="4000" step="100" value="1200" data-qr="size" /></div>
-                    <div class="field"><label class="label" for="qr-margin">Quiet zone: <output data-out="margin">4</output> dots</label><input id="qr-margin" type="range" min="0" max="10" step="1" value="4" data-qr="margin" /></div>
-                    <div class="field"><label class="label" for="qr-ecl">Error correction</label>
-                        <select id="qr-ecl" data-qr="ecl"><option value="auto">Automatic</option><option value="L">Low (7%), fewest dots</option><option value="M">Medium (15%)</option><option value="Q">Quartile (25%)</option><option value="H">High (30%), best with logos</option></select></div>
+                <div class="qr-panel" role="tabpanel" id="qr-panel-label" aria-labelledby="qr-tab-label" data-qr-panel="label" hidden>
+                    <div class="qr-chips" role="radiogroup" aria-label="Frame">
+                        <label class="chip chip--sm"><input type="radio" name="qr-frame" value="none" data-qr="frame" /><span>None</span></label>
+                        <label class="chip chip--sm"><input type="radio" name="qr-frame" value="below" data-qr="frame" /><span>Label below</span></label>
+                        <label class="chip chip--sm"><input type="radio" name="qr-frame" value="above" data-qr="frame" /><span>Label above</span></label>
+                        <label class="chip chip--sm"><input type="radio" name="qr-frame" value="badge" data-qr="frame" /><span>Badge</span></label>
+                    </div>
+                    <div class="qr-grid qr-grid--colors" data-when="frame">
+                        <div class="field"><label class="label" for="qr-ftext">Label</label><input id="qr-ftext" data-qr="ftext" value="SCAN ME" maxlength="28" /></div>
+                        <div class="field field--color"><label class="label" for="qr-fcolor">Frame</label><input id="qr-fcolor" type="color" data-qr="fcolor" value="#101011" /></div>
+                        <div class="field field--color"><label class="label" for="qr-ftcolor">Text</label><input id="qr-ftcolor" type="color" data-qr="ftcolor" value="#ffffff" /></div>
+                    </div>
+                    <p class="field__hint" data-when="bulkmode">In "Many codes", each code's own label is used when "Print each label" is on.</p>
                 </div>
-            </section>
+
+                <div class="qr-panel" role="tabpanel" id="qr-panel-size" aria-labelledby="qr-tab-size" data-qr-panel="size" hidden>
+                    <div class="qr-grid">
+                        <div class="field"><label class="label" for="qr-size">Image size: <output data-out="size">1200</output> px</label><input id="qr-size" type="range" min="300" max="4000" step="100" value="1200" data-qr="size" /></div>
+                        <div class="field"><label class="label" for="qr-margin">Quiet zone: <output data-out="margin">4</output> dots</label><input id="qr-margin" type="range" min="0" max="10" step="1" value="4" data-qr="margin" /></div>
+                        <div class="field"><label class="label" for="qr-ecl">Error correction</label>
+                            <select id="qr-ecl" data-qr="ecl"><option value="auto">Automatic</option><option value="L">Low (7%), fewest dots</option><option value="M">Medium (15%)</option><option value="Q">Quartile (25%)</option><option value="H">High (30%), best with logos</option></select></div>
+                    </div>
+                </div>
+                <button class="link-button" type="button" data-qr-reset>Start over with the AVI look</button>
+            </details>
         </form>
 
         <div class="qr-tool__out">
-            <div class="qr-tool__preview" data-qr-preview role="img" aria-label="QR code preview"></div>
-            <p class="qr-tool__status small" data-qr-status aria-live="polite"></p>
-            <ul class="qr-tool__warn small" data-qr-warn></ul>
-            <div class="actions qr-tool__actions">
-                <button class="btn btn--accent" type="button" data-qr-download="png">PNG</button>
-                <button class="btn btn--ghost" type="button" data-qr-download="svg">SVG</button>
-                <button class="btn btn--ghost" type="button" data-qr-download="jpg">JPG</button>
-                <button class="btn btn--ghost" type="button" data-qr-copy>Copy image</button>
+            <div data-qr-pane="one">
+                <div class="qr-tool__preview" data-qr-preview role="img" aria-label="QR code preview"></div>
+                <p class="qr-tool__status small" data-qr-status aria-live="polite"></p>
+                <ul class="qr-tool__warn small" data-qr-warn></ul>
+                <div class="qr-tool__actions">
+                    <button class="btn btn--accent" type="button" data-qr-download="png">Download PNG</button>
+                    <div class="qr-tool__more">
+                        <button class="btn btn--ghost btn--sm" type="button" data-qr-download="svg">SVG</button>
+                        <button class="btn btn--ghost btn--sm" type="button" data-qr-download="jpg">JPG</button>
+                        <button class="btn btn--ghost btn--sm" type="button" data-qr-copy>Copy</button>
+                    </div>
+                </div>
             </div>
-            <button class="link-button" type="button" data-qr-reset>Reset to the AVI look</button>
-            <ul class="qr-tool__tips small">@foreach (var tip in c["qr.tips"].ListHtml()) { <li>@tip</li> }</ul>
+            <div data-qr-pane="bulk" hidden>
+                <p class="qr-bulk__count" data-qr-bulkcount aria-live="polite"></p>
+                <ol class="qr-bulk__grid" data-qr-bulkgrid role="list"></ol>
+                <ul class="qr-tool__warn small" data-qr-bulkwarn></ul>
+                <div class="qr-tool__actions">
+                    <button class="btn btn--accent" type="button" data-qr-zip="png">Download all (ZIP of PNGs)</button>
+                    <div class="qr-tool__more">
+                        <button class="btn btn--ghost btn--sm" type="button" data-qr-zip="svg">ZIP of SVGs</button>
+                        <button class="btn btn--ghost btn--sm" type="button" data-qr-print>Print a sheet</button>
+                        <label class="qr-tool__per">Per page
+                            <select data-qr="perpage"><option value="6">6</option><option value="12" selected>12</option><option value="20">20</option><option value="30">30</option></select></label>
+                    </div>
+                </div>
+            </div>
+            <details class="qr-tool__tips small"><summary>Tips for codes that scan</summary><ul>@foreach (var tip in c["qr.tips"].ListHtml()) { <li>@tip</li> }</ul></details>
         </div>
         <noscript><p class="alert">The QR maker needs JavaScript turned on.</p></noscript>
     </div>
+    <div class="qr-print" data-qr-printsheet aria-hidden="true"></div>
 </section>
 
 <script src="/lib/qrcode-generator.js" defer></script>
 <script src="/js/qr-tool.js" defer data-start-theme="@ThemeOrDefault"></script>
 
 @code {
-    /// <summary>Prefill, e.g. /tools/qr?url=https://avirobotics.org/dynamicqr/one&style=avi (used by the admin page).</summary>
+    /// <summary>Prefill, e.g. /tools/qr?url=https://avirobotics.org/dynamicqr/one&style=avi (used by the admin page).
+    /// A batch comes in the #bulk=… part of the link (one "label, link" per line), so it never reaches the server.</summary>
     [SupplyParameterFromQuery] public string? Url { get; set; }
     [SupplyParameterFromQuery] public string? Style { get; set; }
 
     private static readonly (string, string)[] Kinds =
-        [("url", "Link"), ("text", "Text"), ("wifi", "Wi-Fi"), ("email", "Email"), ("tel", "Phone call"), ("sms", "Text message"), ("vcard", "Contact card")];
+        [("url", "Link"), ("wifi", "Wi-Fi"), ("vcard", "Contact card"), ("email", "Email"), ("tel", "Phone call"), ("sms", "Text message"), ("text", "Plain text")];
     private static readonly (string, string)[] Themes =
-        [("avi", "AVI"), ("sms", "SMS"), ("classic", "Classic"), ("ocean", "Ocean"), ("sunset", "Sunset"), ("forest", "Forest"), ("mono", "Mono dots")];
+        [("avi", "AVI"), ("sms", "SMS"), ("classic", "Classic"), ("ocean", "Ocean"), ("sunset", "Sunset"), ("forest", "Forest"), ("mono", "Mono")];
+    private static readonly (string, string)[] Tabs =
+        [("dots", "Dots"), ("corners", "Corners"), ("colors", "Colors"), ("logo", "Logo"), ("label", "Label"), ("size", "Size")];
     private string ThemeOrDefault => Themes.Any(t => t.Item1 == Style) ? Style! : Style == "plain" ? "classic" : "avi";
-    private static readonly string[] BgSwatches = ["#ffffff", "#f4f1ea", "#e8f0fe", "#e4f6f4", "#fff4d6", "#fde8ec", "#eef0f2"];
+    private static readonly string[] BgSwatches = ["#ffffff", "#f4f1ea", "#f7f1e6", "#e8f0fe", "#e4f6f4", "#fff4d6", "#fde8ec", "#eef0f2"];
 
     // Icons are tiny previews of each shape on a 30x30 grid.
     private static readonly (string, string, string)[] DotShapes =

@@ -76,12 +76,53 @@
             @if (error is not null) { <p class="alert" role="alert">@error</p> }
             <div><button class="btn btn--accent" type="submit">Add code</button></div>
         </EditForm>
+
+        <h2 class="h3 qr-admin__h">Add a batch</h2>
+        <p class="muted">For things like weekly sign-ins: makes <span class="mono">prefix-1</span>, <span class="mono">prefix-2</span>… all pointing at the same place to start. Repoint each one when its week comes.</p>
+        <EditForm Model="Batch!" FormName="qr-batch" OnValidSubmit="CreateBatchAsync" method="post" class="form qr-admin__form" novalidate>
+            <DataAnnotationsValidator />
+            <div class="qr-admin__grid">
+                <div class="field">
+                    <label class="label" for="b-prefix">Name in the link</label>
+                    <InputText id="b-prefix" @bind-Value="Batch!.Prefix" placeholder="e.g. sign-in" autocomplete="off" />
+                    <span class="field__hint mono">…/dynamicqr/@(string.IsNullOrWhiteSpace(Batch!.Prefix) ? "sign-in" : Batch.Prefix.Trim().ToLowerInvariant())-@Batch.From</span>
+                </div>
+                <div class="field">
+                    <label class="label" for="b-from">From</label>
+                    <InputNumber id="b-from" @bind-Value="Batch!.From" min="0" max="999" />
+                </div>
+                <div class="field">
+                    <label class="label" for="b-to">To</label>
+                    <InputNumber id="b-to" @bind-Value="Batch!.To" min="0" max="999" />
+                </div>
+                <div class="field">
+                    <label class="label" for="b-target">Goes to (for now)</label>
+                    <InputText id="b-target" @bind-Value="Batch!.Target" placeholder="https://… or /join" inputmode="url" />
+                </div>
+                <div class="field">
+                    <label class="label" for="b-campaign">Name in the Google Sheet</label>
+                    <InputText id="b-campaign" @bind-Value="Batch!.Campaign" placeholder="Sign-in {n}" />
+                    <span class="field__hint">{n} becomes the number.</span>
+                </div>
+            </div>
+            @if (batchError is not null) { <p class="alert" role="alert">@batchError</p> }
+            <div><button class="btn btn--accent" type="submit">Add batch</button></div>
+        </EditForm>
+        @if (BatchMade is not null)
+        {
+            var made = codes.Where(q => BatchMade.Split(',').Contains(q.Slug)).ToList();
+            var lines = string.Join("\n", made.Select(q => $"{q.Campaign}, {PrintUrl(q.Slug)}"));
+            <p class="alert alert--ok" role="status">Added @made.Count codes. <a href="/tools/qr#bulk=@Uri.EscapeDataString(lines)" target="_blank" rel="noopener">Make their QR images</a></p>
+        }
     </div>
 </section>
 
 @code {
     [SupplyParameterFromForm(FormName = "qr-new")] public NewCode? New { get; set; }
     [SupplyParameterFromQuery] public string? Saved { get; set; }
+    [SupplyParameterFromQuery] public string? BatchMade { get; set; }
+    [SupplyParameterFromForm(FormName = "qr-batch")] public BatchCodes? Batch { get; set; }
+    private string? batchError;
     private IReadOnlyList<DynamicQr> codes = [];
     private string? error;
     private static readonly TimeZoneInfo Pacific = TimeZoneInfo.FindSystemTimeZoneById("America/Los_Angeles");
@@ -89,6 +130,7 @@
     protected override async Task OnInitializedAsync()
     {
         New ??= new();
+        Batch ??= new();
         codes = await Codes.ListAsync();
     }
 
@@ -114,6 +156,39 @@
         });
         if (!ok) { error = $"There's already a code called {slug}."; return; }
         Nav.NavigateTo($"/admin/qr?saved={Uri.EscapeDataString(slug)}");
+    }
+
+    private async Task CreateBatchAsync()
+    {
+        var b = Batch!;
+        var prefix = (b.Prefix ?? "").Trim().ToLowerInvariant();
+        batchError = DynamicQrRules.CheckSlug(prefix + "-1") ?? DynamicQrRules.CheckTarget(b.Target);
+        if (batchError is null && (b.To < b.From || b.To - b.From >= 100)) batchError = "Pick a range of up to 100 numbers.";
+        if (batchError is not null) return;
+        var made = new List<string>();
+        var skipped = 0;
+        for (var n = b.From; n <= b.To; n++)
+        {
+            var slug = $"{prefix}-{n}";
+            var ok = await Codes.CreateAsync(new DynamicQr
+            {
+                Slug = slug,
+                Target = b.Target!.Trim(),
+                Campaign = string.IsNullOrWhiteSpace(b.Campaign) ? slug : b.Campaign.Trim().Replace("{n}", n.ToString()),
+            });
+            if (ok) made.Add(slug); else skipped++;
+        }
+        if (made.Count == 0) { batchError = "All of those names already exist."; return; }
+        Nav.NavigateTo($"/admin/qr?saved={Uri.EscapeDataString($"{made.Count} codes" + (skipped > 0 ? $" ({skipped} already existed)" : ""))}&batchMade={Uri.EscapeDataString(string.Join(',', made))}");
+    }
+
+    public sealed class BatchCodes
+    {
+        [Required(ErrorMessage = "Give the batch a name.")] public string? Prefix { get; set; }
+        public int From { get; set; } = 1;
+        public int To { get; set; } = 12;
+        [Required(ErrorMessage = "Where should they go for now?")] public string? Target { get; set; }
+        [StringLength(80)] public string? Campaign { get; set; } = "Sign-in {n}";
     }
 
     public sealed class NewCode
