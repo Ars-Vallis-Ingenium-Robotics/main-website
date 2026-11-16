@@ -440,6 +440,8 @@
   });
 
   // ---------- Wiring ----------
+  // Keep Enter from submitting/reloading the tool form, without an inline CSP-blocked handler.
+  root.querySelector("form").addEventListener("submit", (e) => e.preventDefault());
   function setMode(m) {
     mode = m;
     page.querySelectorAll("[data-qr-mode]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.qrMode === m)));
