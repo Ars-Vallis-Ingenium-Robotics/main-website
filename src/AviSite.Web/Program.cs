@@ -46,6 +46,7 @@ services.AddSingleton<IOrderStore, JsonOrderStore>();
 services.Configure<DynamicQrOptions>(builder.Configuration.GetSection(DynamicQrOptions.Section));
 services.AddSingleton<SiteDb>();
 services.AddSingleton<IDynamicQrStore, SqliteDynamicQrStore>();
+services.AddSingleton<HoursStore>();
 services.AddHttpClient("google-sheet");
 services.AddHttpClient("google-signin", c => c.Timeout = TimeSpan.FromSeconds(15));
 // Countdowns (/countdown, edited in /admin/countdowns)
@@ -173,6 +174,7 @@ app.MapAdminEndpoints();
 app.MapAccountAuth();
 app.MapPeopleAdminEndpoints();
 app.MapQrLookEndpoints();
+app.MapHoursEndpoints();
 app.MapPeopleEndpoints();
 app.MapDynamicQrEndpoints();
 app.MapToolUsageEndpoints();

@@ -1,0 +1,12 @@
+@* The numbers behind a chart, folded away: the accessible (and copyable) view. *@
+<details class="report__table">
+    <summary>Show as a table</summary>
+    <table class="table">
+        <thead><tr><th scope="col">@Head</th><th scope="col" class="num">Hours</th></tr></thead>
+        <tbody>@foreach (var (l, v) in Rows) { <tr><th scope="row">@l</th><td class="num mono">@HoursText.Hours(v)</td></tr> }</tbody>
+    </table>
+</details>
+@code {
+    [Parameter, EditorRequired] public List<(string Label, double Value)> Rows { get; set; } = [];
+    [Parameter] public string Head { get; set; } = "";
+}

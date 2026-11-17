@@ -1,0 +1,63 @@
+@page "/admin/hours/settings"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
+@using AviSite.Web.Endpoints
+@inject IAccountStore Accounts
+@inject HoursStore Store
+@inject NavigationManager Nav
+
+<PageTitle>Hours settings · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin hours">
+    <div class="wrap narrow">
+        <AdminNav Current="hours" />
+        <p class="eyebrow"><a href="/admin/hours">Hours</a> / Settings</p>
+        <h1 class="h1">Hours settings</h1>
+        <p class="muted">Each organization sets its own. Its leads (and the owner) can change these.</p>
+
+        @if (Done == "settings") { <p class="alert alert--ok" role="status">Saved.</p> }
+        @if (Error is not null) { <p class="alert" role="alert">@(Error switch { "season" => "Pick a season start between the 1st and the 28th.", "categories" => "Keep at least one category.", _ => "You can't change that organization." })</p> }
+
+        @foreach (var (org, s, cats) in orgs)
+        {
+            <form method="post" action="/admin/hours/settings" class="form hours-settings" data-org="@org.Id">
+                <AntiforgeryToken />
+                <input type="hidden" name="org" value="@org.Id" />
+                <h2 class="h3">@org.Name</h2>
+                <label class="check"><input type="checkbox" name="leaderboard" value="true" checked="@s.Leaderboard" /> Show a leaderboard to everyone in @org.Name (this season's hours)</label>
+                <div class="qr-admin__grid">
+                    <label class="field">
+                        <span class="label">Season starts</span>
+                        <select name="seasonMonth">
+                            @for (var mo = 1; mo <= 12; mo++) { <option value="@mo" selected="@(mo == s.SeasonMonth)">@System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.GetMonthName(mo)</option> }
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span class="label">Day</span>
+                        <input type="number" name="seasonDay" min="1" max="28" value="@s.SeasonDay" />
+                    </label>
+                </div>
+                <label class="field">
+                    <span class="label">Categories, one per line</span>
+                    <textarea name="categories" rows="@Math.Max(6, cats.Count + 1)">@string.Join("\n", cats)</textarea>
+                    <span class="field__hint">Renaming one doesn't change hours already logged under the old name.</span>
+                </label>
+                <div><button class="btn btn--accent" type="submit">Save @org.Name</button></div>
+            </form>
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery] public string? Done { get; set; }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    private List<(AccountGroup Org, HoursSettings Settings, List<string> Categories)> orgs = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var access = await Http!.AccessAsync(Accounts);
+        orgs = HoursRules.SettingsOrgs(access).Select(o => (o, Store.Settings(o.Id), Store.Categories(o.Id))).ToList();
+        if (orgs.Count == 0) Nav.NavigateTo("/admin/hours");
+    }
+}

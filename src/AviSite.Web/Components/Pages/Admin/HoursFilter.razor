@@ -1,0 +1,34 @@
+@* Team + range (+ search) for the team page and the report. A plain GET form: filters live in the URL. *@
+<form method="get" action="@Action" class="qr-filter" role="search" aria-label="Filter hours">
+    @if (ShowSearch)
+    {
+        <div class="field qr-filter__q">
+            <label class="label" for="h-q">Person</label>
+            <input id="h-q" name="q" type="search" value="@Q" placeholder="Name or email" />
+        </div>
+    }
+    <div class="field">
+        <label class="label" for="h-team">Team</label>
+        <select id="h-team" name="team">
+            <option value="" selected="@(string.IsNullOrEmpty(Team))">All my teams</option>
+            @foreach (var g in Teams) { <option value="@g.Id" selected="@(Team == g.Id)">@(new string(' ', Tree.Depth(g.Id) * 3))@g.Name</option> }
+        </select>
+    </div>
+    <div class="field">
+        <label class="label" for="h-range">When</label>
+        <select id="h-range" name="range">
+            @foreach (var (k, label) in HoursRanges.All) { <option value="@k" selected="@((Range ?? "season") == k)">@label</option> }
+        </select>
+    </div>
+    <div class="qr-filter__go"><button class="btn btn--ink btn--sm" type="submit">Show</button></div>
+</form>
+
+@code {
+    [Parameter, EditorRequired] public List<AccountGroup> Teams { get; set; } = [];
+    [Parameter, EditorRequired] public GroupTree Tree { get; set; } = new([]);
+    [Parameter] public string? Team { get; set; }
+    [Parameter] public string? Range { get; set; }
+    [Parameter] public string? Q { get; set; }
+    [Parameter] public bool ShowSearch { get; set; } = true;
+    [Parameter, EditorRequired] public string Action { get; set; } = "";
+}

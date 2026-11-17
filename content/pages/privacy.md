@@ -29,6 +29,12 @@ So we know which tools are worth building more of, the tools pages count how oft
 ### Admin accounts
 People an officer adds to the admin pages sign in with Google. We keep their email, name, access level, group and when they last signed in, and nothing from their Google account beyond that. Removing someone deletes their account here.
 
+### Hours
+Members who log hours have their sessions stored: team, category, start and end times, and any note they add.
+Their own leads (and the club's officers, for AVI teams) can see and fix them, and download them for sponsor reports
+and award letters. If an organization turns on its leaderboard, everyone in that organization sees members' names and
+season totals.
+
 ### Buying or donating
 To hand over a shirt or send a receipt we keep your name, email, optional phone number and your order. Payment happens on PayPal; we never see your card. Officers use this only for your order, and you can ask us to delete it once it's done.
 

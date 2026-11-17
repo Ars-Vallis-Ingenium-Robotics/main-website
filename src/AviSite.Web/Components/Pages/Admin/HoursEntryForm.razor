@@ -1,0 +1,96 @@
+@* Add or edit one hours entry. Members: their own. Leads: pass People to add time for someone on their teams.
+   Posts to /admin/hours/save (and /delete); lands back on Back. *@
+
+<form method="post" action="/admin/hours/save" class="form hours-form">
+    <AntiforgeryToken />
+    <input type="hidden" name="back" value="@Back" />
+    @if (Entry is not null) { <input type="hidden" name="id" value="@Entry.Id" /> }
+    <div class="qr-admin__grid">
+        @if (People is not null && Entry is null)
+        {
+            <label class="field">
+                <span class="label">Who</span>
+                <select name="email">
+                    @foreach (var p in People) { <option value="@p.Email">@JsonAccountStore.DisplayName(p)</option> }
+                </select>
+            </label>
+        }
+        <label class="field">
+            <span class="label">Team</span>
+            <select name="team">
+                @foreach (var g in Teams) { <option value="@g.Id" selected="@(g.Id == team)">@(new string(' ', Tree.Depth(g.Id) * 3))@g.Name</option> }
+            </select>
+        </label>
+        <label class="field">
+            <span class="label">Category</span>
+            <select name="category">
+                @foreach (var c in Categories) { <option value="@c" selected="@(c == category)">@c</option> }
+            </select>
+        </label>
+        <label class="field">
+            <span class="label">Date</span>
+            <input type="date" name="date" value="@date" required />
+        </label>
+        <label class="field">
+            <span class="label">From</span>
+            <input type="time" name="start" value="@start" required />
+        </label>
+        <label class="field">
+            <span class="label">To</span>
+            <input type="time" name="end" value="@end" required />
+        </label>
+        <label class="field hours-form__note">
+            <span class="label">Note <span class="muted">(optional)</span></span>
+            <input name="note" value="@Entry?.Note" maxlength="200" autocomplete="off" />
+        </label>
+    </div>
+    <div class="hours-form__actions">
+        <button class="btn btn--accent btn--sm" type="submit">@(Entry is null ? "Add" : "Save")</button>
+    </div>
+</form>
+@if (Entry is not null)
+{
+    <form method="post" action="/admin/hours/delete" class="hours-form__delete">
+        <AntiforgeryToken />
+        <input type="hidden" name="id" value="@Entry.Id" />
+        <input type="hidden" name="back" value="@Back" />
+        <details>
+            <summary class="btn btn--ghost btn--sm btn--danger">Delete</summary>
+            <button class="btn btn--sm btn--danger-solid" type="submit">Yes, delete this entry</button>
+        </details>
+    </form>
+}
+
+@code {
+    [Parameter] public HoursEntry? Entry { get; set; }
+    [Parameter, EditorRequired] public List<AccountGroup> Teams { get; set; } = [];
+    [Parameter, EditorRequired] public List<string> Categories { get; set; } = [];
+    [Parameter, EditorRequired] public GroupTree Tree { get; set; } = new([]);
+    [Parameter] public List<Account>? People { get; set; }
+    [Parameter] public string? DefaultTeam { get; set; }
+    [Parameter] public string? DefaultCategory { get; set; }
+    [Parameter] public string Back { get; set; } = "/admin/hours";
+    [Inject] private HoursStore Store { get; set; } = default!;
+
+    private string team = "", category = "", date = "", start = "", end = "";
+
+    protected override void OnParametersSet()
+    {
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        if (Entry is not null)
+        {
+            team = Entry.Team; category = Entry.Category;
+            var s = Entry.StartUtc.ToPacific(); var e = (Entry.EndUtc ?? Store.Now).ToPacific();
+            date = s.ToString("yyyy-MM-dd", inv); start = s.ToString("HH:mm", inv); end = e.ToString("HH:mm", inv);
+            // Keep an entry's own team/category selectable even if it's not in today's lists.
+            if (Teams.All(g => g.Id != team) && Tree.Find(team) is { } g) Teams = [.. Teams, g];
+            if (!Categories.Contains(category)) Categories = [.. Categories, category];
+        }
+        else
+        {
+            team = DefaultTeam ?? Teams.FirstOrDefault()?.Id ?? ""; category = DefaultCategory ?? Categories.FirstOrDefault() ?? "";
+            var now = Store.Now.ToPacific();
+            date = now.ToString("yyyy-MM-dd", inv); end = now.ToString("HH:mm", inv); start = now.AddHours(-1).ToString("HH:mm", inv);
+        }
+    }
+}

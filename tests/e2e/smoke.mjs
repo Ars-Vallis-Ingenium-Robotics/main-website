@@ -812,6 +812,8 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
 
   // Members: own codes only; leads above see them.
   const [mc, mp] = await as(m2);
+  assert.equal(new URL(mp.url()).pathname, "/admin/hours", "members land on hours");
+  await mp.goto(BASE + "/admin/qr");
   assert.equal(await mp.inputValue("#slug"), `${er}-${cd}-`, "sub-team codes start with the whole chain: organization, then team");
   await mp.fill("#slug", `${er}-${cd}-`); await mp.fill("#target", "/join"); await mp.fill("#campaign", "e2e");
   await mp.getByRole("button", { name: "Add code" }).click();
@@ -820,6 +822,7 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
   await mp.getByRole("button", { name: "Add code" }).click();
   await mp.waitForURL(/saved=/);
   const [m1c, m1p] = await as(m1);
+  await m1p.goto(BASE + "/admin/qr");
   assert.equal(await m1p.locator(`[data-qr-row="${er}-${cd}-flyer"]`).count(), 0, "members don't see each other's codes");
   await m1p.goto(BASE + "/admin/people"); assert.equal(new URL(m1p.url()).pathname, "/admin/people", "m1 leads Electrical, so they get People");
   await mp.goto(BASE + "/admin/people"); assert.match(mp.url(), /\/admin\/login/, "plain members can't manage people");
@@ -943,6 +946,150 @@ await test("dynamic QR looks: save from the maker, reopen with it; strangers can
   assert.equal(forged.status(), 400, "other sites can't save looks");
 });
 
+// ---------- Hours ----------
+// A few hours tests need a session that started over a day ago; nobody can make one through the site, so the test
+// writes it straight into the database (Node's built-in SQLite). Where the site keeps it depends on how it was started.
+async function siteDb() {
+  const { DatabaseSync } = await import("node:sqlite");
+  const fs = await import("node:fs"); const path = await import("node:path");
+  const here = path.dirname(new URL(import.meta.url).pathname);
+  const candidates = [process.env.SITE_DB, path.join(here, "../../App_Data/site.db"), path.join(here, "../../src/AviSite.Web/App_Data/site.db")].filter((f) => f && fs.existsSync(f));
+  candidates.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  const db = new DatabaseSync(candidates[0]); db.exec("PRAGMA busy_timeout = 5000"); return db;
+}
+const signIn = async (email) => {
+  const c = await browser.newContext({ viewport: { width: 1280, height: 900 } }); const pg = await c.newPage();
+  await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', email); await pg.click("text=Sign in (dev only)");
+  await pg.waitForLoadState(); return [c, pg];
+};
+const addPerson = async (pg, list, team, role = "Member") => {
+  await pg.goto(BASE + "/admin/people");
+  await pg.fill("#add-list", list); await pg.selectOption("#add-team", team); await pg.selectOption("#add-role", role);
+  await Promise.all([pg.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/admin/people"), pg.getByRole("button", { name: "Add", exact: true }).click()]);
+};
+
+await test("hours: clocking in and out each take two taps; one session at a time; /hours links pre-pick team and category", async () => {
+  const id = Date.now().toString(36).slice(-5), who = `clock-${id}@example.com`;
+  const [oc, op] = await signIn("owner@example.com");
+  await addPerson(op, who, "sms");
+  const [c, pg] = await signIn(who);
+  assert.equal(new URL(pg.url()).pathname, "/admin/hours", "members land on hours");
+  await pg.goto(BASE + "/hours?team=sms&category=Outreach");
+  assert.equal(await pg.inputValue("[data-clock-team]"), "sms");
+  assert.equal(await pg.locator('[data-clock-cat][value="Outreach"]').isChecked(), true, "the poster link picked the category");
+  await pg.click(".clock__confirm > summary"); // tap 1
+  assert.equal(await pg.locator(".clock--on").count(), 0, "one tap doesn't clock you in");
+  assert.match(await pg.locator("[data-clock-what]").innerText(), /Sequoia Marine Solutions · Outreach/);
+  await pg.click("text=Yes, clock in"); // tap 2
+  await pg.locator(".clock--on").waitFor();
+  const tok = await pg.locator('input[name="__RequestVerificationToken"]').first().inputValue();
+  const again = await pg.request.post(BASE + "/admin/hours/in", { form: { team: "sms", category: "Build", __RequestVerificationToken: tok }, maxRedirects: 0 });
+  assert.match(again.headers().location, /error=already-in/, "can't start a second session");
+  await pg.click(".clock__confirm > summary"); // tap 1
+  assert.equal(await pg.locator(".clock--on").count(), 1, "one tap doesn't clock you out");
+  await pg.fill('input[name="note"]', "e2e work"); await pg.click("text=Yes, clock out"); // tap 2
+  await pg.locator(".clock__confirm > summary", { hasText: "Clock in" }).waitFor();
+  assert.match(await pg.locator(".entry").first().innerText(), /Outreach[\s\S]*e2e work/);
+  await c.close(); await oc.close();
+});
+
+await test("hours: members add, edit and delete their own time; bad times are refused; others' entries are off limits", async () => {
+  const id = Date.now().toString(36).slice(-5), a = `ha-${id}@example.com`, b = `hb-${id}@example.com`;
+  const [oc, op] = await signIn("owner@example.com");
+  await addPerson(op, `${a}\n${b}`, "sms");
+  const [c, pg] = await signIn(a);
+  const add = async (date, start, end) => {
+    await pg.goto(BASE + "/admin/hours"); await pg.click("summary:has-text('Add time by hand')");
+    const f = pg.locator("details[open] form.hours-form").first();
+    await f.locator('input[name="date"]').fill(date); await f.locator('input[name="start"]').fill(start); await f.locator('input[name="end"]').fill(end);
+    await f.locator('select[name="category"]').selectOption("Build");
+    await f.locator('button[type="submit"]').click(); await pg.waitForLoadState();
+    return pg.locator(".alert").first().innerText();
+  };
+  assert.match(await add("2026-10-01", "17:30", "20:00"), /Added/);
+  assert.match(await add("2030-01-01", "10:00", "11:00"), /future/i);
+  assert.match(await add("2026-10-02", "22:00", "01:30"), /Added/, "past midnight is fine");
+  const first = pg.locator(".entry", { hasText: "Thu, Oct 1" });
+  assert.match(await first.innerText(), /2 h 30 min/);
+  await first.locator(".entry__edit > summary").click();
+  await first.locator('input[name="end"]').fill("21:00"); await first.locator('button', { hasText: "Save" }).click(); await pg.waitForLoadState();
+  assert.match(await pg.locator(".entry", { hasText: "Thu, Oct 1" }).innerText(), /3 h 30 min/, "edited");
+  const myId = await pg.locator(".entry", { hasText: "Thu, Oct 1" }).locator('input[name="id"]').first().inputValue();
+  await pg.locator(".entry", { hasText: "Fri, Oct 2" }).locator(".entry__edit > summary").click();
+  await pg.locator(".entry", { hasText: "Fri, Oct 2" }).locator(".hours-form__delete summary").click();
+  await pg.locator(".entry", { hasText: "Fri, Oct 2" }).locator("text=Yes, delete this entry").click(); await pg.waitForLoadState();
+  assert.equal(await pg.locator(".entry", { hasText: "Fri, Oct 2" }).count(), 0, "deleted");
+  // Another member can't touch it.
+  const [bc, bp] = await signIn(b);
+  const tok = await bp.locator('input[name="__RequestVerificationToken"]').first().inputValue();
+  const r = await bp.request.post(BASE + "/admin/hours/delete", { form: { id: myId, __RequestVerificationToken: tok }, maxRedirects: 0 });
+  assert.match(r.headers().location, /error=denied/, "members can't delete each other's hours");
+  for (const x of [c, bc, oc]) await x.close();
+});
+
+await test("hours: leads see their team, fix anyone's time, end forgotten sessions; >24 h sessions warn on every admin page", async () => {
+  const id = Date.now().toString(36).slice(-5), lead = `hl-${id}@example.com`, m = `hm-${id}@example.com`, gone = `hg-${id}@example.com`;
+  const [oc, op] = await signIn("owner@example.com");
+  await addPerson(op, lead, "sms", "Lead");
+  await addPerson(op, `${m}, Hours Member\n${gone}, Forgot Clockout`, "sms");
+  // m clocks in normally; gone clocked in 30 hours ago and never left.
+  const [mc, mp] = await signIn(m);
+  await mp.goto(BASE + "/hours?team=sms&category=Build"); await mp.click(".clock__confirm > summary"); await mp.click("text=Yes, clock in");
+  const db = await siteDb();
+  const t = new Date(Date.now() - 30 * 3600e3).toISOString();
+  db.prepare("INSERT INTO hours (email, team, category, start_utc, source, created_utc, updated_utc) VALUES (?, 'sms', 'Build', ?, 'clock', ?, ?)").run(gone, t, t, t);
+  db.close();
+  const [lc, lp] = await signIn(lead);
+  await lp.goto(BASE + "/admin/qr");
+  const banner = lp.locator(".long-sessions");
+  assert.match(await banner.innerText(), /Forgot Clockout · Sequoia Marine Solutions/, "the warning is on every admin page");
+  assert.match(await banner.locator('a[href^="mailto:"]').first().getAttribute("href"), new RegExp(gone.replace(/[.@-]/g, "\\$&")));
+  await banner.locator("text=Set the end time").first().click();
+  const fix = lp.locator("#fix");
+  await fix.locator('input[name="end"]').fill("23:00"); // the day they started
+  await fix.locator("text=End session").click(); await lp.waitForLoadState();
+  assert.match(await lp.locator(".alert").first().innerText(), /Session ended/);
+  assert.equal(await lp.locator(".long-sessions").count(), 0, "warning gone once it's fixed");
+  assert.match(await lp.locator("[data-running]").first().innerText(), /Hours Member/, "who's clocked in right now");
+  // The lead adds time for someone.
+  await lp.click("summary:has-text('Add time for someone')");
+  const f = lp.locator("details.people-admin__more[open] form.hours-form");
+  await f.locator('select[name="email"]').selectOption(m);
+  await f.locator('input[name="date"]').fill("2026-10-03"); await f.locator('input[name="start"]').fill("09:00"); await f.locator('input[name="end"]').fill("12:00");
+  await f.locator('button[type="submit"]').click(); await lp.waitForLoadState();
+  assert.match(await lp.locator(".alert").first().innerText(), /Added/);
+  await mp.goto(BASE + "/admin/hours");
+  assert.match(await mp.locator(".entry", { hasText: "Sat, Oct 3" }).innerText(), /added by a lead/, "the member sees who added it");
+  // Members don't get the team page.
+  await mp.goto(BASE + "/admin/hours/team"); assert.equal(new URL(mp.url()).pathname, "/admin/hours");
+  for (const x of [oc, mc, lc]) await x.close();
+});
+
+await test("hours: report with charts and CSV; leaderboard is each organization's choice", async () => {
+  const [oc, op] = await signIn("owner@example.com");
+  await op.goto(BASE + "/admin/hours/report?range=all");
+  assert.ok(await op.locator(".colchart__bar").count() > 0, "hours-per-week chart");
+  assert.ok(await op.locator(".report__block .hbars li").count() > 0, "category / team / person bars");
+  assert.match(await op.locator(".report__matrix").innerText(), /Total/i);
+  const csv = await op.request.get(BASE + "/admin/hours/export.csv?range=all");
+  assert.equal(csv.status(), 200);
+  assert.match((await csv.text()).split("\n")[0], /^name,email,organization,team,category,date,start,end,hours,note,source$/);
+  // Leaderboard off by default; the owner turns it on for AVI; members of AVI teams see it.
+  await op.goto(BASE + "/admin/hours/settings");
+  const avi = op.locator('form[data-org="avi"]');
+  await avi.locator('input[name="leaderboard"]').check(); await avi.locator("button", { hasText: "Save" }).click(); await op.waitForLoadState();
+  const id = Date.now().toString(36).slice(-5), who = `lb-${id}@example.com`;
+  await addPerson(op, who, "sms");
+  const [c, pg] = await signIn(who);
+  assert.match(await pg.locator(".board").innerText(), /AVI Robotics leaderboard/);
+  await op.goto(BASE + "/admin/hours/settings");
+  await op.locator('form[data-org="avi"] input[name="leaderboard"]').uncheck(); await op.locator('form[data-org="avi"] button', { hasText: "Save" }).click(); await op.waitForLoadState();
+  await pg.reload(); assert.equal(await pg.locator(".board").count(), 0, "turned off again");
+  // A member can't reach settings or someone else's CSV.
+  assert.equal((await pg.request.get(BASE + "/admin/hours/export.csv")).status(), 404);
+  await c.close(); await oc.close();
+});
+
 // ---------- Layout checks: catch "looks a little off" bugs (off-center icons, buttons jammed together) ----------
 // Looks at the real pixels: finds the icon's ink inside a button and checks its middle is the button's middle.
 const lens = await (await browser.newContext({ deviceScaleFactor: 1 })).newPage(); // about:blank, no CSP, for pixel math
@@ -1031,7 +1178,7 @@ await test("layout: buttons never touch or overlap (admin, QR maker, sign-in, ho
   const openAll = () => pg.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
   await pg.goto(BASE + "/admin/login"); await openAll(); await assertButtonsBreathe(pg, "/admin/login");
   await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
-  for (const path of ["/admin/people", "/admin/qr", "/admin/qr/three", "/admin/usage", "/tools/qr", "/"]) {
+  for (const path of ["/admin/people", "/admin/qr", "/admin/qr/three", "/admin/usage", "/admin/hours", "/admin/hours/team", "/admin/hours/report", "/admin/hours/settings", "/tools/qr", "/"]) {
     for (const w of [1440, 1024, 768, 390]) {
       await pg.setViewportSize({ width: w, height: 900 });
       await pg.goto(BASE + path); await openAll();

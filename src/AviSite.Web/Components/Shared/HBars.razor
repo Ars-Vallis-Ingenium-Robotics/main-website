@@ -1,0 +1,14 @@
+@* One-series horizontal bars: label, bar, value at the tip. Bars ≤ 24px tall with a 4px rounded end. *@
+@if (Rows.Count > 0)
+{
+    var max = Rows.Max(r => r.Value);
+    <ul class="hbars" role="list">
+        @foreach (var (label, v) in Rows)
+        {
+            <li title="@label: @HoursText.Hours(v) h"><span class="hbars__label">@label</span><span class="hbars__bar" style="--w: @((int)Math.Max(1, Math.Round(v * 100 / max)))%"></span><span class="hbars__n mono">@HoursText.Hours(v) h</span></li>
+        }
+    </ul>
+}
+@code {
+    [Parameter, EditorRequired] public List<(string Label, double Value)> Rows { get; set; } = [];
+}

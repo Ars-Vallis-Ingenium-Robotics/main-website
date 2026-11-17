@@ -1,0 +1,184 @@
+@page "/admin/hours/team"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
+@using AviSite.Web.Endpoints
+@inject IAccountStore Accounts
+@inject HoursStore Store
+@inject NavigationManager Nav
+
+<PageTitle>Team hours · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin hours">
+    <div class="wrap">
+        <AdminNav Current="hours" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow"><a href="/admin/hours">Hours</a> / Team</p>
+                <h1 class="h1">Team hours</h1>
+                <p class="muted">Everyone on the teams you lead. Fix anyone's time, end a forgotten session, or add time for someone.</p>
+            </div>
+            <div class="hours__leadlinks">
+                <a class="btn btn--ghost btn--sm" href="/admin/hours/report?@Query">Report</a>
+                <a class="btn btn--ghost btn--sm" href="/admin/hours/export.csv?@Query">Download CSV</a>
+            </div>
+        </div>
+
+        @if (Message is { } m) { <p class="alert @(Done is not null ? "alert--ok" : "")" role="status">@m</p> }
+
+        <HoursFilter Teams="teams" Tree="access.Tree" Team="@Team" Range="@Range" Q="@Q" Action="/admin/hours/team" />
+
+        @* ---------- Clocked in right now ---------- *@
+        @if (running.Count > 0)
+        {
+            <h2 class="h4">Clocked in now</h2>
+            <ul class="entries" role="list">
+                @foreach (var e in running)
+                {
+                    var isLong = e.Duration(Store.Now) > HoursStore.LongSession;
+                    <li class="entry entry--running @(isLong ? "entry--long" : "")" id="@(e.Id == Fix ? "fix" : null)" data-running="@e.Id">
+                        <div class="entry__main">
+                            <span class="entry__what"><strong>@Name(e.Email)</strong> · @access.Tree.Name(e.Team) · @e.Category</span>
+                            <span class="entry__when">since @Stamp(e.StartUtc)</span>
+                        </div>
+                        <span class="entry__dur mono">@HoursText.Duration(e.Duration(Store.Now))</span>
+                        @if (Editable(e))
+                        {
+                            <details class="entry__edit" open="@(e.Id == Fix)">
+                                <summary>End it</summary>
+                                <form method="post" action="/admin/hours/stop" class="form hours-form">
+                                    <AntiforgeryToken />
+                                    <input type="hidden" name="id" value="@e.Id" />
+                                    <input type="hidden" name="back" value="/admin/hours/team" />
+                                    <div class="qr-admin__grid">
+                                        <label class="field"><span class="label">Left on</span><input type="date" name="date" value="@e.StartUtc.ToPacific().ToString("yyyy-MM-dd")" required /></label>
+                                        <label class="field"><span class="label">At</span><input type="time" name="end" value="@SuggestEnd(e)" required /></label>
+                                    </div>
+                                    <div class="hours-form__actions"><button class="btn btn--accent btn--sm" type="submit">End session</button>
+                                        <a class="btn btn--ghost btn--sm" href="mailto:@e.Email">Email @Name(e.Email)</a></div>
+                                </form>
+                            </details>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+
+        @* ---------- Totals per person ---------- *@
+        <h2 class="h4">@RangeLabel · @HoursText.Hours(people.Sum(p => p.Hours)) hours from @people.Count @(people.Count == 1 ? "person" : "people")</h2>
+        @if (people.Count == 0)
+        {
+            <p class="muted">No hours in this range yet.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="table">
+                    <thead><tr><th scope="col">Person</th><th scope="col" class="num">Hours</th><th scope="col" class="num">Sessions</th><th scope="col">Top category</th></tr></thead>
+                    <tbody>
+                        @foreach (var p in people)
+                        {
+                            <tr><th scope="row">@p.Name</th><td class="num mono">@HoursText.Hours(p.Hours)</td><td class="num">@p.Sessions</td><td class="small">@p.TopCategory</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <details class="people-admin__more">
+            <summary>Add time for someone</summary>
+            <HoursEntryForm Teams="teams" Categories="categories" Tree="access.Tree" People="roster" Back="/admin/hours/team" />
+        </details>
+
+        @* ---------- Every entry in range ---------- *@
+        <h2 class="h4 qr-admin__h">Entries</h2>
+        <ul class="entries" role="list">
+            @foreach (var e in entries.Where(e => !e.Running).Take(400))
+            {
+                <li class="entry">
+                    <div class="entry__main">
+                        <span class="entry__what"><strong>@Name(e.Email)</strong> · @access.Tree.Name(e.Team) · @e.Category@(e.Source == "lead" ? " · added by a lead" : e.Source == "manual" ? " · added by hand" : "")</span>
+                        <span class="entry__when">@Stamp(e.StartUtc)–@e.EndUtc!.Value.ToPacific().ToString("h:mm tt")</span>
+                        @if (e.Note is not null) { <span class="entry__note">@e.Note</span> }
+                    </div>
+                    <span class="entry__dur mono">@HoursText.Duration(e.Duration(Store.Now))</span>
+                    @if (Editable(e))
+                    {
+                        <details class="entry__edit">
+                            <summary>Edit</summary>
+                            <HoursEntryForm Entry="e" Teams="teams" Categories="categories" Tree="access.Tree" Back="/admin/hours/team" />
+                        </details>
+                    }
+                </li>
+            }
+        </ul>
+        @if (entries.Count(e => !e.Running) > 400) { <p class="small muted">Showing the newest 400. Narrow the range or download the CSV for everything.</p> }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery] public string? Done { get; set; }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromQuery] public string? Team { get; set; }
+    [SupplyParameterFromQuery] public string? Range { get; set; }
+    [SupplyParameterFromQuery] public string? Q { get; set; }
+    [SupplyParameterFromQuery] public long? Fix { get; set; }
+
+    private Access access = new();
+    private List<AccountGroup> teams = [];
+    private List<string> categories = [];
+    private List<Account> roster = [];
+    private Dictionary<string, Account> byEmail = [];
+    private List<HoursEntry> entries = [], running = [];
+    private sealed record PersonRow(string Email, string Name, double Hours, int Sessions, string TopCategory);
+    private List<PersonRow> people = [];
+    private string RangeLabel = "";
+
+    private string Query => $"team={Uri.EscapeDataString(Team ?? "")}&range={Uri.EscapeDataString(Range ?? "")}";
+    private string Name(string email) => byEmail.TryGetValue(email, out var a) ? JsonAccountStore.DisplayName(a) : email;
+    private static string Stamp(DateTimeOffset t) => t.ToPacific().ToString("ddd MMM d, h:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+    private bool Editable(HoursEntry e) => HoursRules.CanEdit(access, e, byEmail.GetValueOrDefault(e.Email));
+    private string SuggestEnd(HoursEntry e) => e.StartUtc.ToPacific().AddHours(Math.Min(3, Math.Max(0.5, (Store.Now - e.StartUtc).TotalHours))).ToString("HH:mm");
+
+    private string? Message => (Done, Error) switch
+    {
+        ("stopped", _) => "Session ended.",
+        ("added", _) => "Added.",
+        ("saved", _) => "Saved.",
+        ("deleted", _) => "Deleted.",
+        (_, "too-long") => "One entry can be at most 24 hours.",
+        (_, "before-start") => "That's before they clocked in.",
+        (_, "future") => "That's in the future.",
+        (_, "denied") => "You can't change that person's hours.",
+        (_, { }) => "That didn't work. Check the date and times.",
+        _ => null,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        access = await Http!.AccessAsync(Accounts);
+        var managed = HoursRules.ManagedTeams(access);
+        if (managed.Count == 0) { Nav.NavigateTo("/admin/hours"); return; }
+        if (string.IsNullOrWhiteSpace(Team) || !managed.Contains(Team)) Team = null;
+        if (string.IsNullOrWhiteSpace(Q)) Q = null;
+
+        teams = access.Tree.Ordered(g => managed.Contains(g.Id)).ToList();
+        var scope = Team is null ? managed : access.Tree.WithDescendants([Team]);
+        var orgs = teams.Select(g => HoursRules.OrgOf(g.Id, access.Tree)).Distinct().ToList();
+        categories = orgs.SelectMany(Store.Categories).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var all = await Accounts.ListAsync();
+        byEmail = all.ToDictionary(a => a.Email);
+        roster = all.Where(a => a.Teams.Any(t => managed.Contains(t.Group)) || a.Email == access.Account?.Email).OrderBy(JsonAccountStore.DisplayName).ToList();
+
+        var settings = Store.Settings(Team is not null ? HoursRules.OrgOf(Team, access.Tree) : orgs.FirstOrDefault() ?? JsonAccountStore.AviRoot);
+        var (from, to, label) = HoursRanges.Resolve(Range, settings, Store.Now);
+        RangeLabel = label;
+        entries = Store.List(teams: scope, from: from, to: to);
+        if (Q is not null) entries = entries.Where(e => e.Email.Contains(Q, StringComparison.OrdinalIgnoreCase) || Name(e.Email).Contains(Q, StringComparison.OrdinalIgnoreCase)).ToList();
+        running = Store.List(teams: scope).Where(e => e.Running).OrderBy(e => e.StartUtc).ToList();
+        people = entries.GroupBy(e => e.Email)
+            .Select(g => new PersonRow(g.Key, Name(g.Key), g.Sum(e => HoursRanges.Clip(e, from, to, Store.Now)), g.Count(),
+                g.GroupBy(e => e.Category).OrderByDescending(c => c.Sum(e => HoursRanges.Clip(e, from, to, Store.Now))).First().Key))
+            .Where(p => p.Hours > 0).OrderByDescending(p => p.Hours).ToList();
+    }
+}

@@ -1,5 +1,12 @@
-@* Shared header for admin pages: section switcher + sign out. Team logins only see their QR codes. *@
+@* Shared header for admin pages: section switcher + sign out, and (for leads) a warning about forgotten clock-outs. *@
+@using AviSite.Web.Endpoints
+@inject IAccountStore Accounts
+@inject HoursStore Hours
 <nav class="admin-nav" aria-label="Admin">
+    @if (hasAccount)
+    {
+        <a href="/admin/hours" class="@(Current == "hours" ? "is-current" : "")" aria-current="@(Current == "hours" ? "page" : null)">Hours</a>
+    }
     @if (isAdmin)
     {
         <a href="/admin" class="@(Current == "orders" ? "is-current" : "")" aria-current="@(Current == "orders" ? "page" : null)">Shop orders</a>
@@ -17,22 +24,59 @@
     <form method="post" action="/admin/logout"><AntiforgeryToken /><button class="link-button" type="submit">Sign out (@who)</button></form>
 </nav>
 
+@if (forgotten.Count > 0)
+{
+    <div class="long-sessions" role="alert">
+        <p class="long-sessions__title"><strong>@forgotten.Count @(forgotten.Count == 1 ? "person has" : "people have") been clocked in for over 24 hours.</strong> Probably a forgotten clock-out.</p>
+        <ul role="list">
+            @foreach (var (e, name) in forgotten)
+            {
+                <li data-long-session="@e.Id">
+                    <span><strong>@name</strong> · @Tree.Name(e.Team) · since @e.StartUtc.ToPacific().ToString("ddd MMM d, h:mm tt", System.Globalization.CultureInfo.InvariantCulture) (@HoursText.Duration(e.Duration(Hours.Now)))</span>
+                    <span class="long-sessions__actions">
+                        <a class="btn btn--ghost btn--sm" href="mailto:@e.Email?subject=@Uri.EscapeDataString("Your hours: still clocked in?")&body=@Uri.EscapeDataString($"Hi {name}, the hours page shows you clocked in to {Tree.Name(e.Team)} since {e.StartUtc.ToPacific():ddd MMM d, h:mm tt}. When did you leave? I can fix the end time, or you can on /hours.")">Email them</a>
+                        <a class="btn btn--ghost btn--sm" href="/admin/hours/team?fix=@e.Id#fix">Set the end time</a>
+                    </span>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
 @code {
     [Parameter] public string Current { get; set; } = "";
     [CascadingParameter] public HttpContext? Http { get; set; }
-    private bool isAdmin;
+    private bool isAdmin, hasAccount;
     private string? team;
     private bool lead, canPeople;
     private string who = "";
-    protected override void OnInitialized()
+    private GroupTree Tree = new([]);
+    private List<(HoursEntry Entry, string Name)> forgotten = [];
+
+    protected override async Task OnInitializedAsync()
     {
         var u = Http?.User;
         isAdmin = u?.IsInRole("Admin") == true;
-        team = u?.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value;
+        team = u?.FindFirst(AdminEndpoints.TeamClaim)?.Value;
         lead = u?.IsInRole("Lead") == true;
-        canPeople = u?.FindFirst(AviSite.Web.Endpoints.AccountAuth.EmailClaim) is not null && (isAdmin || lead);
+        hasAccount = u?.FindFirst(AccountAuth.EmailClaim) is not null;
+        canPeople = hasAccount && (isAdmin || lead);
         // Accounts show their name; the old shared passwords show what they unlock.
-        who = u?.FindFirst(AviSite.Web.Endpoints.AccountAuth.EmailClaim) is not null ? u.Identity?.Name ?? ""
-            : team is not null ? team.ToUpperInvariant() + " password" : "officer password";
+        who = hasAccount ? u!.Identity?.Name ?? "" : team is not null ? team.ToUpperInvariant() + " password" : "officer password";
+
+        // Leads, officers and the owner: anyone on their teams clocked in for more than a day, at the top of every admin page.
+        if (Http is not null && (isAdmin || lead))
+        {
+            var access = await Http.AccessAsync(Accounts);
+            Tree = access.Tree;
+            var managed = HoursRules.ManagedTeams(access);
+            if (managed.Count > 0)
+            {
+                var people = (await Accounts.ListAsync()).ToDictionary(a => a.Email);
+                forgotten = Hours.LongRunning(managed)
+                    .Where(e => e.Email != access.Account?.Email) // your own shows on your hours page
+                    .Select(e => (e, people.TryGetValue(e.Email, out var p) ? JsonAccountStore.DisplayName(p) : e.Email)).ToList();
+            }
+        }
     }
 }

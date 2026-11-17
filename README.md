@@ -106,6 +106,22 @@ PayPal webhook URL to register: `https://avirobotics.org/api/paypal/webhook`
 - `Access.For(account, tree)` is the single place that answers "what can this person do"; reuse it in new admin tools.
 - Every admin request re-checks the account (`AccountAuth.ValidateAsync`): removals and changes apply on the next click.
 
+## Hours
+
+`/hours` (→ `/admin/hours`): members clock in and out (two taps each: a button that opens a confirm, then the confirm),
+add time by hand, and edit or delete their own entries. The team and category they used last are already picked;
+`/hours?team=sms&category=Build` pre-picks them (print it as a QR code for a meeting). Accounts stay signed in for
+30 days on a device so this stays two taps.
+
+- **Leads** (`/admin/hours/team`): everyone on their teams, who's clocked in now, fix anyone's time, end a forgotten
+  session, add time for someone, CSV. Sessions running over 24 hours show as a warning at the top of every admin page,
+  with an email link and "set the end time". Clocking out of one caps it at 24 hours.
+- **Report** (`/admin/hours/report`): totals, hours per week (or month), by category, team and person, a person ×
+  category table; print or save as PDF. Charts are server-rendered SVG (`ColumnChart`, `HBars`), no chart library.
+- **Settings** (`/admin/hours/settings`, each organization's leads and the owner): leaderboard on/off, season start
+  (default Aug 1), categories.
+- Data: `hours`, `hours_categories`, `hours_settings` in `site.db` (`Store/Hours.cs`); rules in `Endpoints/HoursEndpoints.cs`.
+
 ## Privacy
 
 `/privacy` (content/pages/privacy.md) lists every cookie, browser-storage key and third party. Only strictly necessary cookies are used, so there's no banner; anything optional must be opt-in. **If a feature starts storing or sending something new, update that page.** YouTube loads only on click (`media.js`).

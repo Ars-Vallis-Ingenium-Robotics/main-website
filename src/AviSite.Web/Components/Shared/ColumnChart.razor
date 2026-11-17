@@ -1,0 +1,85 @@
+@* One-series column chart drawn as SVG on the server (no chart library, nothing to load).
+   Columns ≤ 24px with a 4px rounded top and a square base; hairline gridlines at clean values; only the tallest
+   column is labeled (the rest: hover tooltip via <title>, and the table under the chart). *@
+@if (Points.Count == 0 || Points.All(p => p.Value <= 0))
+{
+    <p class="muted small">Nothing to chart in this range.</p>
+}
+else
+{
+    <figure class="colchart">
+        <svg viewBox="0 0 @W @H" role="img" aria-label="@Label" class="colchart__svg">
+            @foreach (var t in ticks)
+            {
+                var y = Y(t);
+                <line x1="@F(left)" x2="@F(W)" y1="@F(y)" y2="@F(y)" class="colchart__grid" />
+                @Txt(left - 6, y + 4, "end", "colchart__tick", Fmt(t))
+            }
+            @for (var i = 0; i < Points.Count; i++)
+            {
+                var p = Points[i];
+                var cx = left + slot * i + slot / 2;
+                var x = cx - bar / 2; var y = Y(p.Value); var h = Y(0) - y;
+                <g class="colchart__col">
+                    <rect x="@F(left + slot * i)" y="0" width="@F(slot)" height="@F(Y(0))" class="colchart__hit"><title>@p.Label: @Fmt(p.Value) @Unit</title></rect>
+                    @if (h > 0.5)
+                    {
+                        var r = Math.Min(4, Math.Min(bar / 2, h));
+                        <path d="@Column(x, y, r)" class="colchart__bar"><title>@p.Label: @Fmt(p.Value) @Unit</title></path>
+                    }
+                    @if (i == maxIndex)
+                    {
+                        @Txt(cx, y - 6, "middle", "colchart__value", Fmt(p.Value))
+                    }
+                    @if (Points.Count <= 16 || i % LabelEvery == 0)
+                    {
+                        @Txt(cx, H - 6, "middle", "colchart__x", p.Short)
+                    }
+                </g>
+            }
+            <line x1="@F(left)" x2="@F(W)" y1="@F(Y(0))" y2="@F(Y(0))" class="colchart__base" />
+        </svg>
+    </figure>
+}
+
+@code {
+    public sealed record Point(string Label, string Short, double Value);
+    [Parameter, EditorRequired] public List<Point> Points { get; set; } = [];
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter] public string Unit { get; set; } = "h";
+
+    private const double W = 720, H = 240, top = 18, bottom = 26, left = 40;
+    private double max, slot, bar;
+    private int maxIndex;
+    private List<double> ticks = [];
+    private int LabelEvery => (int)Math.Ceiling(Points.Count / 12.0);
+
+    protected override void OnParametersSet()
+    {
+        if (Points.Count == 0) return;
+        var peak = Points.Max(p => p.Value);
+        maxIndex = Points.FindIndex(p => p.Value == peak);
+        var step = Nice(peak / 4);
+        max = Math.Max(step, Math.Ceiling(peak / step) * step);
+        ticks = Enumerable.Range(0, (int)Math.Round(max / step) + 1).Select(i => i * step).ToList();
+        slot = (W - left) / Points.Count;
+        bar = Math.Min(24, slot * 0.7);
+    }
+
+    /// <summary>An SVG &lt;text&gt; (Razor reserves the tag name), content HTML-encoded.</summary>
+    private static MarkupString Txt(double x, double y, string anchor, string cls, string content) =>
+        new($"<text x=\"{F(x)}\" y=\"{F(y)}\" text-anchor=\"{anchor}\" class=\"{cls}\">{System.Net.WebUtility.HtmlEncode(content)}</text>");
+    /// <summary>A column with a 4px rounded top and a square base on the baseline.</summary>
+    private string Column(double x, double y, double r) =>
+        $"M{F(x)},{F(Y(0))} V{F(y + r)} Q{F(x)},{F(y)} {F(x + r)},{F(y)} H{F(x + bar - r)} Q{F(x + bar)},{F(y)} {F(x + bar)},{F(y + r)} V{F(Y(0))} Z";
+    private double Y(double v) => top + (H - top - bottom) * (1 - v / max);
+    private static string F(double v) => v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+    private static string Fmt(double v) => v >= 100 ? v.ToString("0", System.Globalization.CultureInfo.InvariantCulture) : v.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+    private static double Nice(double x)
+    {
+        if (x <= 0) return 1;
+        var p = Math.Pow(10, Math.Floor(Math.Log10(x)));
+        var f = x / p;
+        return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+    }
+}

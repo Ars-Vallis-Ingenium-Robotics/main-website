@@ -1,0 +1,262 @@
+@page "/admin/hours"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
+@using AviSite.Web.Endpoints
+@inject IAccountStore Accounts
+@inject HoursStore Store
+
+<PageTitle>Hours · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+<script src="/js/hours.js" defer></script>
+
+<section class="section admin hours">
+    <div class="wrap">
+        <AdminNav Current="hours" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Hours</p>
+                <h1 class="h1">@(running is null ? "Clock in" : "You're clocked in")</h1>
+            </div>
+            @if (HoursRules.ManagedTeams(access).Count > 0)
+            {
+                <div class="hours__leadlinks">
+                    <a class="btn btn--ghost btn--sm" href="/admin/hours/team">Team hours</a>
+                    <a class="btn btn--ghost btn--sm" href="/admin/hours/report">Report</a>
+                    @if (HoursRules.SettingsOrgs(access).Any()) { <a class="btn btn--ghost btn--sm" href="/admin/hours/settings">Settings</a> }
+                </div>
+            }
+        </div>
+
+        @if (Message is { } m) { <p class="alert @(Done is not null ? "alert--ok" : "")" role="status">@m</p> }
+
+        @* ---------- The clock: two taps in, two taps out ---------- *@
+        @if (teams.Count == 0)
+        {
+            <p class="alert">You're not on a team yet, so there's nowhere to log hours. Ask your team's lead to add you.</p>
+        }
+        else if (running is null)
+        {
+            <form method="post" action="/admin/hours/in" class="clock" data-clock>
+                <AntiforgeryToken />
+                <div class="clock__pick">
+                    <label class="field">
+                        <span class="label">Team</span>
+                        <select name="team" data-clock-team>
+                            @foreach (var g in teams) { <option value="@g.Id" selected="@(g.Id == defTeam)">@Indent(g)@g.Name</option> }
+                        </select>
+                    </label>
+                    <fieldset class="clock__cats">
+                        <legend class="label">Working on</legend>
+                        @foreach (var c in categories)
+                        {
+                            <label class="chip-radio"><input type="radio" name="category" value="@c" checked="@(c == defCategory)" data-clock-cat /><span>@c</span></label>
+                        }
+                    </fieldset>
+                </div>
+                <details class="clock__confirm">
+                    <summary class="btn btn--accent clock__btn">Clock in</summary>
+                    <div class="clock__sure">
+                        <p>Clock in to <strong data-clock-what>@access.Tree.Name(defTeam) · @defCategory</strong> now?</p>
+                        <button class="btn btn--accent clock__btn" type="submit">Yes, clock in</button>
+                    </div>
+                </details>
+            </form>
+        }
+        else
+        {
+            var long_ = running.Duration(Store.Now) > HoursStore.LongSession;
+            <div class="clock clock--on @(long_ ? "clock--long" : "")">
+                <p class="clock__status">
+                    <span class="clock__dot" aria-hidden="true"></span>
+                    <strong>@access.Tree.Name(running.Team) · @running.Category</strong>
+                    <span>since @Time(running.StartUtc)@(SameDay(running.StartUtc) ? "" : ", " + Day(running.StartUtc))</span>
+                </p>
+                <p class="clock__elapsed" data-clock-since="@running.StartUtc.ToUnixTimeSeconds()" aria-live="off">@HoursText.Duration(running.Duration(Store.Now))</p>
+                @if (long_)
+                {
+                    <p class="alert" role="alert">That's over 24 hours: you probably forgot to clock out. Clocking out now keeps 24 hours; fix the end time below.</p>
+                }
+                <form method="post" action="/admin/hours/out">
+                    <AntiforgeryToken />
+                    <details class="clock__confirm">
+                        <summary class="btn btn--tools clock__btn">Clock out</summary>
+                        <div class="clock__sure">
+                            <label class="field">
+                                <span class="label">What did you get done? <span class="muted">(optional)</span></span>
+                                <input name="note" maxlength="200" autocomplete="off" placeholder="e.g. wired the thrusters" />
+                            </label>
+                            <button class="btn btn--tools clock__btn" type="submit">Yes, clock out</button>
+                        </div>
+                    </details>
+                </form>
+            </div>
+        }
+
+        @* ---------- Totals ---------- *@
+        <div class="hours__totals">
+            <div class="stat"><span class="stat__num">@HoursText.Hours(Total(weekFrom, null))</span><span class="stat__label">hours this week</span></div>
+            <div class="stat"><span class="stat__num">@HoursText.Hours(Total(seasonFrom, null))</span><span class="stat__label">hours this season (@seasonLabel)</span></div>
+            <div class="stat"><span class="stat__num">@HoursText.Hours(Total(null, null))</span><span class="stat__label">hours all time</span></div>
+        </div>
+        @if (byCategory.Count > 0)
+        {
+            var max = byCategory.Max(c => c.Hours);
+            <h2 class="h4">This season by category</h2>
+            <ul class="hbars" role="list">
+                @foreach (var (cat, h) in byCategory)
+                {
+                    <li><span class="hbars__label">@cat</span><span class="hbars__bar" style="--w: @((int)Math.Round(h * 100 / max))%"></span><span class="hbars__n mono">@HoursText.Hours(h) h</span></li>
+                }
+            </ul>
+        }
+
+        @* ---------- Leaderboards (each organization turns its own on) ---------- *@
+        @foreach (var board in boards)
+        {
+            <section class="board" aria-labelledby="board-@board.Org">
+                <h2 class="h4" id="board-@board.Org">@board.Name leaderboard · @board.Season</h2>
+                <ol class="board__list">
+                    @foreach (var (row, i) in board.Rows.Select((r, i) => (r, i)))
+                    {
+                        <li class="@(row.Email == me ? "is-me" : "")"><span class="board__rank">@(i + 1)</span><span>@row.Name</span><span class="mono">@HoursText.Hours(row.Hours) h</span></li>
+                    }
+                </ol>
+                @if (board.MyRank is { } r && r > board.Rows.Count) { <p class="small muted">You're #@r with @HoursText.Hours(board.MyHours) h.</p> }
+            </section>
+        }
+
+        @* ---------- My entries ---------- *@
+        <h2 class="h3 qr-admin__h">Your time</h2>
+        <details class="people-admin__more" open="@(Error is not null && Done is null)">
+            <summary>Add time by hand</summary>
+            <HoursEntryForm Teams="teams" Categories="categories" Tree="access.Tree" DefaultTeam="@defTeam" DefaultCategory="@defCategory" Back="/admin/hours" />
+        </details>
+        @if (mine.Count == 0)
+        {
+            <p class="muted">Nothing logged yet. Clock in when you start working and out when you leave.</p>
+        }
+        else
+        {
+            <ul class="entries" role="list">
+                @foreach (var e in mine)
+                {
+                    <li class="entry @(e.Running ? "entry--running" : "")">
+                        <div class="entry__main">
+                            <span class="entry__when">@Day(e.StartUtc) · @Time(e.StartUtc)–@(e.EndUtc is { } end ? Time(end) : "now")</span>
+                            <span class="entry__what">@access.Tree.Name(e.Team) · @e.Category@(e.Source == "lead" ? " · added by a lead" : "")</span>
+                            @if (e.Note is not null) { <span class="entry__note">@e.Note</span> }
+                        </div>
+                        <span class="entry__dur mono">@HoursText.Duration(e.Duration(Store.Now))</span>
+                        @if (!e.Running)
+                        {
+                            <details class="entry__edit">
+                                <summary>Edit</summary>
+                                <HoursEntryForm Entry="e" Teams="teams" Categories="categories" Tree="access.Tree" Back="/admin/hours" />
+                            </details>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery] public string? Done { get; set; }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromQuery(Name = "team")] public string? QueryTeam { get; set; }
+    [SupplyParameterFromQuery(Name = "category")] public string? QueryCategory { get; set; }
+
+    private Access access = new();
+    private string me = "";
+    private HoursEntry? running;
+    private List<AccountGroup> teams = [];
+    private List<string> categories = [];
+    private string defTeam = "", defCategory = "";
+    private List<HoursEntry> all = [];
+    private List<HoursEntry> mine = [];
+    private DateTimeOffset weekFrom, seasonFrom;
+    private string seasonLabel = "";
+    private List<(string Cat, double Hours)> byCategory = [];
+    private sealed record BoardRow(string Email, string Name, double Hours);
+    private sealed record Board(string Org, string Name, string Season, List<BoardRow> Rows, int? MyRank, double MyHours);
+    private List<Board> boards = [];
+
+    private string Indent(AccountGroup g) => new string('\u00a0', access.Tree.Depth(g.Id) * 3);
+    private static string Time(DateTimeOffset t) => t.ToPacific().ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+    private static string Day(DateTimeOffset t) => t.ToPacific().ToString("ddd, MMM d", System.Globalization.CultureInfo.InvariantCulture);
+    private bool SameDay(DateTimeOffset t) => t.ToPacific().Date == Store.Now.ToPacific().Date;
+
+    private double Total(DateTimeOffset? from, DateTimeOffset? to) =>
+        all.Sum(e => Clip(e, from, to));
+
+    /// <summary>Hours of an entry inside [from, to). Running sessions count up to now, capped at 24 h.</summary>
+    private double Clip(HoursEntry e, DateTimeOffset? from, DateTimeOffset? to)
+    {
+        var end = e.EndUtc ?? Min(Store.Now, e.StartUtc + HoursStore.LongSession);
+        var s = from is { } f && e.StartUtc < f ? f : e.StartUtc;
+        var x = to is { } t && end > t ? t : end;
+        return Math.Max(0, (x - s).TotalHours);
+    }
+    private static DateTimeOffset Min(DateTimeOffset a, DateTimeOffset b) => a < b ? a : b;
+
+    private string? Message => (Done, Error) switch
+    {
+        ("in", _) => "You're clocked in. Clock out when you leave.",
+        ("out", _) => "Clocked out. Thanks!",
+        ("out-capped", _) => "Clocked out. That session ran over 24 hours, so it was cut to 24: edit the end time below if you left earlier.",
+        ("added", _) => "Added.",
+        ("saved", _) => "Saved.",
+        ("deleted", _) => "Deleted.",
+        (_, "already-in") => "You're already clocked in.",
+        (_, "not-in") => "You weren't clocked in.",
+        (_, "too-long") => "One entry can be at most 24 hours. Split longer stretches into separate entries.",
+        (_, "future") => "That's in the future.",
+        (_, "time" or "date") => "Check the date and times.",
+        (_, "team") => "Pick one of your teams.",
+        (_, "category") => "Pick a category.",
+        (_, { }) => "That didn't work. Try again.",
+        _ => null,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        access = await Http!.AccessAsync(Accounts);
+        me = access.Account?.Email ?? "";
+        teams = HoursRules.LoggableTeams(access);
+        running = me.Length > 0 ? Store.Running(me) : null;
+
+        var last = me.Length > 0 ? Store.LastUsed(me) : null;
+        defTeam = teams.Any(g => g.Id == QueryTeam) ? QueryTeam! : last is { } l && teams.Any(g => g.Id == l.Team) ? l.Team : teams.FirstOrDefault()?.Id ?? "";
+        var orgs = teams.Select(g => HoursRules.OrgOf(g.Id, access.Tree)).Distinct().ToList();
+        categories = orgs.SelectMany(Store.Categories).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        defCategory = categories.Contains(QueryCategory ?? "") ? QueryCategory! : last is { } l2 && categories.Contains(l2.Category) ? l2.Category : categories.FirstOrDefault() ?? "Other";
+
+        all = me.Length > 0 ? Store.List(emails: [me]) : [];
+        mine = all.Take(40).ToList();
+
+        var today = DateOnly.FromDateTime(Store.Now.ToPacific().DateTime);
+        weekFrom = HoursText.StartOfDayPacific(HoursText.WeekStart(today));
+        var settings = Store.Settings(defTeam.Length > 0 ? HoursRules.OrgOf(defTeam, access.Tree) : JsonAccountStore.AviRoot);
+        var season = settings.SeasonOf(today);
+        seasonFrom = HoursText.StartOfDayPacific(season.Start);
+        seasonLabel = season.Label;
+        byCategory = all.GroupBy(e => e.Category).Select(g => (g.Key, g.Sum(e => Clip(e, seasonFrom, null)))).Where(x => x.Item2 > 0).OrderByDescending(x => x.Item2).ToList();
+
+        // Leaderboards: each organization I'm in that has turned one on. Everyone in it is ranked by this season's hours.
+        var people = (await Accounts.ListAsync()).ToDictionary(a => a.Email);
+        foreach (var org in orgs)
+        {
+            var s = Store.Settings(org);
+            if (!s.Leaderboard) continue;
+            var sn = s.SeasonOf(today);
+            var from = HoursText.StartOfDayPacific(sn.Start);
+            var orgTeams = access.Tree.WithDescendants([org]);
+            var rows = Store.List(teams: orgTeams, from: from)
+                .GroupBy(e => e.Email).Select(g => new BoardRow(g.Key, people.TryGetValue(g.Key, out var p) ? JsonAccountStore.DisplayName(p) : g.Key, g.Sum(e => Clip(e, from, null))))
+                .Where(r => r.Hours > 0).OrderByDescending(r => r.Hours).ToList();
+            var myIndex = rows.FindIndex(r => r.Email == me);
+            boards.Add(new Board(org, access.Tree.Name(org), sn.Label, rows.Take(10).ToList(), myIndex >= 0 ? myIndex + 1 : null, myIndex >= 0 ? rows[myIndex].Hours : 0));
+        }
+    }
+}

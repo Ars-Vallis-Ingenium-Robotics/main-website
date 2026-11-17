@@ -176,15 +176,19 @@ public static class AccountAuth
 
     private static async Task SignInAsync(HttpContext http, Account account, IAccountStore store)
     {
-        await http.SignInAsync(AdminEndpoints.Scheme, PrincipalFor(account));
+        // Stay signed in on this device (30 days, renewed as you use it) so clocking in stays two taps.
+        // Removing someone still ends it on their next click (ValidateAsync).
+        await http.SignInAsync(AdminEndpoints.Scheme, PrincipalFor(account), new AuthenticationProperties { IsPersistent = true });
         await store.MarkSignInAsync(account.Email);
     }
 
     public static string Home(Account a, string? returnUrl)
     {
         var admin = a.SiteWide;
-        var target = SafeReturn(returnUrl) ?? (admin ? "/admin" : "/admin/qr");
-        return admin || target.StartsWith("/admin/qr", StringComparison.Ordinal) || target.StartsWith("/admin/people", StringComparison.Ordinal) ? target : "/admin/qr";
+        // Members mostly come to log hours, so that's home for everyone without site-wide access.
+        var target = SafeReturn(returnUrl) ?? (admin ? "/admin" : "/admin/hours");
+        return admin || target.StartsWith("/admin/qr", StringComparison.Ordinal) || target.StartsWith("/admin/people", StringComparison.Ordinal)
+            || target.StartsWith("/admin/hours", StringComparison.Ordinal) ? target : "/admin/hours";
     }
 
     private static string? SafeReturn(string? r) =>

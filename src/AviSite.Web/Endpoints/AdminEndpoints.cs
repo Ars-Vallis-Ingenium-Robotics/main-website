@@ -99,7 +99,7 @@ public static class AdminAuthSetup
                 o.Cookie.Path = "/admin";
                 o.LoginPath = "/admin/login";
                 o.AccessDeniedPath = "/admin/login";
-                o.ExpireTimeSpan = TimeSpan.FromHours(8);
+                o.ExpireTimeSpan = TimeSpan.FromDays(30); // Google accounts stay signed in (persistent); shared-password logins end with the browser
                 o.SlidingExpiration = true;
                 o.Events.OnValidatePrincipal = AccountAuth.ValidateAsync; // removed people are out on their next click
             });
