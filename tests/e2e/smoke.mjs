@@ -738,8 +738,10 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
   };
   const addPeople = async (pg, list, team, role = "Member") => {
     await pg.fill("#add-list", list); await pg.selectOption("#add-team", team); await pg.selectOption("#add-role", role);
-    await pg.getByRole("button", { name: "Add", exact: true }).click();
-    await pg.locator(".alert").first().waitFor();
+    // Wait for this save's page, not an alert left over from the last one.
+    await Promise.all([pg.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/admin/people"),
+      pg.getByRole("button", { name: "Add", exact: true }).click()]);
+    await pg.waitForLoadState();
   };
 
   const [oc, op] = await as("owner@example.com");

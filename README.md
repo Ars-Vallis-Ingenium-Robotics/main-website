@@ -120,12 +120,18 @@ PayPal webhook URL to register: `https://avirobotics.org/api/paypal/webhook`
 | Store | open, PayPal sandbox | **coming soon**, PayPal `Off` (set `PayPal__Mode=Live` + creds in prod.env to turn donations on) |
 | Service / port | `avi-site-testing` / 5081 | `avi-site-prod` / 5080 |
 | Deploys | every push to `site-v2` (CI) | every push to `main` (CI) |
-| Orders + keys | inside the release (throwaway) | `~/.local/share/avi-site-prod/data` (kept) |
+| Data (accounts, QR codes, usage, orders, sign-in keys) | inside the release: **starts empty after every deploy** (on purpose) | `~/.local/share/avi-site-prod/data` (kept across deploys) |
 
 **Ship to prod:** once testing looks right, `git push origin site-v2:main` (fast-forward).
 CI tests it, runs `deploy-site-prod <sha>` on the server and checks avirobotics.org,
 sms.avirobotics.org and that the shop says coming soon. **Roll back:** push the older commit to
 `main`, or on the server run the prod deploy with an older SHA (releases are kept).
+
+**What's stored where:** page copy, photos and code are in git. Everything people change on the site lives in JSON
+files in the data directory, outside the release folders, so deploys never touch it: `accounts.json` (people, teams),
+`dynamic-qr.json` (codes, scans, saved looks), `countdowns.json`, `tool-usage.json`, `orders.json`, and `keys/`
+(sign-in and cart cookies; losing it just signs everyone out). Locally that's `src/AviSite.Web/App_Data/` (git-ignored).
+Back it up by copying the data folder. In production the site logs a warning at startup if the data directory is inside a release.
 
 Server files: `deploy/systemd/avi-site-{prod,testing}.service` (user units),
 `deploy/nginx/*.conf`, `deploy/scripts/deploy-{staging,production}.sh`.

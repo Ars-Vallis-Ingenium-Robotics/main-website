@@ -124,6 +124,12 @@ services.Configure<ForwardedHeadersOptions>(o =>
 
 var app = builder.Build();
 
+// Accounts, QR codes, orders and sign-in keys live in the data directory. In production it must sit outside the
+// release folders, or every deploy starts empty (Store__DataDirectory in deploy/systemd/avi-site-prod.service).
+// (Testing is throwaway on purpose: it keeps its data inside the release.)
+if (app.Environment.IsProduction() && Path.GetFullPath(dataDir).StartsWith(Path.GetFullPath(builder.Environment.ContentRootPath), StringComparison.Ordinal))
+    app.Logger.LogWarning("Data directory {Dir} is inside the release folder: it will be EMPTY after the next deploy. Set Store__DataDirectory to a path outside releases/.", Path.GetFullPath(dataDir));
+
 app.UseForwardedHeaders();
 app.UseSmsHostRouting(builder.Configuration["SmsSite:Host"] ?? "sms.avirobotics.org");
 app.UseStoreComingSoon();
