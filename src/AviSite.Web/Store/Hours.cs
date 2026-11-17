@@ -184,7 +184,7 @@ public sealed class HoursStore(SiteDb db, TimeProvider clock)
     public (string Team, string Category)? LastUsed(string email)
     {
         using var c = db.Open();
-        return Query(c, $"SELECT {Cols} FROM hours WHERE email = $e ORDER BY created_utc DESC LIMIT 1", ("$e", email)).FirstOrDefault() is { } last
+        return Query(c, $"SELECT {Cols} FROM hours WHERE email = $e AND category <> '' ORDER BY created_utc DESC LIMIT 1", ("$e", email)).FirstOrDefault() is { } last
             ? (last.Team, last.Category) : null;
     }
 
@@ -232,6 +232,10 @@ public sealed class HoursStore(SiteDb db, TimeProvider clock)
 /// <summary>Formatting and time helpers shared by the hours pages.</summary>
 public static class HoursText
 {
+    /// <summary>Quick clock-ins (from the header) start without a reason; this is what shows until one is picked.</summary>
+    public const string NoReason = "No reason yet";
+    public static string Cat(string category) => string.IsNullOrEmpty(category) ? NoReason : category;
+
     public static string Duration(TimeSpan t)
     {
         if (t < TimeSpan.Zero) t = TimeSpan.Zero;

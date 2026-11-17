@@ -1,16 +1,5 @@
-// /admin/hours: keeps the "clocked in for…" timer ticking, and keeps the clock-in confirm saying what you picked.
+// /admin/hours: keeps the clock-in confirm saying what you picked.
 (() => {
-  const el = document.querySelector("[data-clock-since]");
-  if (el) {
-    const since = Number(el.dataset.clockSince) * 1000;
-    // h:mm:ss, every second.
-    const show = () => {
-      const t = Math.max(0, Math.floor((Date.now() - since) / 1000));
-      const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60;
-      el.textContent = `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-    };
-    show(); setInterval(show, 1000);
-  }
   const form = document.querySelector("[data-clock]");
   if (form) {
     const what = form.querySelector("[data-clock-what]");

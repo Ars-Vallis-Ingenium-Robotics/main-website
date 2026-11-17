@@ -1,7 +1,6 @@
 @* The signed-in corner of the main menu. Signed out: "Sign in" + the Join button.
    Signed in: the clock (Clock in / Clocked in · 1:02) as the main button, and an account menu with everything else. *@
 @using AviSite.Web.Endpoints
-@inject HoursStore Hours
 
 @if (!signedIn)
 {
@@ -13,7 +12,7 @@ else if (Sheet)
     <li class="nav__account-sheet">
         <p class="nav__account-name">@name</p>
         <ul role="list">
-            <li><a class="btn btn--accent btn--sm" href="/hours">@(running is null ? "Clock in" : $"Clocked in · {HoursText.Clock(running.Duration(Hours.Now))[..^3]}")</a></li>
+            <li><QuickClock Class="btn btn--accent btn--sm" Confirm="Tap again to clock in"><a class="btn btn--accent btn--sm" href="/admin/hours">Hours</a></QuickClock></li>
             @foreach (var (href, label) in links) { <li><a class="nav__link" href="@href">@label</a></li> }
             <li><form method="post" action="/admin/logout"><AntiforgeryToken /><button class="link-button" type="submit">Sign out</button></form></li>
         </ul>
@@ -21,12 +20,7 @@ else if (Sheet)
 }
 else
 {
-    <li>
-        <a class="btn btn--accent btn--sm nav__join nav__clock @(running is null ? "" : "is-on")" href="/hours">
-            @if (running is null) { <span>Clock in</span> }
-            else { <span class="nav__clock-dot" aria-hidden="true"></span><span>Clocked in · <span data-clock-since="@running.StartUtc.ToUnixTimeSeconds()" data-clock-short>@HoursText.Clock(running.Duration(Hours.Now))[..^3]</span></span> }
-        </a>
-    </li>
+    <li><QuickClock Class="btn btn--accent btn--sm nav__join" /></li>
     <li class="nav__account">
         <details class="account-menu">
             <summary class="account-menu__toggle" aria-label="Account: @name"><span class="account-menu__initial" aria-hidden="true">@initial</span></summary>
@@ -47,7 +41,7 @@ else
     [CascadingParameter] public HttpContext? Http { get; set; }
     private bool signedIn;
     private string name = "", initial = "?";
-    private HoursEntry? running;
+
     private List<(string Href, string Label)> links = [];
 
     protected override void OnInitialized()
@@ -58,7 +52,7 @@ else
         var email = u!.FindFirst(AccountAuth.EmailClaim)?.Value;
         name = u.Identity?.Name ?? "Signed in";
         initial = name.Length > 0 ? char.ToUpperInvariant(name[0]).ToString() : "?";
-        if (email is not null) running = Hours.Running(email);
+
         var admin = u.IsInRole("Admin");
         if (email is not null) links.Add(("/admin/hours", "My hours"));
         if (admin || u.IsInRole("Lead")) links.Add(("/admin/hours/team", "Team hours"));

@@ -22,7 +22,16 @@
         <div class="landing__actions">
             @foreach (var (b, i) in c["landing.buttons"].Links().Select((b, i) => (b, i)))
             {
-                <a class="btn @(i == 0 ? "btn--accent" : b.Href == "/tools" ? "btn--tools" : "btn--ghost-on-ink")" href="@b.Href" target="@b.Target" rel="@b.Rel">@b.Text</a>
+                var cls = $"btn {(i == 0 ? "btn--accent" : b.Href == "/tools" ? "btn--tools" : "btn--ghost-on-ink")}";
+                @if (i == 0)
+                {
+                    @* Signed in, the first button ("Join the club") becomes the clock. *@
+                    <QuickClock Class="@cls" Confirm="Confirm clock in"><a class="@cls" href="@b.Href" target="@b.Target" rel="@b.Rel">@b.Text</a></QuickClock>
+                }
+                else
+                {
+                    <a class="@cls" href="@b.Href" target="@b.Target" rel="@b.Rel">@b.Text</a>
+                }
             }
         </div>
         <a class="landing__cue" href="#intro"><span class="landing__cue-line" aria-hidden="true"></span><span class="mono">Scroll</span></a>

@@ -78,20 +78,45 @@ public static class HoursEndpoints
             {
                 var s = e.StartUtc.ToPacific(); var en = e.EndUtc!.Value.ToPacific();
                 sb.AppendJoin(',', Csv(names.GetValueOrDefault(e.Email, e.Email)), Csv(e.Email), Csv(me.Tree.Name(HoursRules.OrgOf(e.Team, me.Tree))),
-                    Csv(me.Tree.Name(e.Team)), Csv(e.Category), s.ToString("yyyy-MM-dd"), s.ToString("HH:mm"), en.ToString("HH:mm"),
+                    Csv(me.Tree.Name(e.Team)), Csv(HoursText.Cat(e.Category)), s.ToString("yyyy-MM-dd"), s.ToString("HH:mm"), en.ToString("HH:mm"),
                     HoursRanges.Clip(e, from, to, store.Now).ToString("0.00", CultureInfo.InvariantCulture), Csv(e.Note), e.Source).Append('\n');
             }
             var file = $"hours-{(team ?? "all")}-{label.ToLowerInvariant().Replace(' ', '-').Replace("–", "-")}.csv";
             return Results.File(System.Text.Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", file);
         });
 
-        hours.MapPost("/in", async ([FromForm] string team, [FromForm] string category, HttpContext http, IAccountStore accounts, HoursStore store) =>
+        // Clock in. From the hours page: team + category picked. Quick (the header button, from any page): last-used team,
+        // no reason yet (flagged on the hours page until one is picked), and you stay on the page you were on.
+        hours.MapPost("/in", async ([FromForm] string? team, [FromForm] string? category, [FromForm] bool? quick, [FromForm] string? back,
+            HttpContext http, IAccountStore accounts, HoursStore store) =>
         {
             var me = await http.AccessAsync(accounts);
             if (me.Account is null) return Back("/admin/hours", error: "account");
-            if (HoursRules.LoggableTeams(me).All(g => g.Id != team)) return Back("/admin/hours", error: "team");
-            if (!store.Categories(HoursRules.OrgOf(team, me.Tree)).Contains(category)) return Back("/admin/hours", error: "category");
+            var loggable = HoursRules.LoggableTeams(me);
+            if (quick == true)
+            {
+                var last = store.LastUsed(me.Account.Email);
+                team = last is { } l && loggable.Any(g => g.Id == l.Team) ? l.Team : loggable.FirstOrDefault()?.Id;
+                if (team is null) return Back("/admin/hours", error: "team");
+                if (store.ClockIn(me.Account.Email, team, "") is null) return Back("/admin/hours", error: "already-in");
+                return Results.LocalRedirect(SafePage(back));
+            }
+            if (team is null || loggable.All(g => g.Id != team)) return Back("/admin/hours", error: "team");
+            if (category is null || !store.Categories(HoursRules.OrgOf(team, me.Tree)).Contains(category)) return Back("/admin/hours", error: "category");
             return store.ClockIn(me.Account.Email, team, category) is null ? Back("/admin/hours", error: "already-in") : Back("/admin/hours", done: "in");
+        });
+
+        // Pick the reason for a quick clock-in (running or finished). Your own entries only, or a lead's.
+        hours.MapPost("/reason", async ([FromForm] long id, [FromForm] string category, [FromForm] string? back, HttpContext http, IAccountStore accounts, HoursStore store) =>
+        {
+            var me = await http.AccessAsync(accounts);
+            var to = SafeBack(back);
+            var entry = store.Get(id);
+            if (entry is null) return Back(to, error: "gone");
+            if (!HoursRules.CanEdit(me, entry, await accounts.FindAsync(entry.Email))) return Back(to, error: "denied");
+            if (!store.Categories(HoursRules.OrgOf(entry.Team, me.Tree)).Contains(category)) return Back(to, error: "category");
+            entry.Category = category;
+            return store.Update(entry, me.Account?.Email ?? "officer password") ? Back(to, done: "reason") : Back(to, error: "gone");
         });
 
         hours.MapPost("/out", async ([FromForm] string? note, HttpContext http, IAccountStore accounts, HoursStore store) =>
@@ -237,6 +262,10 @@ public static class HoursEndpoints
 
     private static string SafeBack(string? back) =>
         back is not null && back.StartsWith("/admin/hours", StringComparison.Ordinal) && !back.Contains("//") && !back.Contains('\\') ? back.Split('?')[0] : "/admin/hours";
+
+    /// <summary>Back to the page the header clock was pressed on: a local path only.</summary>
+    private static string SafePage(string? back) =>
+        back is not null && back.StartsWith('/') && !back.StartsWith("//") && !back.Contains('\\') && back.Length < 500 ? back : "/admin/hours";
 
     private static IResult Back(string to, string? done = null, string? error = null) =>
         Results.LocalRedirect(to + (done is not null ? "?done=" + done : error is not null ? "?error=" + error : ""));

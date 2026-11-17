@@ -1165,8 +1165,47 @@ await test("hours: the second tap lands where the first one was (no mouse move);
   await c.close(); await oc.close();
 });
 
+await test("hours: quick clock-in from the header (two taps, same spot, stay on the page); no reason gets flagged; both timers tick", async () => {
+  const id = Date.now().toString(36).slice(-5), who = `quick-${id}@example.com`;
+  const [oc, op] = await signIn("owner@example.com");
+  await addPerson(op, who, "sms");
+  const [c, pg] = await signIn(who);
+  await pg.goto(BASE + "/about?x=1");
+  const sum = pg.locator("header .nav--wide [data-quick-clock] > summary");
+  const a = await sum.boundingBox();
+  await pg.mouse.click(a.x + a.width / 2, a.y + a.height / 2);
+  const b = await pg.locator("header .nav--wide .nav__clock--sure").boundingBox();
+  assert.ok(a.x + a.width / 2 > b.x && a.x + a.width / 2 < b.x + b.width && a.y + a.height / 2 > b.y && a.y + a.height / 2 < b.y + b.height, "confirm sits under the first tap");
+  await Promise.all([pg.waitForURL(/\/about\?x=1$/), pg.mouse.click(a.x + a.width / 2, a.y + a.height / 2)]);
+  await pg.locator("header .nav--wide .nav__clock.is-on").waitFor();
+  await pg.goto(BASE + "/admin/hours");
+  assert.match(await pg.locator(".clock__status").innerText(), /No reason yet/);
+  const big = pg.locator(".clock__elapsed"), small = pg.locator("header .nav--wide [data-clock-since]");
+  const [b1, s1] = [await big.innerText(), await small.innerText()];
+  await pg.waitForTimeout(2100);
+  assert.notEqual(await big.innerText(), b1, "big timer ticks"); assert.notEqual(await small.innerText(), s1, "header timer ticks");
+  assert.match(await big.innerText(), /^\d+:\d\d:\d\d$/);
+  await Promise.all([pg.waitForURL(/done=reason/), pg.locator(".clock [data-reason] button", { hasText: "Build" }).click()]);
+  assert.match(await pg.locator(".clock__status").innerText(), /Build/);
+  // Clocked out without a reason: the entry is flagged until one is picked.
+  const tok = await pg.locator('input[name="__RequestVerificationToken"]').first().inputValue();
+  await pg.request.post(BASE + "/admin/hours/out", { form: { __RequestVerificationToken: tok } });
+  await pg.goto(BASE + "/about");
+  await pg.locator("header .nav--wide [data-quick-clock] > summary").click();
+  await Promise.all([pg.waitForURL(/\/about$/), pg.locator("header .nav--wide .nav__clock--sure").click()]);
+  await pg.request.post(BASE + "/admin/hours/out", { form: { __RequestVerificationToken: tok } });
+  await pg.goto(BASE + "/admin/hours");
+  assert.equal(await pg.locator("[data-no-reason]").isVisible(), true, "flag at the top");
+  assert.equal(await pg.locator(".entry--flag").count(), 1);
+  await pg.locator(".entry--flag [data-reason] button", { hasText: "Outreach" }).click(); await pg.waitForLoadState();
+  assert.equal(await pg.locator(".entry--flag").count(), 0); assert.equal(await pg.locator("[data-no-reason]").count(), 0);
+  await c.close(); await oc.close();
+});
+
 await test("header: Sign in when signed out; Clock in + account menu when signed in (sign-in works on public pages)", async () => {
   const anon = await browser.newContext({ viewport: { width: 1280, height: 900 } }); const ap = await anon.newPage();
+  await ap.goto(BASE + "/");
+  assert.match(await ap.locator(".landing__actions > *").first().innerText(), /Join/, "signed out, home's first button is Join");
   await ap.goto(BASE + "/about");
   assert.equal(await ap.locator("header .nav--wide .nav__signin").isVisible(), true, "Sign in link in the header");
   assert.equal(await ap.locator("header .account-menu").count(), 0);
@@ -1174,7 +1213,10 @@ await test("header: Sign in when signed out; Clock in + account menu when signed
   const [c, pg] = await signIn("owner@example.com");
   await pg.goto(BASE + "/about");
   assert.equal(await pg.locator("header .nav--wide .nav__signin").count(), 0, "no Sign in once signed in");
-  assert.equal(await pg.locator("header .nav--wide .nav__clock").isVisible(), true, "clock button in the header");
+  assert.equal(await pg.locator("header .nav--wide [data-quick-clock] > summary").isVisible(), true, "clock button in the header");
+  await pg.goto(BASE + "/");
+  assert.match(await pg.locator(".landing__actions > *").first().innerText(), /Clock|Clocked in/, "home's first button is the clock when signed in");
+  await pg.goto(BASE + "/about");
   await pg.locator("header .nav--wide .account-menu > summary").click();
   for (const label of ["My hours", "QR codes", "People"]) assert.equal(await pg.locator("header .nav--wide .account-menu__panel a", { hasText: label }).isVisible(), true, label);
   await pg.locator("header .nav--wide .account-menu__panel a", { hasText: "QR codes" }).click();

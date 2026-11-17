@@ -37,7 +37,7 @@
                     var isLong = e.Duration(Store.Now) > HoursStore.LongSession;
                     <li class="entry entry--running @(isLong ? "entry--long" : "")" id="@(e.Id == Fix ? "fix" : null)" data-running="@e.Id">
                         <div class="entry__main">
-                            <span class="entry__what"><strong>@Name(e.Email)</strong> · @access.Tree.Name(e.Team) · @e.Category</span>
+                            <span class="entry__what"><strong>@Name(e.Email)</strong> · @access.Tree.Name(e.Team) · @HoursText.Cat(e.Category)</span>
                             <span class="entry__when">since @Stamp(e.StartUtc)</span>
                         </div>
                         <span class="entry__dur mono" title="hours:minutes:seconds">@HoursText.Clock(e.Duration(Store.Now))</span>
@@ -96,7 +96,7 @@
             {
                 <li class="entry">
                     <div class="entry__main">
-                        <span class="entry__what"><strong>@Name(e.Email)</strong> · @access.Tree.Name(e.Team) · @e.Category@(e.Source == "lead" ? " · added by a lead" : e.Source == "manual" ? " · added by hand" : "")</span>
+                        <span class="entry__what"><strong>@Name(e.Email)</strong> · @access.Tree.Name(e.Team) · @HoursText.Cat(e.Category)@(e.Source == "lead" ? " · added by a lead" : e.Source == "manual" ? " · added by hand" : "")</span>
                         <span class="entry__when">@Stamp(e.StartUtc)–@e.EndUtc!.Value.ToPacific().ToString("h:mm tt")</span>
                         @if (e.Note is not null) { <span class="entry__note">@e.Note</span> }
                     </div>

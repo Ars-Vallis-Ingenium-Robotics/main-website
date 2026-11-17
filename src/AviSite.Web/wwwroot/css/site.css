@@ -1935,7 +1935,7 @@
   .team-chip form { display: contents; }
   /* The × is two drawn bars, not a text glyph, so it's centered in every font. */
   .team-chip__x { position: relative; flex: none; border: 0; padding: 0; background: none; cursor: pointer; width: 1.5rem; height: 1.5rem; border-radius: 50%; color: var(--text-muted); }
-  .team-chip__x::before, .team-chip__x::after { content: ""; position: absolute; left: 50%; top: 50%; width: 0.6rem; height: 1.5px; border-radius: 1px; background: currentColor; translate: -50% -50%; rotate: 45deg; }
+  .team-chip__x::before, .team-chip__x::after { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 2px; border-radius: 1px; background: currentColor; translate: -50% -50%; rotate: 45deg; }
   .team-chip__x::after { rotate: -45deg; }
   .team-chip__x:hover, .team-chip__x:focus-visible { background: var(--danger); color: var(--white); outline: none; }
   .people-admin__officer { align-self: end; padding-bottom: var(--s-2); }
@@ -2138,4 +2138,24 @@
   .wk__row-day { min-width: 7.5rem; font-weight: 700; }
   .wk__row input, .wk__row select { min-height: 40px; padding: 0.3rem 0.5rem; border: 1px solid var(--line-input); border-radius: 8px; background: var(--surface); color: var(--fg); font: inherit; }
   .wk__row-dur { margin-left: auto; }
+}
+/* ---------- Quick clock-in (header) and picking a reason later ---------- */
+@layer components {
+  .nav__quick { margin: 0; }
+  .nav__quick-confirm > summary { list-style: none; cursor: pointer; }
+  .nav__quick-confirm > summary::-webkit-details-marker { display: none; }
+  .nav__quick-confirm[open] > summary { display: none; }
+  .nav--wide .nav__quick-confirm .nav__clock { min-width: 6.5rem; justify-content: center; }
+  .nav__clock--sure { --btn-bg: var(--ok); }
+  .nav__account-sheet .nav__quick-confirm .nav__clock { width: 100%; justify-content: center; }
+  .reason { display: grid; gap: var(--s-2); margin: var(--s-2) 0; padding: var(--s-3); border-radius: 12px; border: 2px dashed var(--danger); background: var(--surface); }
+  .reason__lead { margin: 0; font-weight: 700; }
+  .reason__chips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .reason__chip { min-height: 44px; padding: 0 var(--s-4); border: 2px solid var(--fg); border-radius: var(--radius); background: var(--surface); color: var(--fg); font: 700 0.95rem var(--font-mono); cursor: pointer; }
+  .reason__chip:hover, .reason__chip:focus-visible { background: var(--fg); color: var(--surface); }
+  .entry--flag .entry__what { color: var(--danger); font-weight: 700; }
+}
+@layer components {
+  .landing__actions .nav__quick { display: flex; }
+  .landing__actions .nav__clock { min-width: 10rem; justify-content: center; }
 }

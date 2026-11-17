@@ -57,8 +57,8 @@
                                 var top = Math.Clamp((s.Hour + s.Minute / 60.0 - FirstHour) / (LastHour - FirstHour), 0, 1);
                                 var bottom = Math.Clamp(((en.Date > s.Date ? 24 : en.Hour + en.Minute / 60.0) - FirstHour) / (LastHour - FirstHour), 0, 1);
                                 <a class="wk__block" href="/admin/hours?edit=@e.Id#entry-@e.Id" data-week-entry data-start="@s.ToString("HH:mm")" data-end="@en.ToString("HH:mm")"
-                                   style="top: @(Pct(top)); height: @(Pct(Math.Max(bottom - top, 0.02)))" title="@Tree.Name(e.Team) · @e.Category, @s.ToString("h:mm tt")–@en.ToString("h:mm tt")">
-                                    <span>@e.Category</span><span class="wk__time">@s.ToString("h:mm")–@en.ToString("h:mm")</span>
+                                   style="top: @(Pct(top)); height: @(Pct(Math.Max(bottom - top, 0.02)))" title="@Tree.Name(e.Team) · @HoursText.Cat(e.Category), @s.ToString("h:mm tt")–@en.ToString("h:mm tt")">
+                                    <span>@HoursText.Cat(e.Category)</span><span class="wk__time">@s.ToString("h:mm")–@en.ToString("h:mm")</span>
                                 </a>
                             }
                         </div>

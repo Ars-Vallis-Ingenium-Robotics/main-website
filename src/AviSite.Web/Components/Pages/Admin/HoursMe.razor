@@ -27,6 +27,10 @@
         </div>
 
         @if (Message is { } m) { <p class="alert @(Done is not null ? "alert--ok" : "")" role="status">@m</p> }
+        @if (noReason.Count > 0)
+        {
+            <p class="alert" role="status" data-no-reason>@(noReason.Count == 1 ? "One session needs" : $"{noReason.Count} sessions need") a reason: <a href="#entry-@noReason[0].Id">pick one below</a>.</p>
+        }
 
         @* ---------- The clock: two taps in, two taps out ---------- *@
         @if (teams.Count == 0)
@@ -68,9 +72,13 @@
             <div class="clock clock--on @(long_ ? "clock--long" : "")">
                 <p class="clock__status">
                     <span class="clock__dot" aria-hidden="true"></span>
-                    <strong>@access.Tree.Name(running.Team) · @running.Category</strong>
+                    <strong>@access.Tree.Name(running.Team) · @HoursText.Cat(running.Category)</strong>
                     <span>since @Time(running.StartUtc)@(SameDay(running.StartUtc) ? "" : ", " + Day(running.StartUtc))</span>
                 </p>
+                @if (running.Category == "")
+                {
+                    <ReasonPicker Entry="running" Categories="CatsFor(running)" Lead="You clocked in from the header. What are you working on?" />
+                }
                 <p class="clock__elapsed" data-clock-since="@running.StartUtc.ToUnixTimeSeconds()" aria-live="off">@HoursText.Clock(running.Duration(Store.Now))</p>
                 @if (long_)
                 {
@@ -144,11 +152,12 @@
             <ul class="entries" role="list">
                 @foreach (var e in mine)
                 {
-                    <li class="entry @(e.Running ? "entry--running" : "")" id="entry-@e.Id">
+                    <li class="entry @(e.Running ? "entry--running" : "") @(e.Category == "" ? "entry--flag" : "")" id="entry-@e.Id">
                         <div class="entry__main">
                             <span class="entry__when">@Day(e.StartUtc) · @Time(e.StartUtc)–@(e.EndUtc is { } end ? Time(end) : "now")</span>
-                            <span class="entry__what">@access.Tree.Name(e.Team) · @e.Category@(e.Source == "lead" ? " · added by a lead" : "")</span>
+                            <span class="entry__what">@access.Tree.Name(e.Team) · @HoursText.Cat(e.Category)@(e.Source == "lead" ? " · added by a lead" : "")</span>
                             @if (e.Note is not null) { <span class="entry__note">@e.Note</span> }
+                            @if (!e.Running && e.Category == "") { <ReasonPicker Entry="e" Categories="CatsFor(e)" /> }
                         </div>
                         <span class="entry__dur mono" title="hours:minutes:seconds">@HoursText.Clock(e.Duration(Store.Now))</span>
                         @if (!e.Running)
@@ -182,6 +191,7 @@
     private string defTeam = "", defCategory = "";
     private List<HoursEntry> all = [];
     private List<HoursEntry> mine = [];
+    private List<HoursEntry> noReason = [];
     private DateTimeOffset weekFrom, seasonFrom;
     private string seasonLabel = "";
     private List<(string Cat, double Hours)> byCategory = [];
@@ -189,6 +199,7 @@
     private sealed record Board(string Org, string Name, string Season, List<BoardRow> Rows, int? MyRank, double MyHours);
     private List<Board> boards = [];
 
+    private List<string> CatsFor(HoursEntry e) => Store.Categories(HoursRules.OrgOf(e.Team, access.Tree)).ToList();
     private string Indent(AccountGroup g) => new string('\u00a0', access.Tree.Depth(g.Id) * 3);
     private static string Time(DateTimeOffset t) => t.ToPacific().ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture);
     private static string Day(DateTimeOffset t) => t.ToPacific().ToString("ddd, MMM d", System.Globalization.CultureInfo.InvariantCulture);
@@ -215,6 +226,7 @@
         ("added", _) => "Added.",
         ("saved", _) => "Saved.",
         ("deleted", _) => "Deleted.",
+        ("reason", _) => "Got it.",
         (_, "already-in") => "You're already clocked in.",
         (_, "not-in") => "You weren't clocked in.",
         (_, "too-long") => "One entry can be at most 24 hours. Split longer stretches into separate entries.",
@@ -241,6 +253,8 @@
 
         all = me.Length > 0 ? Store.List(emails: [me]) : [];
         mine = all.Take(40).ToList();
+        noReason = all.Where(e => !e.Running && e.Category == "").ToList();
+        foreach (var e in noReason) if (!mine.Contains(e)) mine.Add(e);
         if (Edit is { } editId && mine.All(e => e.Id != editId) && all.FirstOrDefault(e => e.Id == editId) is { } older) mine.Add(older);
 
         var today = DateOnly.FromDateTime(Store.Now.ToPacific().DateTime);
@@ -249,7 +263,7 @@
         var season = settings.SeasonOf(today);
         seasonFrom = HoursText.StartOfDayPacific(season.Start);
         seasonLabel = season.Label;
-        byCategory = all.GroupBy(e => e.Category).Select(g => (g.Key, g.Sum(e => Clip(e, seasonFrom, null)))).Where(x => x.Item2 > 0).OrderByDescending(x => x.Item2).ToList();
+        byCategory = all.GroupBy(e => HoursText.Cat(e.Category)).Select(g => (g.Key, g.Sum(e => Clip(e, seasonFrom, null)))).Where(x => x.Item2 > 0).OrderByDescending(x => x.Item2).ToList();
 
         // Leaderboards: each organization I'm in that has turned one on. Everyone in it is ranked by this season's hours.
         var people = (await Accounts.ListAsync()).ToDictionary(a => a.Email);

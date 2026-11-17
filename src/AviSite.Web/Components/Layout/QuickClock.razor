@@ -1,0 +1,48 @@
+@* The clock button, wherever it appears (header, phone menu, home page). Signed out, or not on a team: whatever
+   ChildContent is (e.g. "Join the club"). Clocked in: a live timer linking to Hours. Otherwise: quick clock-in,
+   tap once to arm and again in the same spot, last-used team, no reason yet (the hours page asks), stay on the page. *@
+@using AviSite.Web.Endpoints
+@inject HoursStore Hours
+@inject IAccountStore Accounts
+
+@if (state == State.Running)
+{
+    <a class="@Class nav__clock is-on" href="/admin/hours">
+        <span class="nav__clock-dot" aria-hidden="true"></span><span>Clocked in · <span data-clock-since="@running!.StartUtc.ToUnixTimeSeconds()">@HoursText.Clock(running.Duration(Hours.Now))</span></span>
+    </a>
+}
+else if (state == State.CanClock)
+{
+    <form method="post" action="/admin/hours/in" class="nav__quick">
+        <AntiforgeryToken /><input type="hidden" name="quick" value="true" /><input type="hidden" name="back" value="@here" />
+        <details class="nav__quick-confirm" data-quick-clock>
+            <summary class="@Class nav__clock" title="Clock in (tap twice)">Clock in</summary>
+            <button class="@Class nav__clock nav__clock--sure" type="submit">@Confirm</button>
+        </details>
+    </form>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public string Class { get; set; } = "btn btn--accent btn--sm";
+    [Parameter] public string Confirm { get; set; } = "Confirm";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    private enum State { Out, Running, CanClock }
+    private State state;
+    private HoursEntry? running;
+    private string here = "/";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var u = Http?.User;
+        if (u?.Identity?.IsAuthenticated != true || u.FindFirst(AccountAuth.EmailClaim)?.Value is not { } email) return;
+        here = Http!.Request.Path + Http.Request.QueryString;
+        running = Hours.Running(email);
+        if (running is not null) state = State.Running;
+        else if (HoursRules.LoggableTeams(await Http.AccessAsync(Accounts)).Count > 0) state = State.CanClock;
+    }
+}

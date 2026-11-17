@@ -1,0 +1,19 @@
+@* For a session started with the header's quick Clock in: one tap on a category sets it. *@
+<form method="post" action="/admin/hours/reason" class="reason" data-reason>
+    <AntiforgeryToken />
+    <input type="hidden" name="id" value="@Entry.Id" />
+    <input type="hidden" name="back" value="/admin/hours" />
+    <p class="reason__lead">@(Lead ?? "Pick a reason for this session:")</p>
+    <div class="reason__chips">
+        @foreach (var c in Categories)
+        {
+            <button class="reason__chip" type="submit" name="category" value="@c">@c</button>
+        }
+    </div>
+</form>
+
+@code {
+    [Parameter, EditorRequired] public HoursEntry Entry { get; set; } = default!;
+    [Parameter, EditorRequired] public List<string> Categories { get; set; } = [];
+    [Parameter] public string? Lead { get; set; }
+}

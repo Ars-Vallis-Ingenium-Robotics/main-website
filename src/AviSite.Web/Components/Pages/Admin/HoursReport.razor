@@ -114,10 +114,10 @@
         var names = (await Accounts.ListAsync()).ToDictionary(a => a.Email, JsonAccountStore.DisplayName);
         string Name(string e) => names.GetValueOrDefault(e, e);
 
-        byCategory = entries.GroupBy(e => e.Category).Select(g => (g.Key, g.Sum(H))).Where(x => x.Item2 > 0).OrderByDescending(x => x.Item2).ToList();
+        byCategory = entries.GroupBy(e => HoursText.Cat(e.Category)).Select(g => (g.Key, g.Sum(H))).Where(x => x.Item2 > 0).OrderByDescending(x => x.Item2).ToList();
         byTeam = entries.GroupBy(e => e.Team).Select(g => (access.Tree.Name(g.Key), g.Sum(H))).Where(x => x.Item2 > 0).OrderByDescending(x => x.Item2).ToList();
         byPerson = entries.GroupBy(e => e.Email).Select(g => (Name(g.Key), g.Sum(H))).Where(x => x.Item2 > 0).OrderByDescending(x => x.Item2).ToList();
-        matrix = entries.GroupBy(e => e.Email).Select(g => (Name(g.Key), byCategory.Select(c => g.Where(e => e.Category == c.Label).Sum(H)).ToList(), g.Sum(H)))
+        matrix = entries.GroupBy(e => e.Email).Select(g => (Name(g.Key), byCategory.Select(c => g.Where(e => HoursText.Cat(e.Category) == c.Label).Sum(H)).ToList(), g.Sum(H)))
             .Where(r => r.Item3 > 0).OrderByDescending(r => r.Item3).ToList();
 
         // Over time: weeks for up to ~6 months, months beyond that.

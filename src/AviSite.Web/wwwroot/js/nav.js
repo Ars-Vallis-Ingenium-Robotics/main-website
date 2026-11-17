@@ -9,15 +9,31 @@
   menu.addEventListener("click", (e) => { if (e.target.closest("a")) menu.open = false; });
 })();
 
-// Header clock ("Clocked in · 1:02"): keep the minutes current.
+// Every running clock on the page (header and the hours page), h:mm:ss, every second.
 (() => {
-  const els = document.querySelectorAll("[data-clock-since][data-clock-short]");
+  const els = document.querySelectorAll("[data-clock-since]");
   if (!els.length) return;
+  const pad = (n) => String(n).padStart(2, "0");
   const tick = () => els.forEach((el) => {
-    const m = Math.max(0, Math.floor((Date.now() - Number(el.dataset.clockSince) * 1000) / 60000));
-    el.textContent = `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+    const t = Math.max(0, Math.floor((Date.now() - Number(el.dataset.clockSince) * 1000) / 1000));
+    el.textContent = `${Math.floor(t / 3600)}:${pad(Math.floor((t % 3600) / 60))}:${pad(t % 60)}`;
   });
-  tick(); setInterval(tick, 20000);
+  tick(); setInterval(tick, 1000);
+})();
+
+// Header quick clock-in: tap once to arm, again (same spot) to clock in. Disarms after a few seconds,
+// on Escape, or on a tap anywhere else, so a stray tap later can't clock you in.
+(() => {
+  document.querySelectorAll("[data-quick-clock]").forEach((d) => {
+    let timer;
+    d.addEventListener("toggle", () => {
+      clearTimeout(timer);
+      if (d.open) timer = setTimeout(() => { d.open = false; }, 5000);
+    });
+  });
+  const closeAll = (except) => document.querySelectorAll("[data-quick-clock][open]").forEach((d) => { if (d !== except) d.open = false; });
+  document.addEventListener("click", (e) => closeAll(e.target.closest("[data-quick-clock]")));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAll(null); });
 })();
 
 // Theme toggle (header): flips between dark and light and remembers it in this browser.
