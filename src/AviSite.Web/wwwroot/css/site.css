@@ -41,7 +41,8 @@
     --white: #ffffff;
     --slate: #364964;        /* dog dark grey */
     --steel: #6c7283;        /* dog light grey: decorative / large text only (4.5:1 on paper, 4.2 on paper-2) */
-    --antenna: #911b1b;      /* dog antenna red: tiny details only */
+    --antenna: #911b1b;      /* AVI RED (dog antenna): details + the Free tools button. White text on it = 8.8:1 */
+    --antenna-hover: #a82424;
 
     --accent: #0c63e6;       /* AVI BLURPLE: buttons, links, bands. White text on it = 5.3:1 */
     --accent-hover: #0a52c0;
@@ -224,6 +225,8 @@
   .btn--ghost { --btn-bg: transparent; --btn-fg: var(--ink); --btn-border: var(--ink); }
   .btn--ghost-on-ink { --btn-bg: transparent; --btn-fg: var(--on-ink); --btn-border: var(--on-ink); --btn-shadow: var(--accent-on-ink); }
   .btn--ok { --btn-bg: var(--ok); --btn-fg: var(--white); }
+  .btn--tools { --btn-bg: var(--antenna); --btn-fg: var(--white); --btn-shadow: var(--accent-on-ink); }
+  .btn--tools:hover { --btn-bg: var(--antenna-hover); }
   .btn--sm { min-height: 36px; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
   .btn--lg { min-height: 52px; padding: 0.9rem 1.6rem; font-size: 1.05rem; }
 

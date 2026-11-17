@@ -16,7 +16,7 @@ label: AVI Robotics: Ars Vallis Ingenium, the Valley of Artistic Ingenuity
 - Ars Vallis Ingenium
 - Valley of Artistic Ingenuity
 
-<!-- First button is the bright one. -->
+<!-- First button is the bright one; the /tools button is AVI red. -->
 ## landing.buttons
 - [Join the club](/join)
 - [Our story](/history)
