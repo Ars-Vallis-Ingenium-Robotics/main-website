@@ -123,25 +123,36 @@ public interface IDynamicQrStore
     Task<bool> IsTakenAsync(string slug, CancellationToken ct = default);
 }
 
-/// <summary>Same draft storage as orders: one JSON file in the data directory, atomic rewrite.</summary>
-public sealed class JsonDynamicQrStore : IDynamicQrStore
+/// <summary>
+/// Dynamic QR codes in SQLite (<see cref="SiteDb"/>). A scan updates a few counters on one row and one day row,
+/// never the logos. On first start it imports the old dynamic-qr.json and renames it to dynamic-qr.json.imported.
+/// </summary>
+public sealed class SqliteDynamicQrStore : IDynamicQrStore
 {
     private static readonly TimeZoneInfo Pacific = TimeZoneInfo.FindSystemTimeZoneById("America/Los_Angeles");
-    private readonly string _path;
-    private readonly SemaphoreSlim _lock = new(1, 1);
-    private readonly List<DynamicQr> _codes;
+    private readonly SiteDb _db;
     private readonly TimeProvider _clock;
+    private readonly SemaphoreSlim _write = new(1, 1);
+    private const string Columns = "slug, target, campaign, note, active, team, created_by, created_utc, updated_utc, scans, last_scan_utc, weekday, hour, devices, look, look_updated_utc, look_by, deleted_utc, deleted_by";
 
-    public JsonDynamicQrStore(IOptions<StoreOptions> options, IWebHostEnvironment env, TimeProvider clock)
+    public SqliteDynamicQrStore(SiteDb db, IOptions<StoreOptions> options, IWebHostEnvironment env, TimeProvider clock, ILogger<SqliteDynamicQrStore> log)
     {
+        _db = db;
         _clock = clock;
-        var dir = Path.Combine(env.ContentRootPath, options.Value.DataDirectory);
-        Directory.CreateDirectory(dir);
-        _path = Path.Combine(dir, "dynamic-qr.json");
-        _codes = File.Exists(_path)
-            ? JsonSerializer.Deserialize<List<DynamicQr>>(File.ReadAllText(_path), JsonDefaults.Options) ?? []
+        using var c = db.Open();
+        using (var cmd = SiteDb.Cmd(c, "SELECT COUNT(*) FROM qr_codes")) if ((long)cmd.ExecuteScalar()! > 0) return;
+        var json = Path.Combine(env.ContentRootPath, options.Value.DataDirectory, "dynamic-qr.json");
+        var codes = File.Exists(json)
+            ? JsonSerializer.Deserialize<List<DynamicQr>>(File.ReadAllText(json), JsonDefaults.Options) ?? []
             : Seed(clock.GetUtcNow());
-        if (!File.Exists(_path)) Save();
+        using var tx = c.BeginTransaction();
+        foreach (var q in codes) Insert(c, tx, q);
+        tx.Commit();
+        if (File.Exists(json))
+        {
+            File.Move(json, json + ".imported", overwrite: true);
+            log.LogInformation("Imported {Count} dynamic QR codes from dynamic-qr.json into site.db (old file kept as dynamic-qr.json.imported)", codes.Count);
+        }
     }
 
     /// <summary>The four codes already printed from the old site (legacy-static/dynamicqr/*).</summary>
@@ -153,18 +164,71 @@ public sealed class JsonDynamicQrStore : IDynamicQrStore
         new() { Slug = "four", Target = "https://discord.gg/NHMHVrp473", Campaign = "Discord Join", CreatedUtc = now, UpdatedUtc = now },
     ];
 
-    public async Task<IReadOnlyList<DynamicQr>> ListAsync(CancellationToken ct = default)
+    private static void Insert(Microsoft.Data.Sqlite.SqliteConnection c, Microsoft.Data.Sqlite.SqliteTransaction tx, DynamicQr q)
     {
-        await _lock.WaitAsync(ct);
-        try { return _codes.Where(c => c.DeletedUtc is null).Select(Clone).ToList()!; }
-        finally { _lock.Release(); }
+        SiteDb.Exec(c, $"INSERT INTO qr_codes ({Columns}) VALUES ($slug,$target,$campaign,$note,$active,$team,$by,$created,$updated,$scans,$last,$wk,$hr,$dev,$look,$lookAt,$lookBy,$del,$delBy)", tx, Params(q));
+        foreach (var (day, n) in q.Daily) SiteDb.Exec(c, "INSERT INTO qr_daily (slug, day, scans) VALUES ($s,$d,$n)", tx, ("$s", q.Slug), ("$d", day), ("$n", n));
+        if (q.LookLogo is not null) SiteDb.Exec(c, "INSERT INTO qr_logos (slug, data) VALUES ($s,$d)", tx, ("$s", q.Slug), ("$d", q.LookLogo));
     }
 
-    public async Task<DynamicQr?> GetAsync(string slug, CancellationToken ct = default)
+    private static (string, object?)[] Params(DynamicQr q) =>
+    [
+        ("$slug", q.Slug), ("$target", q.Target), ("$campaign", q.Campaign), ("$note", q.Note), ("$active", q.Active ? 1 : 0),
+        ("$team", q.Team), ("$by", q.CreatedBy), ("$created", SiteDb.Iso(q.CreatedUtc)), ("$updated", SiteDb.Iso(q.UpdatedUtc)),
+        ("$scans", q.Scans), ("$last", SiteDb.Iso(q.LastScanUtc)),
+        ("$wk", JsonSerializer.Serialize(q.Weekday is { Length: 7 } ? q.Weekday : new int[7])),
+        ("$hr", JsonSerializer.Serialize(q.Hour is { Length: 24 } ? q.Hour : new int[24])),
+        ("$dev", JsonSerializer.Serialize(q.Devices)), ("$look", q.Look), ("$lookAt", SiteDb.Iso(q.LookUpdatedUtc)), ("$lookBy", q.LookBy),
+        ("$del", SiteDb.Iso(q.DeletedUtc)), ("$delBy", q.DeletedBy),
+    ];
+
+    private static DynamicQr Read(Microsoft.Data.Sqlite.SqliteDataReader r) => new()
     {
-        await _lock.WaitAsync(ct);
-        try { return Find(slug) is { DeletedUtc: null } c ? Clone(c) : null; }
-        finally { _lock.Release(); }
+        Slug = r.GetString(0), Target = r.GetString(1), Campaign = r.GetString(2), Note = SiteDb.StrOrNull(r, 3), Active = r.GetInt64(4) != 0,
+        Team = SiteDb.StrOrNull(r, 5), CreatedBy = SiteDb.StrOrNull(r, 6), CreatedUtc = SiteDb.Time(r.GetString(7)), UpdatedUtc = SiteDb.Time(r.GetString(8)),
+        Scans = (int)r.GetInt64(9), LastScanUtc = SiteDb.TimeOrNull(r, 10),
+        Weekday = JsonSerializer.Deserialize<int[]>(r.GetString(11)) ?? new int[7],
+        Hour = JsonSerializer.Deserialize<int[]>(r.GetString(12)) ?? new int[24],
+        Devices = JsonSerializer.Deserialize<Dictionary<string, int>>(r.GetString(13)) ?? [],
+        Look = SiteDb.StrOrNull(r, 14), LookUpdatedUtc = SiteDb.TimeOrNull(r, 15), LookBy = SiteDb.StrOrNull(r, 16),
+        DeletedUtc = SiteDb.TimeOrNull(r, 17), DeletedBy = SiteDb.StrOrNull(r, 18),
+    };
+
+    private string DailyFrom() => TimeZoneInfo.ConvertTime(_clock.GetUtcNow(), Pacific).Date.AddDays(-89).ToString("yyyy-MM-dd");
+
+    /// <summary>Loads codes (no logos) with their last 90 days of scans.</summary>
+    private List<DynamicQr> Load(Microsoft.Data.Sqlite.SqliteConnection c, string where, params (string, object?)[] args)
+    {
+        var list = new List<DynamicQr>();
+        using (var cmd = SiteDb.Cmd(c, $"SELECT {Columns} FROM qr_codes WHERE {where}", null, args))
+        using (var r = cmd.ExecuteReader()) while (r.Read()) list.Add(Read(r));
+        if (list.Count == 0) return list;
+        var bySlug = list.ToDictionary(q => q.Slug);
+        using (var cmd = SiteDb.Cmd(c, "SELECT slug, day, scans FROM qr_daily WHERE day >= $from ORDER BY day", null, ("$from", DailyFrom())))
+        using (var r = cmd.ExecuteReader())
+            while (r.Read()) if (bySlug.TryGetValue(r.GetString(0), out var q)) q.Daily[r.GetString(1)] = (int)r.GetInt64(2);
+        return list;
+    }
+
+    public Task<IReadOnlyList<DynamicQr>> ListAsync(CancellationToken ct = default)
+    {
+        using var c = _db.Open();
+        return Task.FromResult<IReadOnlyList<DynamicQr>>(Load(c, "deleted_utc IS NULL ORDER BY created_utc"));
+    }
+
+    public Task<DynamicQr?> GetAsync(string slug, CancellationToken ct = default)
+    {
+        using var c = _db.Open();
+        return Task.FromResult(Get(c, slug, includeDeleted: false));
+    }
+
+    private DynamicQr? Get(Microsoft.Data.Sqlite.SqliteConnection c, string slug, bool includeDeleted)
+    {
+        var q = Load(c, "slug = $s COLLATE NOCASE" + (includeDeleted ? "" : " AND deleted_utc IS NULL"), ("$s", slug)).FirstOrDefault();
+        if (q is null) return null;
+        using var cmd = SiteDb.Cmd(c, "SELECT data FROM qr_logos WHERE slug = $s", null, ("$s", q.Slug));
+        q.LookLogo = cmd.ExecuteScalar() as string;
+        return q;
     }
 
     public static string DeviceOf(string? ua)
@@ -178,96 +242,96 @@ public sealed class JsonDynamicQrStore : IDynamicQrStore
 
     public async Task<DynamicQr?> ScanAsync(string slug, string? userAgent = null, CancellationToken ct = default)
     {
-        await _lock.WaitAsync(ct);
+        await _write.WaitAsync(ct);
         try
         {
-            var c = Find(slug);
-            if (c is null) return null;
-            if (c.DeletedUtc is not null) return new DynamicQr { Slug = c.Slug, Active = false }; // old prints → home page
-            if (c.Active)
+            using var c = _db.Open();
+            using var tx = c.BeginTransaction();
+            DynamicQr? q;
+            using (var cmd = SiteDb.Cmd(c, $"SELECT {Columns} FROM qr_codes WHERE slug = $s COLLATE NOCASE", tx, ("$s", slug)))
+            using (var r = cmd.ExecuteReader()) q = r.Read() ? Read(r) : null;
+            if (q is null) return null;
+            if (q.DeletedUtc is not null) return new DynamicQr { Slug = q.Slug, Active = false }; // old prints → home page
+            if (q.Active)
             {
                 var now = _clock.GetUtcNow();
                 var local = TimeZoneInfo.ConvertTime(now, Pacific);
-                var day = local.ToString("yyyy-MM-dd");
-                if (c.Weekday is not { Length: 7 }) c.Weekday = new int[7];
-                if (c.Hour is not { Length: 24 }) c.Hour = new int[24];
-                c.Weekday[(int)local.DayOfWeek]++;
-                c.Hour[local.Hour]++;
+                q.Weekday[(int)local.DayOfWeek]++;
+                q.Hour[local.Hour]++;
                 var device = DeviceOf(userAgent);
-                c.Devices[device] = c.Devices.GetValueOrDefault(device) + 1;
-                c.Scans++;
-                c.LastScanUtc = now;
-                c.Daily[day] = c.Daily.GetValueOrDefault(day) + 1;
-                while (c.Daily.Count > 90) c.Daily.Remove(c.Daily.Keys.First());
-                Save();
+                q.Devices[device] = q.Devices.GetValueOrDefault(device) + 1;
+                q.Scans++;
+                q.LastScanUtc = now;
+                SiteDb.Exec(c, "UPDATE qr_codes SET scans = scans + 1, last_scan_utc = $t, weekday = $wk, hour = $hr, devices = $dev WHERE slug = $s", tx,
+                    ("$t", SiteDb.Iso(now)), ("$wk", JsonSerializer.Serialize(q.Weekday)), ("$hr", JsonSerializer.Serialize(q.Hour)),
+                    ("$dev", JsonSerializer.Serialize(q.Devices)), ("$s", q.Slug));
+                SiteDb.Exec(c, "INSERT INTO qr_daily (slug, day, scans) VALUES ($s, $d, 1) ON CONFLICT(slug, day) DO UPDATE SET scans = scans + 1", tx,
+                    ("$s", q.Slug), ("$d", local.ToString("yyyy-MM-dd")));
             }
-            return Clone(c);
+            tx.Commit();
+            return q;
         }
-        finally { _lock.Release(); }
+        finally { _write.Release(); }
     }
 
     public async Task<bool> CreateAsync(DynamicQr code, CancellationToken ct = default)
     {
-        await _lock.WaitAsync(ct);
+        await _write.WaitAsync(ct);
         try
         {
-            if (Find(code.Slug) is not null) return false;
+            using var c = _db.Open();
+            if (Get(c, code.Slug, includeDeleted: true) is not null) return false;
             code.CreatedUtc = code.UpdatedUtc = _clock.GetUtcNow();
-            _codes.Add(code);
-            Save();
+            using var tx = c.BeginTransaction();
+            Insert(c, tx, code);
+            tx.Commit();
             return true;
         }
-        finally { _lock.Release(); }
+        finally { _write.Release(); }
     }
 
     public async Task<bool> UpdateAsync(string slug, Action<DynamicQr> change, CancellationToken ct = default)
     {
-        await _lock.WaitAsync(ct);
+        await _write.WaitAsync(ct);
         try
         {
-            var c = Find(slug);
-            if (c is null || c.DeletedUtc is not null) return false;
-            change(c);
-            c.Slug = slug; // the printed address never changes
-            c.UpdatedUtc = _clock.GetUtcNow();
-            Save();
+            using var c = _db.Open();
+            var q = Get(c, slug, includeDeleted: false);
+            if (q is null) return false;
+            var printed = q.Slug;
+            change(q);
+            q.Slug = printed; // the printed address never changes
+            q.UpdatedUtc = _clock.GetUtcNow();
+            using var tx = c.BeginTransaction();
+            SiteDb.Exec(c, """
+                UPDATE qr_codes SET target=$target, campaign=$campaign, note=$note, active=$active, team=$team, created_by=$by,
+                    updated_utc=$updated, look=$look, look_updated_utc=$lookAt, look_by=$lookBy WHERE slug=$slug
+                """, tx, Params(q));
+            if (q.LookLogo is null) SiteDb.Exec(c, "DELETE FROM qr_logos WHERE slug = $s", tx, ("$s", q.Slug));
+            else SiteDb.Exec(c, "INSERT INTO qr_logos (slug, data) VALUES ($s,$d) ON CONFLICT(slug) DO UPDATE SET data = excluded.data", tx, ("$s", q.Slug), ("$d", q.LookLogo));
+            tx.Commit();
             return true;
         }
-        finally { _lock.Release(); }
+        finally { _write.Release(); }
     }
 
     public async Task<bool> DeleteAsync(string slug, string? by, CancellationToken ct = default)
     {
-        await _lock.WaitAsync(ct);
+        await _write.WaitAsync(ct);
         try
         {
-            var c = Find(slug);
-            if (c is null || c.DeletedUtc is not null) return false;
-            c.DeletedUtc = c.UpdatedUtc = _clock.GetUtcNow();
-            c.DeletedBy = by;
-            c.Active = false;
-            Save();
-            return true;
+            using var c = _db.Open();
+            var now = SiteDb.Iso(_clock.GetUtcNow());
+            using var cmd = SiteDb.Cmd(c, "UPDATE qr_codes SET deleted_utc = $t, deleted_by = $by, active = 0, updated_utc = $t WHERE slug = $s COLLATE NOCASE AND deleted_utc IS NULL",
+                null, ("$t", now), ("$by", by), ("$s", slug));
+            return cmd.ExecuteNonQuery() > 0;
         }
-        finally { _lock.Release(); }
+        finally { _write.Release(); }
     }
 
-    public async Task<bool> IsTakenAsync(string slug, CancellationToken ct = default)
+    public Task<bool> IsTakenAsync(string slug, CancellationToken ct = default)
     {
-        await _lock.WaitAsync(ct);
-        try { return Find(slug) is not null; }
-        finally { _lock.Release(); }
+        using var c = _db.Open();
+        return Task.FromResult(Get(c, slug, includeDeleted: true) is not null);
     }
-
-    private DynamicQr? Find(string slug) => _codes.FirstOrDefault(c => c.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase));
-
-    private void Save()
-    {
-        var tmp = _path + ".tmp";
-        File.WriteAllText(tmp, JsonSerializer.Serialize(_codes, JsonDefaults.Options));
-        File.Move(tmp, _path, overwrite: true);
-    }
-
-    private static DynamicQr? Clone(DynamicQr? c) =>
-        c is null ? null : JsonSerializer.Deserialize<DynamicQr>(JsonSerializer.Serialize(c, JsonDefaults.Options), JsonDefaults.Options);
 }

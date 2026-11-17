@@ -127,11 +127,16 @@ CI tests it, runs `deploy-site-prod <sha>` on the server and checks avirobotics.
 sms.avirobotics.org and that the shop says coming soon. **Roll back:** push the older commit to
 `main`, or on the server run the prod deploy with an older SHA (releases are kept).
 
-**What's stored where:** page copy, photos and code are in git. Everything people change on the site lives in JSON
-files in the data directory, outside the release folders, so deploys never touch it: `accounts.json` (people, teams),
-`dynamic-qr.json` (codes, scans, saved looks), `countdowns.json`, `tool-usage.json`, `orders.json`, and `keys/`
-(sign-in and cart cookies; losing it just signs everyone out). Locally that's `src/AviSite.Web/App_Data/` (git-ignored).
-Back it up by copying the data folder. In production the site logs a warning at startup if the data directory is inside a release.
+**What's stored where:** page copy, photos and code are in git. Everything people change on the site lives in the
+data directory, outside the release folders, so deploys never touch it:
+
+- `site.db` (SQLite): dynamic QR codes (scans, saved looks, logos) and hours. Schema steps live in `Store/SiteDb.cs`
+  and apply on startup; old `dynamic-qr.json` is imported once and kept as `dynamic-qr.json.imported`.
+- `accounts.json` (people, teams), `countdowns.json`, `tool-usage.json`, `orders.json`: small JSON files.
+- `keys/`: sign-in and cart cookies (losing it just signs everyone out).
+
+Locally that's `src/AviSite.Web/App_Data/` (git-ignored). Back up with `sqlite3 site.db ".backup site-backup.db"`
+(safe while the site runs) plus a copy of the JSON files and `keys/`. In production the site logs a warning at startup if the data directory is inside a release.
 
 Server files: `deploy/systemd/avi-site-{prod,testing}.service` (user units),
 `deploy/nginx/*.conf`, `deploy/scripts/deploy-{staging,production}.sh`.

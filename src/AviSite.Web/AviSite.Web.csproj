@@ -5,7 +5,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <!-- Fail the build if any package (including SQLite's native library) has a known vulnerability. -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- SQLite: one file in the data directory (App_Data/site.db). The bundle is pinned to the patched native
+         SQLite (CVE-2025-6965 fixed in 2.1.12+); don't let it float back down. -->
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.15" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.13" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Dev-only settings (fake PayPal, dev admin password) must never reach the server. -->

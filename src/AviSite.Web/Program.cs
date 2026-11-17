@@ -44,7 +44,8 @@ services.AddSingleton<ICatalog, JsonCatalog>();
 services.AddSingleton<IOrderStore, JsonOrderStore>();
 // Dynamic QR codes (/dynamicqr/{slug}, edited in /admin/qr)
 services.Configure<DynamicQrOptions>(builder.Configuration.GetSection(DynamicQrOptions.Section));
-services.AddSingleton<IDynamicQrStore, JsonDynamicQrStore>();
+services.AddSingleton<SiteDb>();
+services.AddSingleton<IDynamicQrStore, SqliteDynamicQrStore>();
 services.AddHttpClient("google-sheet");
 services.AddHttpClient("google-signin", c => c.Timeout = TimeSpan.FromSeconds(15));
 // Countdowns (/countdown, edited in /admin/countdowns)
@@ -123,6 +124,10 @@ services.Configure<ForwardedHeadersOptions>(o =>
 });
 
 var app = builder.Build();
+
+// Open the database (applying any new schema steps) and import old JSON data now, not on the first request,
+// so a problem shows up at startup instead of in the middle of someone's scan.
+app.Services.GetRequiredService<IDynamicQrStore>();
 
 // Accounts, QR codes, orders and sign-in keys live in the data directory. In production it must sit outside the
 // release folders, or every deploy starts empty (Store__DataDirectory in deploy/systemd/avi-site-prod.service).
