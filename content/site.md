@@ -60,6 +60,7 @@ A student-led engineering club at Fresno State and home of Sequoia Marine Soluti
 - [YouTube](youtube)
 - [Linktree](linktree)
 - [Member portal](portal)
+- [Privacy](/privacy)
 
 ## sms.footer.about
 The MATE ROV company of [AVI Robotics](avi:/) at Fresno State. {legal-name} is a {status} nonprofit, {ein}.
@@ -81,3 +82,4 @@ The MATE ROV company of [AVI Robotics](avi:/) at Fresno State. {legal-name} is a
 - [Join](avi:/join)
 - [Sponsor or donate](avi:/sponsors)
 - [SMS Team Tee](avi:/shop/sms-team-tee)
+- [Privacy](avi:/privacy)

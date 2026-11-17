@@ -80,4 +80,10 @@ public sealed class AdminOptions
 
     /// <summary>Output of <c>dotnet run -- hash-password</c>. Empty disables admin login.</summary>
     public string? PasswordHash { get; set; }
+
+    /// <summary>
+    /// Team logins (team name → password hash). A team can only see and edit its own dynamic QR codes,
+    /// whose names all start with "&lt;team&gt;-". Set in the env file, e.g. Admin__Teams__sms=pbkdf2-sha256$…
+    /// </summary>
+    public Dictionary<string, string> Teams { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }

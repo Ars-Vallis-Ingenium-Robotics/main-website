@@ -6,8 +6,9 @@
 
 <section class="section">
     <div class="wrap narrow narrow--form">
-        <p class="eyebrow">Officers only</p>
-        <h1 class="h1">Shop admin</h1>
+        <p class="eyebrow">Officers and team leads</p>
+        <h1 class="h1">Sign in</h1>
+        <p class="muted">Officers get the shop, countdowns and every QR code. A team password opens just that team's QR codes.</p>
         @if (string.IsNullOrEmpty(Admin.Value.PasswordHash))
         {
             <p class="alert" role="alert">Admin login is disabled. Set <code>Admin:PasswordHash</code> (see README).</p>

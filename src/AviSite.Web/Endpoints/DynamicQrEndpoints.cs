@@ -19,7 +19,7 @@ public static class DynamicQrEndpoints
         IHttpClientFactory clients, IOptions<DynamicQrOptions> options, ILoggerFactory logs, CancellationToken ct)
     {
         // HEAD (link checkers, previews) redirects without counting.
-        var code = HttpMethods.IsHead(http.Request.Method) ? await store.GetAsync(slug, ct) : await store.ScanAsync(slug, ct);
+        var code = HttpMethods.IsHead(http.Request.Method) ? await store.GetAsync(slug, ct) : await store.ScanAsync(slug, http.Request.Headers.UserAgent.ToString(), ct);
         if (code is null) return Results.NotFound();
         http.Response.Headers.CacheControl = "no-store"; // every scan must reach us
         if (!code.Active) return Results.Redirect("/");

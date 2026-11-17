@@ -39,25 +39,59 @@
   }
   const pressTheme = (name) => $$("[data-qr-theme]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.qrTheme === name)));
   function readLook() { const l = {}; for (const k of [...LOOK_KEYS, ...EXTRA_KEYS]) l[k] = RADIOS.has(k) ? radio(k) : val(k); return l; }
-  function saveLook() { try { localStorage.setItem(STORE, JSON.stringify({ ...readLook(), theme: currentTheme })); } catch { /* fine */ } }
+  // Nothing is kept in the browser unless the visitor asks ("Remember my look" or "Save look").
+  const remembering = () => !!page.querySelector("[data-qr-remember]")?.checked;
+  function saveLook() {
+    if (!remembering()) return;
+    try { localStorage.setItem(STORE, JSON.stringify({ ...readLook(), theme: currentTheme })); } catch { /* fine */ }
+  }
+  function setLook(l) {
+    for (const [k, v] of Object.entries(l)) {
+      if (k === "theme" || k === "name" || v === undefined || v === null || (k === "logo" && v === "upload")) continue;
+      (RADIOS.has(k) ? setRadio : setVal)(k, v);
+    }
+  }
   function loadLook() {
     try {
       const l = JSON.parse(localStorage.getItem(STORE) || "null");
       if (!l) return false;
-      for (const [k, v] of Object.entries(l)) {
-        if (k === "theme" || v === undefined || v === null || (k === "logo" && v === "upload")) continue;
-        (RADIOS.has(k) ? setRadio : setVal)(k, v);
-      }
+      setLook(l);
       currentTheme = l.theme || null; pressTheme(currentTheme);
       return true;
     } catch { return false; }
   }
+
+  // ---------- Saved looks (only when someone clicks "Save look") and shareable look links ----------
+  const SAVED = "avi-qr-saved";
+  const readSaved = () => { try { return JSON.parse(localStorage.getItem(SAVED) || "[]"); } catch { return []; } };
+  const writeSaved = (list) => { try { localStorage.setItem(SAVED, JSON.stringify(list)); return true; } catch { return false; } };
+  function drawSaved() {
+    const box = page.querySelector("[data-qr-saved]");
+    if (!box) return;
+    const list = readSaved();
+    box.innerHTML = list.map((l, i) => `<span class="qr-saved__item"><button type="button" class="qr-saved__use" data-qr-use="${i}">${xml(l.name)}</button><button type="button" class="qr-saved__del" data-qr-del="${i}" aria-label="Delete ${xml(l.name)}">×</button></span>`).join("");
+  }
+  const encodeLook = (l) => btoa(unescape(encodeURIComponent(JSON.stringify(l)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const decodeLook = (t) => JSON.parse(decodeURIComponent(escape(atob(t.replace(/-/g, "+").replace(/_/g, "/")))));
 
   // ---------- What a single code says ----------
   const esc = (s) => String(s).replace(/([\\;,:"])/g, "\\$1");
   function payload() {
     switch (val("kind")) {
       case "text": return val("text");
+      case "event": {
+        if (!val("evtitle") || !val("evstart")) return "";
+        const ics = (v) => { const d = new Date(v); return isNaN(d) ? "" : d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, ""); };
+        const icsText = (t) => String(t).replace(/([\\;,])/g, "\\$1").replace(/\n/g, "\\n");
+        const start = ics(val("evstart")), end = ics(val("evend") || val("evstart"));
+        return ["BEGIN:VEVENT", `SUMMARY:${icsText(val("evtitle"))}`, `DTSTART:${start}`, `DTEND:${end}`,
+          val("evwhere") && `LOCATION:${icsText(val("evwhere"))}`, val("evnote") && `DESCRIPTION:${icsText(val("evnote"))}`, "END:VEVENT"].filter(Boolean).join("\n");
+      }
+      case "geo": {
+        const lat = parseFloat(val("lat")), lng = parseFloat(val("lng"));
+        if (isFinite(lat) && isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return `geo:${lat},${lng}`;
+        return val("place").trim() ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(val("place").trim()) : "";
+      }
       case "wifi": return val("ssid") ? `WIFI:T:${val("wsec")};S:${esc(val("ssid"))};${val("wsec") === "nopass" ? "" : `P:${esc(val("wpass"))};`}${val("whidden") ? "H:true;" : ""};` : "";
       case "email": {
         if (!val("email")) return "";
@@ -200,13 +234,14 @@
     const ox = pad, oy = pad + (framed && s.frame === "above" ? band : 0);
 
     const parts = [];
-    if (framed && s.frame !== "badge") parts.push(`<rect width="${f(TW)}" height="${f(TH)}" rx="${Math.max(1.5, +s.radius)}" fill="${s.fcolor}"/>`);
+    // Corners stay concentric: the frame's radius is the code's radius plus the gap between them.
+    if (framed && s.frame !== "badge") parts.push(`<rect width="${f(TW)}" height="${f(TH)}" rx="${f(+s.radius + pad)}" fill="${s.fcolor}"/>`);
     if (s.bgmode !== "none") {
       let bgFill = s.bg;
       if (s.bgmode === "linear") { defs.push(gradient(id + "bg", "linear", s.bg, s.bg2, 135, ox, oy, W)); bgFill = `url(#${id}bg)`; }
       parts.push(`<rect x="${ox}" y="${oy}" width="${W}" height="${W}" rx="${+s.radius}" fill="${bgFill}"/>`);
     }
-    if (framed && s.frame === "badge") parts.push(`<rect x="${f(ox - 0.7)}" y="${f(oy - 0.7)}" width="${f(W + 1.4)}" height="${f(W + 1.4)}" rx="${+s.radius + 1.2}" fill="none" stroke="${s.fcolor}" stroke-width="0.7"/>`);
+    if (framed && s.frame === "badge") parts.push(`<rect x="${f(ox - 0.7)}" y="${f(oy - 0.7)}" width="${f(W + 1.4)}" height="${f(W + 1.4)}" rx="${f(+s.radius > 0 ? +s.radius + 0.7 : 0)}" fill="none" stroke="${s.fcolor}" stroke-width="0.7"/>`);
 
     parts.push(`<g transform="translate(${ox} ${oy})">`, `<path fill="${fill}" d="${d}"/>`);
     for (const [ex, ey] of [[m, m], [m + n - 7, m], [m, m + n - 7]]) {
@@ -269,9 +304,21 @@
     if (!url) return null;
     if (logoCache.has(url)) return logoCache.get(url);
     const blob = await (await fetch(url)).blob();
-    const out = await new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(blob); });
+    const raw = await new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(blob); });
+    const out = await asPng(raw);
     logoCache.set(url, out);
     return out;
+  }
+  // Every logo becomes a PNG data URL (keeps transparency) so SVG, PNG and PDF exports all agree.
+  async function asPng(src) {
+    if (!src || src.startsWith("data:image/png")) return src;
+    const img = new Image();
+    await new Promise((ok, bad) => { img.onload = ok; img.onerror = bad; img.src = src; });
+    const k = Math.min(1, 640 / Math.max(img.naturalWidth || 640, img.naturalHeight || 640));
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round((img.naturalWidth || 640) * k)); c.height = Math.max(1, Math.round((img.naturalHeight || 640) * k));
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL("image/png");
   }
   const look = () => { const l = readLook(); l.lsize = +l.lsize; l.size = +l.size; return l; };
   async function logoFor(l) {
@@ -316,7 +363,7 @@
   async function renderBulk(l, logo) {
     const items = bulkItems();
     const grid = page.querySelector("[data-qr-bulkgrid]"), count = page.querySelector("[data-qr-bulkcount]"), warn = page.querySelector("[data-qr-bulkwarn]");
-    page.querySelectorAll("[data-qr-zip], [data-qr-print]").forEach((b) => (b.disabled = !items.length));
+    page.querySelectorAll("[data-qr-zip], [data-qr-print], [data-qr-pdfsheet]").forEach((b) => (b.disabled = !items.length));
     batch = [];
     if (!items.length) { grid.innerHTML = ""; warn.innerHTML = ""; count.textContent = "Add some lines to make a batch."; return; }
     let bad = 0;
@@ -424,6 +471,68 @@
     btn.textContent = label; btn.disabled = false;
     count.textContent = `${files.length} codes zipped.`;
   }));
+  // ---------- PDF (vector, via vendored jsPDF + svg2pdf, loaded only when someone asks for a PDF) ----------
+  let pdfLib = null;
+  function loadScript(src) {
+    return new Promise((ok, bad) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = bad; document.head.appendChild(el); });
+  }
+  async function pdfKit() {
+    if (!pdfLib) pdfLib = (async () => { await loadScript("/lib/jspdf/jspdf.umd.min.js"); await loadScript("/lib/jspdf/svg2pdf.umd.min.js"); return window.jspdf.jsPDF; })();
+    return pdfLib;
+  }
+  function svgNode(svg) {
+    const host = document.createElement("div");
+    host.style.cssText = "position:absolute;left:-10000px;top:0;width:400px";
+    host.innerHTML = svg;
+    document.body.appendChild(host);
+    return { el: host.firstElementChild, done: () => host.remove() };
+  }
+  async function drawSvg(doc, svg, x, y, w, h) {
+    // PDFs carry Helvetica Bold for the label (our web font isn't embedded in the PDF).
+    const n = svgNode(svg.replace(/font-family="[^"]*"/g, 'font-family="helvetica"').replace(/font-weight="800"/g, 'font-weight="bold"'));
+    try { await doc.svg(n.el, { x, y, width: w, height: h }); } finally { n.done(); }
+  }
+  async function pdfOne() {
+    const jsPDF = await pdfKit();
+    const w = +val("pdfsize") * 72, h = w * current.ratio; // points
+    const doc = new jsPDF({ unit: "pt", format: [w, h], orientation: h > w ? "portrait" : "landscape", compress: true });
+    await drawSvg(doc, current.svg, 0, 0, w, h);
+    return doc.output("blob");
+  }
+  async function pdfSheet() {
+    const jsPDF = await pdfKit();
+    const per = +val("perpage"), cols = { 6: 2, 12: 3, 20: 4, 30: 5 }[per] || 3, rows = Math.ceil(per / cols);
+    const doc = new jsPDF({ unit: "pt", format: "letter", compress: true });
+    const PW = 612, PH = 792, M = 36, gap = 14, cap = val("bulklabels") ? 0 : 14;
+    const cw = (PW - 2 * M - gap * (cols - 1)) / cols, ch = (PH - 2 * M - gap * (rows - 1)) / rows;
+    for (let i = 0; i < batch.length; i++) {
+      const k = i % per;
+      if (i > 0 && k === 0) doc.addPage();
+      const b = batch[i], r = Math.floor(k / cols), c = k % cols;
+      const w = Math.min(cw, (ch - cap) / b.ratio), h = w * b.ratio;
+      const x = M + c * (cw + gap) + (cw - w) / 2, y = M + r * (ch + gap);
+      await drawSvg(doc, b.svg, x, y, w, h);
+      if (cap) { doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.text(b.label.slice(0, 48), x + w / 2, y + h + 11, { align: "center" }); }
+    }
+    return doc.output("blob");
+  }
+  page.querySelector('[data-qr-download="pdf"]').addEventListener("click", async (e) => {
+    if (!current) return;
+    const btn = e.currentTarget, label = btn.textContent;
+    btn.textContent = "Making PDF…"; btn.disabled = true;
+    try { save(await pdfOne(), `qr-${slug(current.name)}.pdf`); }
+    catch { page.querySelector("[data-qr-status]").textContent = "Couldn't make the PDF here. SVG works in every print program."; }
+    finally { btn.textContent = label; btn.disabled = false; }
+  });
+  page.querySelector("[data-qr-pdfsheet]").addEventListener("click", async (e) => {
+    if (!batch.length) return;
+    const btn = e.currentTarget, label = btn.textContent, count = page.querySelector("[data-qr-bulkcount]");
+    btn.textContent = "Making PDF…"; btn.disabled = true;
+    try { save(await pdfSheet(), `qr-codes-${batch.length}.pdf`); count.textContent = `${batch.length} codes on ${Math.ceil(batch.length / +val("perpage"))} page(s).`; }
+    catch { count.textContent = "Couldn't make the PDF here. Use Print instead."; }
+    finally { btn.textContent = label; btn.disabled = false; }
+  });
+
   page.querySelector("[data-qr-print]").addEventListener("click", () => {
     if (!batch.length) return;
     const per = +val("perpage"), cols = { 6: 2, 12: 3, 20: 4, 30: 5 }[per] || 3;
@@ -466,12 +575,43 @@
   $("[data-qr-file]").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) { uploaded = null; render(); return; }
-    const r = new FileReader(); r.onload = () => { uploaded = r.result; setRadio("logo", "upload"); render(); }; r.readAsDataURL(file);
+    const r = new FileReader(); r.onload = async () => { uploaded = await asPng(r.result).catch(() => r.result); setRadio("logo", "upload"); render(); }; r.readAsDataURL(file);
   });
 
-  // Start: ?style= in the link wins, then this browser's last look, then AVI. A #bulk=… link opens "Many codes" filled in.
+  page.querySelector("[data-qr-remember]")?.addEventListener("change", (e) => {
+    if (e.target.checked) saveLook(); else { try { localStorage.removeItem(STORE); } catch { /* fine */ } }
+  });
+  page.querySelector("[data-qr-save]").addEventListener("click", () => {
+    const input = page.querySelector("[data-qr-savename]"), hint = page.querySelector("[data-qr-savehint]");
+    const name = input.value.trim() || `My look ${readSaved().length + 1}`;
+    const list = readSaved().filter((l) => l.name !== name);
+    list.push({ ...readLook(), name });
+    hint.textContent = writeSaved(list.slice(-12)) ? `Saved “${name}” in this browser.` : "This browser won't save anything (private window?). Use the link instead.";
+    input.value = ""; drawSaved();
+  });
+  page.querySelector("[data-qr-saved]").addEventListener("click", (e) => {
+    const use = e.target.closest("[data-qr-use]"), del = e.target.closest("[data-qr-del]");
+    const list = readSaved();
+    if (use) { setLook(list[+use.dataset.qrUse]); currentTheme = null; pressTheme(null); render(); }
+    if (del) { list.splice(+del.dataset.qrDel, 1); writeSaved(list); drawSaved(); }
+  });
+  page.querySelector("[data-qr-share]").addEventListener("click", async () => {
+    const hint = page.querySelector("[data-qr-savehint]");
+    const link = `${location.origin}/tools/qr#look=${encodeLook(readLook())}`;
+    try { await navigator.clipboard.writeText(link); hint.textContent = "Link copied. Anyone who opens it starts with this look."; }
+    catch { hint.textContent = link; }
+  });
+
+  // Start: a #look=… link wins, then ?style=, then a look this browser was asked to remember, then AVI.
+  // A #bulk=… link opens "Many codes" filled in.
   const fromLink = new URLSearchParams(location.search).has("style");
-  if (fromLink || !loadLook()) { currentTheme = startTheme; applyLook(startTheme); }
+  const startHash = new URLSearchParams(location.hash.slice(1));
+  let shared = null;
+  try { shared = startHash.get("look") ? decodeLook(startHash.get("look")) : null; } catch { shared = null; }
+  if (shared) { currentTheme = null; applyLook("avi"); setLook(shared); pressTheme(null); }
+  else if (fromLink || !loadLook()) { currentTheme = startTheme; applyLook(startTheme); }
+  else { const r = page.querySelector("[data-qr-remember]"); if (r) r.checked = true; }
+  drawSaved();
   if (radio("logo") === "upload") setRadio("logo", "none");
   const hash = new URLSearchParams(location.hash.slice(1));
   if (hash.get("bulk")) { setVal("bulktext", hash.get("bulk")); setRadio("bulkmode", "list"); mode = "bulk"; }

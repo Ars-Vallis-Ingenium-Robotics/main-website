@@ -63,17 +63,44 @@
     });
   }
 
-  // ---- 3. video carousel ----
+  // ---- 3. videos: click to play (YouTube's player, and anything it stores, only loads after a press) ----
+  const player = (id, title) => {
+    const f = document.createElement("iframe");
+    f.src = `https://www.youtube-nocookie.com/embed/${id}?rel=0&autoplay=1`;
+    f.title = title || "Video";
+    f.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+    f.allowFullscreen = true;
+    f.referrerPolicy = "strict-origin-when-cross-origin";
+    return f;
+  };
+  document.addEventListener("click", (e) => {
+    const play = e.target.closest("[data-video-play]");
+    if (!play) return;
+    e.preventDefault();
+    const box = play.closest("[data-videos]");
+    const v = box ? JSON.parse(box.dataset.videos)[+(box.dataset.index || 0)] : { id: play.dataset.videoId, title: play.dataset.videoTitle };
+    play.parentElement.querySelector(".video__consent")?.remove();
+    play.replaceWith(player(v.id, v.title));
+  });
+
+  // ---- 3b. video carousel ----
   document.querySelectorAll("[data-videos]").forEach((root) => {
-    const vids = JSON.parse(root.dataset.videos), frame = root.querySelector("iframe");
+    const vids = JSON.parse(root.dataset.videos);
     const title = root.querySelector("[data-video-title]"), note = root.querySelector("[data-video-note]");
     const tabs = root.querySelectorAll("[data-video-tab]");
     let i = 0;
     const go = (n) => {
       i = (n + vids.length) % vids.length;
       const v = vids[i];
-      frame.src = `https://www.youtube-nocookie.com/embed/${v.id}?rel=0`;
-      frame.title = v.title;
+      root.dataset.index = i;
+      const frame = root.querySelector("[data-video-frame] iframe");
+      if (frame) { frame.src = `https://www.youtube-nocookie.com/embed/${v.id}?rel=0`; frame.title = v.title; }
+      else {
+        const poster = root.querySelector("[data-video-poster]");
+        if (poster) poster.src = `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`;
+        const link = root.querySelector("[data-video-play]");
+        if (link) link.href = `https://youtu.be/${v.id}`;
+      }
       title.textContent = v.title;
       note.textContent = v.note || "";
       tabs.forEach((t, k) => t.setAttribute("aria-current", k === i ? "true" : "false"));

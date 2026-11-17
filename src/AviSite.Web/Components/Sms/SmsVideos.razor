@@ -3,12 +3,17 @@
     Videos and order: content/sms/season-2026.md → ## videos. media.js does the swapping;
     without JS the list items are plain links to YouTube.
 *@
+@inject SmsUrls Links
 <div class="vcar" data-videos="@json">
     <div class="vcar__stage">
-        <div class="video__frame">
-            <iframe src="https://www.youtube-nocookie.com/embed/@(Videos[0].Id)?rel=0" title="@Videos[0].Title" loading="lazy"
-                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen
-                    referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <div class="video__frame" data-video-frame>
+            @* Click to play: nothing from YouTube's player loads (and no YouTube cookies) until someone presses play. *@
+            <a class="video__facade" href="https://youtu.be/@Videos[0].Id" data-video-play target="_blank" rel="noopener">
+                <img src="https://i.ytimg.com/vi/@(Videos[0].Id)/hqdefault.jpg" alt="" loading="lazy" referrerpolicy="no-referrer" data-video-poster />
+                <span class="video__playbtn" aria-hidden="true"></span>
+                <span class="visually-hidden">Play “@Videos[0].Title”</span>
+            </a>
+            <span class="video__consent">Plays from YouTube when you press play. <a href="@Links.Avi("/privacy")">Privacy</a></span>
         </div>
         <button class="vcar__arrow vcar__arrow--prev" type="button" data-video-prev aria-label="Previous video">‹</button>
         <button class="vcar__arrow vcar__arrow--next" type="button" data-video-next aria-label="Next video">›</button>
@@ -20,7 +25,7 @@
             {
                 var v = Videos[i];
                 <li><a class="vcar__tab" href="https://youtu.be/@v.Id" data-video-tab aria-current="@(i == 0 ? "true" : "false")" target="_blank" rel="noopener">
-                    <img src="https://i.ytimg.com/vi/@(v.Id)/mqdefault.jpg" alt="" width="160" height="90" loading="lazy" />
+                    <img src="https://i.ytimg.com/vi/@(v.Id)/mqdefault.jpg" alt="" width="160" height="90" loading="lazy" referrerpolicy="no-referrer" />
                     <span>@v.Title</span>
                 </a></li>
             }

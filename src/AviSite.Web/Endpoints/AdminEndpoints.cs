@@ -14,6 +14,9 @@ public static class AdminEndpoints
 {
     public const string Scheme = "AviAdmin";
     public const string Policy = "ShopAdmin";
+    /// <summary>Officers and team logins: dynamic QR codes only.</summary>
+    public const string QrPolicy = "QrEditor";
+    public const string TeamClaim = "avi:team";
     public const string LoginRateLimit = "admin-login";
 
     public static void MapAdminEndpoints(this IEndpointRouteBuilder app)
@@ -22,12 +25,18 @@ public static class AdminEndpoints
 
         admin.MapPost("/login", async ([FromForm] string password, [FromForm] string? returnUrl, HttpContext http, IOptions<AdminOptions> options) =>
         {
-            if (!AdminPassword.Verify(password, options.Value.PasswordHash))
+            Claim[] claims;
+            if (AdminPassword.Verify(password, options.Value.PasswordHash))
+                claims = [new Claim(ClaimTypes.Name, "admin"), new Claim(ClaimTypes.Role, "Admin")];
+            else if (options.Value.Teams.FirstOrDefault(t => AdminPassword.Verify(password, t.Value)).Key is { } team)
+                claims = [new Claim(ClaimTypes.Name, team), new Claim(ClaimTypes.Role, "Team"), new Claim(TeamClaim, team.ToLowerInvariant())];
+            else
                 return Results.LocalRedirect("/admin/login?error=1");
 
-            var identity = new ClaimsIdentity([new Claim(ClaimTypes.Name, "admin"), new Claim(ClaimTypes.Role, "Admin")], Scheme);
-            await http.SignInAsync(Scheme, new ClaimsPrincipal(identity));
-            var target = !string.IsNullOrEmpty(returnUrl) && returnUrl.StartsWith("/admin", StringComparison.Ordinal) && !returnUrl.StartsWith("//") ? returnUrl : "/admin";
+            await http.SignInAsync(Scheme, new ClaimsPrincipal(new ClaimsIdentity(claims, Scheme)));
+            var home = claims.Any(c => c.Value == "Team") ? "/admin/qr" : "/admin";
+            var target = !string.IsNullOrEmpty(returnUrl) && returnUrl.StartsWith("/admin", StringComparison.Ordinal) && !returnUrl.StartsWith("//") ? returnUrl : home;
+            if (claims.Any(c => c.Value == "Team") && !target.StartsWith("/admin/qr", StringComparison.Ordinal)) target = home;
             return Results.LocalRedirect(target);
         }).RequireRateLimiting(LoginRateLimit);
 
@@ -92,7 +101,8 @@ public static class AdminAuthSetup
                 o.SlidingExpiration = true;
             });
         services.AddAuthorizationBuilder()
-            .AddPolicy(AdminEndpoints.Policy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Admin"));
+            .AddPolicy(AdminEndpoints.Policy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Admin"))
+            .AddPolicy(AdminEndpoints.QrPolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Admin", "Team"));
         return services;
     }
 }

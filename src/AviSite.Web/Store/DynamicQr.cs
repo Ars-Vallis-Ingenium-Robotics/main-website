@@ -23,6 +23,13 @@ public sealed class DynamicQr
     public DateTimeOffset? LastScanUtc { get; set; }
     /// <summary>Scans per day (yyyy-MM-dd, Pacific), last 90 days.</summary>
     public SortedDictionary<string, int> Daily { get; set; } = [];
+    /// <summary>All-time scans by weekday (0 = Sunday) and hour (0–23), Pacific.</summary>
+    public int[] Weekday { get; set; } = new int[7];
+    public int[] Hour { get; set; } = new int[24];
+    /// <summary>All-time scans by device: iPhone/iPad, Android, Computer, Other. From the User-Agent only; nothing personal is kept.</summary>
+    public Dictionary<string, int> Devices { get; set; } = [];
+    /// <summary>Team that owns the code (null = club-wide, officers only). Team codes are named "&lt;team&gt;-…".</summary>
+    public string? Team { get; set; }
 }
 
 public sealed class DynamicQrOptions
@@ -43,6 +50,10 @@ public static partial class DynamicQrRules
         string.IsNullOrWhiteSpace(slug) ? "Give it a short name." :
         !SlugPattern().IsMatch(slug) ? "Use lowercase letters, numbers and dashes (up to 40)." : null;
 
+    /// <summary>Team codes live under "&lt;team&gt;-" so teams can't take each other's (or the club's) names.</summary>
+    public static string? CheckTeamSlug(string slug, string? team) =>
+        team is null || slug.StartsWith(team + "-", StringComparison.Ordinal) ? null : $"Your team's codes start with \"{team}-\".";
+
     /// <summary>Absolute http(s) links, or a path on this site like /join.</summary>
     public static string? CheckTarget(string? target)
     {
@@ -59,7 +70,7 @@ public interface IDynamicQrStore
     Task<IReadOnlyList<DynamicQr>> ListAsync(CancellationToken ct = default);
     Task<DynamicQr?> GetAsync(string slug, CancellationToken ct = default);
     /// <summary>Counts a scan and returns the code (null if unknown).</summary>
-    Task<DynamicQr?> ScanAsync(string slug, CancellationToken ct = default);
+    Task<DynamicQr?> ScanAsync(string slug, string? userAgent = null, CancellationToken ct = default);
     Task<bool> CreateAsync(DynamicQr code, CancellationToken ct = default);
     Task<bool> UpdateAsync(string slug, Action<DynamicQr> change, CancellationToken ct = default);
 }
@@ -108,7 +119,16 @@ public sealed class JsonDynamicQrStore : IDynamicQrStore
         finally { _lock.Release(); }
     }
 
-    public async Task<DynamicQr?> ScanAsync(string slug, CancellationToken ct = default)
+    public static string DeviceOf(string? ua)
+    {
+        ua ??= "";
+        if (ua.Contains("iPhone") || ua.Contains("iPad") || ua.Contains("iPod")) return "iPhone/iPad";
+        if (ua.Contains("Android")) return "Android";
+        if (ua.Contains("Windows") || ua.Contains("Macintosh") || ua.Contains("X11") || ua.Contains("CrOS")) return "Computer";
+        return "Other";
+    }
+
+    public async Task<DynamicQr?> ScanAsync(string slug, string? userAgent = null, CancellationToken ct = default)
     {
         await _lock.WaitAsync(ct);
         try
@@ -118,7 +138,14 @@ public sealed class JsonDynamicQrStore : IDynamicQrStore
             if (c.Active)
             {
                 var now = _clock.GetUtcNow();
-                var day = TimeZoneInfo.ConvertTime(now, Pacific).ToString("yyyy-MM-dd");
+                var local = TimeZoneInfo.ConvertTime(now, Pacific);
+                var day = local.ToString("yyyy-MM-dd");
+                if (c.Weekday is not { Length: 7 }) c.Weekday = new int[7];
+                if (c.Hour is not { Length: 24 }) c.Hour = new int[24];
+                c.Weekday[(int)local.DayOfWeek]++;
+                c.Hour[local.Hour]++;
+                var device = DeviceOf(userAgent);
+                c.Devices[device] = c.Devices.GetValueOrDefault(device) + 1;
                 c.Scans++;
                 c.LastScanUtc = now;
                 c.Daily[day] = c.Daily.GetValueOrDefault(day) + 1;

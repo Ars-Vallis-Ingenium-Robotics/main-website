@@ -1,12 +1,14 @@
 @*
-    YouTube embed (privacy-enhanced youtube-nocookie.com). The iframe loads lazily.
+    YouTube embed (privacy-enhanced youtube-nocookie.com), click to play: the player only loads after someone presses play.
     CSP allows frame-src https://www.youtube-nocookie.com.
 *@
 <figure class="video @Class">
     <div class="video__frame">
-        <iframe src="https://www.youtube-nocookie.com/embed/@(YouTubeId)?rel=0" title="@Title" loading="lazy"
-                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen
-                referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <a class="video__facade" href="https://youtu.be/@YouTubeId" data-video-play data-video-id="@YouTubeId" data-video-title="@Title" target="_blank" rel="noopener">
+            <img src="https://i.ytimg.com/vi/@(YouTubeId)/hqdefault.jpg" alt="" loading="lazy" referrerpolicy="no-referrer" />
+            <span class="video__playbtn" aria-hidden="true"></span>
+            <span class="visually-hidden">Play “@Title”</span>
+        </a>
     </div>
     <figcaption class="video__caption">
         <span class="video__title">@Title</span>

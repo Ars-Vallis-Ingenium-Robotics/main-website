@@ -1,0 +1,26 @@
+@page "/privacy"
+@* Copy: content/pages/privacy.md *@
+
+<PageTitle>@c.Meta("title")</PageTitle>
+<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+
+<PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
+    @c["hero"].Html()
+</PageHero>
+
+<section class="section">
+    <div class="wrap privacy">
+        @foreach (var t in c["list"].Items)
+        {
+            <div class="prose reveal">
+                <h2 class="h3">@t.Title</h2>
+                @t.Html()
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private PageCopy c = default!;
+    protected override void OnInitialized() => c = Copy.Page("pages/privacy");
+}

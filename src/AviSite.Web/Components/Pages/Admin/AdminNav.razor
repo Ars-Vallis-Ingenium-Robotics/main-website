@@ -1,11 +1,25 @@
-@* Shared header for admin pages: section switcher + sign out. *@
+@* Shared header for admin pages: section switcher + sign out. Team logins only see their QR codes. *@
 <nav class="admin-nav" aria-label="Admin">
-    <a href="/admin" class="@(Current == "orders" ? "is-current" : "")" aria-current="@(Current == "orders" ? "page" : null)">Shop orders</a>
-    <a href="/admin/qr" class="@(Current == "qr" ? "is-current" : "")" aria-current="@(Current == "qr" ? "page" : null)">Dynamic QR codes</a>
-    <a href="/admin/countdowns" class="@(Current == "countdowns" ? "is-current" : "")" aria-current="@(Current == "countdowns" ? "page" : null)">Countdowns</a>
-    <form method="post" action="/admin/logout"><AntiforgeryToken /><button class="link-button" type="submit">Sign out</button></form>
+    @if (isAdmin)
+    {
+        <a href="/admin" class="@(Current == "orders" ? "is-current" : "")" aria-current="@(Current == "orders" ? "page" : null)">Shop orders</a>
+    }
+    <a href="/admin/qr" class="@(Current == "qr" ? "is-current" : "")" aria-current="@(Current == "qr" ? "page" : null)">@(team is null ? "Dynamic QR codes" : $"{team.ToUpperInvariant()} QR codes")</a>
+    @if (isAdmin)
+    {
+        <a href="/admin/countdowns" class="@(Current == "countdowns" ? "is-current" : "")" aria-current="@(Current == "countdowns" ? "page" : null)">Countdowns</a>
+    }
+    <form method="post" action="/admin/logout"><AntiforgeryToken /><button class="link-button" type="submit">Sign out@(team is null ? "" : $" ({team.ToUpperInvariant()})")</button></form>
 </nav>
 
 @code {
     [Parameter] public string Current { get; set; } = "";
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    private bool isAdmin;
+    private string? team;
+    protected override void OnInitialized()
+    {
+        isAdmin = Http?.User.IsInRole("Admin") == true;
+        team = Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value;
+    }
 }

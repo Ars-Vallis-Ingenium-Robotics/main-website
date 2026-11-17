@@ -1,5 +1,5 @@
 @page "/admin/qr/{Slug}"
-@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.Policy)]
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
 @using System.ComponentModel.DataAnnotations
 @inject IDynamicQrStore Codes
 @inject IOptions<SmsSiteOptions> SiteUrls
@@ -16,7 +16,7 @@
             <AdminNav Current="qr" />
             <p class="eyebrow"><a href="/admin/qr">Dynamic QR codes</a> / @qr.Slug</p>
             <h1 class="h1">@qr.Slug</h1>
-            <p class="mono small">@url · <a href="/tools/qr?url=@Uri.EscapeDataString(url)&style=avi" target="_blank" rel="noopener">QR image</a></p>
+            <p class="mono small">@url · <a href="/tools/qr?url=@Uri.EscapeDataString(url)&style=@(QrStyle)" target="_blank" rel="noopener">QR image</a></p>
 
             <EditForm Model="Edit!" FormName="qr-edit" OnValidSubmit="SaveAsync" method="post" class="form" novalidate>
                 <DataAnnotationsValidator />
@@ -46,12 +46,63 @@
                     <li style="--h: @(max == 0 ? 0 : n * 100 / max)%" title="@day: @n"><span class="visually-hidden">@day: @n</span></li>
                 }
             </ol>
+
+            @if (qr.Scans > 0)
+            {
+                var wk = qr.Weekday is { Length: 7 } ? qr.Weekday : new int[7];
+                var hr = qr.Hour is { Length: 24 } ? qr.Hour : new int[24];
+                var wkMax = Math.Max(1, wk.Max()); var hrMax = Math.Max(1, hr.Max());
+                var devTotal = Math.Max(1, qr.Devices.Values.Sum());
+                <p class="qr-insight">@Busiest(wk, hr)</p>
+                <div class="qr-stats">
+                    <figure class="qr-stat">
+                        <figcaption>By day of the week</figcaption>
+                        <ol class="qr-cols" aria-label="Scans by day of the week">
+                            @for (var i = 0; i < 7; i++)
+                            {
+                                var d = (i + 1) % 7; // Monday first
+                                <li style="--h: @(wk[d] * 100 / wkMax)%" title="@Days[d]: @wk[d]"><span class="qr-cols__bar"></span><span class="qr-cols__x">@Days[d][..3]</span><span class="visually-hidden">: @wk[d]</span></li>
+                            }
+                        </ol>
+                    </figure>
+                    <figure class="qr-stat">
+                        <figcaption>By time of day</figcaption>
+                        <ol class="qr-cols qr-cols--hours" aria-label="Scans by hour of the day">
+                            @for (var h = 0; h < 24; h++)
+                            {
+                                <li style="--h: @(hr[h] * 100 / hrMax)%" title="@HourLabel(h): @hr[h]"><span class="qr-cols__bar"></span><span class="qr-cols__x">@(h % 6 == 0 ? HourLabel(h) : "")</span><span class="visually-hidden">@HourLabel(h): @hr[h]</span></li>
+                            }
+                        </ol>
+                    </figure>
+                    <figure class="qr-stat">
+                        <figcaption>By device</figcaption>
+                        <ul class="qr-devices" role="list">
+                            @foreach (var (name, n) in qr.Devices.OrderByDescending(x => x.Value))
+                            {
+                                <li><span>@name</span><span class="mono">@n · @(n * 100 / devTotal)%</span><span class="qr-devices__bar" style="--w: @(n * 100 / devTotal)%"></span></li>
+                            }
+                        </ul>
+                        @if (qr.Devices.Count == 0) { <p class="muted small">Device counts start with the next scan.</p> }
+                    </figure>
+                </div>
+                <p class="muted small">Times are Pacific. Devices come from the browser's own description; nothing personal is stored.</p>
+            }
         </div>
     </section>
 }
 
 @code {
+    private string QrStyle => Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value is "sms" ? "sms" : "avi";
     [Parameter] public string Slug { get; set; } = "";
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    private static readonly string[] Days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    private static string HourLabel(int h) => h == 0 ? "12 AM" : h < 12 ? $"{h} AM" : h == 12 ? "12 PM" : $"{h - 12} PM";
+    private static string Busiest(int[] wk, int[] hr)
+    {
+        if (wk.Sum() == 0) return "";
+        var d = Array.IndexOf(wk, wk.Max()); var h = Array.IndexOf(hr, hr.Max());
+        return $"Busiest: {Days[d]}s, around {HourLabel(h)}.";
+    }
     [SupplyParameterFromForm(FormName = "qr-edit")] public EditModel? Edit { get; set; }
     private DynamicQr? qr;
     private string? error;
@@ -62,7 +113,8 @@
     protected override async Task OnInitializedAsync()
     {
         qr = await Codes.GetAsync(Slug);
-        if (qr is null) { Nav.NotFound(); return; }
+        var team = Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value;
+        if (qr is null || (team is not null && qr.Team != team)) { qr = null; Nav.NotFound(); return; }
         Edit ??= new() { Target = qr.Target, Campaign = qr.Campaign, Note = qr.Note, Active = qr.Active };
         var today = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, Pacific).Date;
         days = Enumerable.Range(0, 30).Select(i => today.AddDays(i - 29).ToString("yyyy-MM-dd"))

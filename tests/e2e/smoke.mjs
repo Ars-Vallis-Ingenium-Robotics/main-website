@@ -312,10 +312,14 @@ await test("people photos, sponsor logos and SMS videos render", async () => {
   assert.ok(await logos.count() >= 15, "sponsor logos");
   for (const alt of await logos.evaluateAll((imgs) => imgs.map((i) => i.alt))) assert.ok(alt.length > 2, "logo alt text");
   await page.goto(BASE + "/sms");
-  assert.equal(await page.locator('iframe[src^="https://www.youtube-nocookie.com/embed/"]').count(), 1, "one big video frame");
+  assert.equal(await page.locator(".vcar [data-video-play]").count(), 1, "one big video frame (poster until play)");
   assert.equal(await page.locator("[data-video-tab]").count(), 3, "three SMS videos to cycle through");
   await page.locator("[data-video-next]").click();
-  assert.match(await page.locator(".vcar iframe").getAttribute("src"), /THIZyHml-es/, "arrow moves to the next video");
+  assert.match(await page.locator(".vcar [data-video-play]").getAttribute("href"), /THIZyHml-es/, "arrow moves the poster to the next video");
+  await page.locator(".vcar [data-video-play]").click();
+  assert.match(await page.locator(".vcar iframe").getAttribute("src"), /THIZyHml-es/, "play loads that video");
+  await page.locator("[data-video-next]").click();
+  assert.doesNotMatch(await page.locator(".vcar iframe").getAttribute("src"), /THIZyHml-es/, "arrow still moves after play");
   await page.goto(BASE + "/sms/rosie");
   assert.equal(await page.locator("model-viewer[src='/models/rosie.glb']").count(), 1, "ROSIE 3D model");
   const csp = (await page.goto(BASE + "/sms")).headers()["content-security-policy"];
@@ -611,6 +615,70 @@ await test("timeline moments can have several photos (gallery in the pop-up)", a
   await dlg.waitFor({ state: "visible" });
   assert.equal(await dlg.locator(".moment-sheet__gallery .photo").count(), 5);
   await page.keyboard.press("Escape");
+});
+
+await test("dynamic QR stats: weekday, hour and device breakdown", async () => {
+  await page.request.get(BASE + "/dynamicqr/three", { maxRedirects: 0, headers: { "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)" } });
+  await page.goto(BASE + "/admin/qr/three");
+  assert.match(await page.locator(".qr-insight").innerText(), /^Busiest: \w+days, around/);
+  assert.match(await page.locator(".qr-devices").innerText(), /iPhone\/iPad/);
+});
+
+await test("team login sees only its own QR codes, under its own prefix", async () => {
+  const tc = await browser.newContext(); const tp = await tc.newPage();
+  await tp.goto(BASE + "/admin/login");
+  await tp.getByLabel("Password").fill(process.env.TEAM_PASSWORD ?? "sms-dev-password");
+  await tp.getByRole("button", { name: "Sign in" }).click();
+  await tp.waitForURL(BASE + "/admin/qr");
+  assert.equal(await tp.locator('nav a[href="/admin"]').count(), 0, "no orders link for teams");
+  assert.equal(await tp.locator('[data-qr-row="one"]').count(), 0, "club codes hidden");
+  assert.equal((await tp.goto(BASE + "/admin/qr/one")).status(), 404, "club code edit blocked");
+  await tp.goto(BASE + "/admin/qr");
+  await tp.fill("#slug", "flyer-" + Date.now().toString(36)); await tp.fill("#target", "/join"); await tp.fill("#campaign", "e2e");
+  await tp.getByRole("button", { name: "Add code" }).click();
+  assert.match(await tp.locator("main").innerText(), /start with "sms-"/);
+  const slug = "sms-e2e-" + Date.now().toString(36);
+  await tp.fill("#slug", slug); await tp.getByRole("button", { name: "Add code" }).click();
+  await tp.waitForURL(/saved=/);
+  assert.equal(await tp.locator(`[data-qr-row="${slug}"]`).count(), 1);
+  await tc.close();
+});
+
+await test("QR maker: event and location codes, PDF, saved looks (opt-in storage only)", async () => {
+  const qc = await browser.newContext({ acceptDownloads: true }); const qp = await qc.newPage();
+  await qp.goto(BASE + "/tools/qr");
+  assert.deepEqual(await qp.evaluate(() => Object.keys(localStorage)), [], "nothing stored on a plain visit");
+  await qp.selectOption("#qr-kind", "event");
+  await qp.fill("#qr-evtitle", "General meeting"); await qp.fill("#qr-evstart", "2026-12-04T17:30");
+  await qp.locator("[data-qr-preview] svg").waitFor();
+  assert.equal(await qp.locator('[data-qr-download="png"]').isDisabled(), false);
+  await qp.selectOption("#qr-kind", "geo"); await qp.fill("#qr-lat", "36.8135"); await qp.fill("#qr-lng", "-119.7454");
+  assert.equal(await qp.locator('[data-qr-download="png"]').isDisabled(), false);
+  const [pdf] = await Promise.all([qp.waitForEvent("download"), qp.click('[data-qr-download="pdf"]')]);
+  assert.match(pdf.suggestedFilename(), /\.pdf$/);
+  assert.match((await (await import("node:fs/promises")).readFile(await pdf.path())).subarray(0, 5).toString(), /%PDF-/);
+  await qp.click(".qr-custom > summary");
+  await qp.fill("[data-qr-savename]", "Club blue"); await qp.click("[data-qr-save]");
+  assert.equal(await qp.locator("[data-qr-use]").count(), 1);
+  assert.deepEqual(await qp.evaluate(() => Object.keys(localStorage)), ["avi-qr-saved"], "a saved look is the only thing kept");
+  await qp.check("[data-qr-remember]");
+  await qp.reload(); assert.equal(await qp.locator("[data-qr-remember]").isChecked(), true);
+  await qp.uncheck("[data-qr-remember]");
+  assert.equal(await qp.evaluate(() => localStorage.getItem("avi-qr-look")), null, "unticking forgets");
+  await qp.click("[data-qr-del]"); assert.equal(await qp.locator("[data-qr-use]").count(), 0);
+  await qc.close();
+});
+
+await test("videos load from YouTube only after pressing play; privacy page is linked", async () => {
+  await page.goto(BASE + "/sms/2026");
+  assert.equal(await page.locator("iframe").count(), 0, "no YouTube frame before play");
+  assert.equal(await page.locator("a a").count(), 0, "no nested links");
+  await page.locator("[data-video-play]").first().click();
+  assert.equal(await page.locator('iframe[src^="https://www.youtube-nocookie.com/embed/"]').count(), 1);
+  await page.goto(BASE + "/");
+  await page.locator('footer a[href="/privacy"]').click();
+  await page.waitForURL(BASE + "/privacy");
+  assert.match(await page.locator("main").innerText(), /avi_cart[\s\S]*avi_admin/);
 });
 
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });

@@ -1,9 +1,10 @@
 @page "/admin/qr"
-@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.Policy)]
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
 @using System.ComponentModel.DataAnnotations
 @inject IDynamicQrStore Codes
 @inject IOptions<SmsSiteOptions> SiteUrls
 @inject NavigationManager Nav
+@inject IOptions<AdminOptions> AdminOpts
 
 <PageTitle>Dynamic QR codes · AVI Robotics admin</PageTitle>
 <HeadContent><meta name="robots" content="noindex" /></HeadContent>
@@ -13,7 +14,7 @@
         <AdminNav Current="qr" />
         <div class="section__head">
             <div>
-                <p class="eyebrow">Admin</p>
+                <p class="eyebrow">@(Team is null ? "Admin" : $"Team {Team.ToUpperInvariant()}")</p>
                 <h1 class="h1">Dynamic QR codes</h1>
                 <p class="muted">The printed code never changes. Change where it goes here, any time. Scans are counted here and sent to the Google Sheet.</p>
             </div>
@@ -34,6 +35,7 @@
                             <th scope="row">
                                 <a href="/admin/qr/@q.Slug"><strong>@q.Slug</strong></a>
                                 @if (!q.Active) { <span class="tag">Off</span> }
+                                @if (Team is null && q.Team is not null) { <span class="tag">@q.Team.ToUpperInvariant()</span> }
                                 <div class="mono small muted">@url</div>
                                 @if (q.Note is not null) { <div class="small">@q.Note</div> }
                             </th>
@@ -43,7 +45,7 @@
                             <td class="small">@(q.LastScanUtc is { } t ? Local(t) : "Never")</td>
                             <td class="qr-admin__actions">
                                 <a class="btn btn--ghost btn--sm" href="/admin/qr/@q.Slug">Edit</a>
-                                <a class="btn btn--ghost btn--sm" href="/tools/qr?url=@Uri.EscapeDataString(url)&style=avi" target="_blank" rel="noopener">QR image</a>
+                                <a class="btn btn--ghost btn--sm" href="/tools/qr?url=@Uri.EscapeDataString(url)&style=@(QrStyle)" target="_blank" rel="noopener">QR image</a>
                             </td>
                         </tr>
                     }
@@ -57,7 +59,7 @@
             <div class="qr-admin__grid">
                 <div class="field">
                     <label class="label" for="slug">Name in the link</label>
-                    <InputText id="slug" @bind-Value="New!.Slug" placeholder="e.g. vintage-days" autocomplete="off" aria-describedby="slug-hint" />
+                    <InputText id="slug" @bind-Value="New!.Slug" placeholder="@(Team is null ? "e.g. vintage-days" : $"e.g. {Team}-pool-day")" autocomplete="off" aria-describedby="slug-hint" />
                     <span id="slug-hint" class="field__hint mono">@PrintUrl(string.IsNullOrWhiteSpace(New!.Slug) ? "…" : New.Slug.Trim().ToLowerInvariant())</span>
                 </div>
                 <div class="field">
@@ -68,6 +70,16 @@
                     <label class="label" for="campaign">Name in the Google Sheet</label>
                     <InputText id="campaign" @bind-Value="New!.Campaign" placeholder="e.g. Vintage Days 2027 flyer" />
                 </div>
+                @if (Team is null && AdminOpts.Value.Teams.Count > 0)
+                {
+                    <div class="field">
+                        <label class="label" for="owner">Team</label>
+                        <InputSelect id="owner" @bind-Value="New!.Owner">
+                            <option value="">Club-wide (officers)</option>
+                            @foreach (var t in AdminOpts.Value.Teams.Keys) { <option value="@t.ToLowerInvariant()">@t.ToUpperInvariant() (name must start with @(t.ToLowerInvariant())-)</option> }
+                        </InputSelect>
+                    </div>
+                }
                 <div class="field">
                     <label class="label" for="note">Note <span class="muted">(optional)</span></label>
                     <InputText id="note" @bind-Value="New!.Note" placeholder="Where it's printed" />
@@ -84,7 +96,7 @@
             <div class="qr-admin__grid">
                 <div class="field">
                     <label class="label" for="b-prefix">Name in the link</label>
-                    <InputText id="b-prefix" @bind-Value="Batch!.Prefix" placeholder="e.g. sign-in" autocomplete="off" />
+                    <InputText id="b-prefix" @bind-Value="Batch!.Prefix" placeholder="@(Team is null ? "e.g. sign-in" : $"e.g. {Team}-sign-in")" autocomplete="off" />
                     <span class="field__hint mono">…/dynamicqr/@(string.IsNullOrWhiteSpace(Batch!.Prefix) ? "sign-in" : Batch.Prefix.Trim().ToLowerInvariant())-@Batch.From</span>
                 </div>
                 <div class="field">
@@ -118,9 +130,13 @@
 </section>
 
 @code {
+    private string QrStyle => Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value is "sms" ? "sms" : "avi";
     [SupplyParameterFromForm(FormName = "qr-new")] public NewCode? New { get; set; }
     [SupplyParameterFromQuery] public string? Saved { get; set; }
     [SupplyParameterFromQuery] public string? BatchMade { get; set; }
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    /// <summary>Set for team logins: they only see and make codes named "&lt;team&gt;-…".</summary>
+    private string? Team;
     [SupplyParameterFromForm(FormName = "qr-batch")] public BatchCodes? Batch { get; set; }
     private string? batchError;
     private IReadOnlyList<DynamicQr> codes = [];
@@ -131,7 +147,8 @@
     {
         New ??= new();
         Batch ??= new();
-        codes = await Codes.ListAsync();
+        Team = Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value;
+        codes = (await Codes.ListAsync()).Where(q => Team is null || q.Team == Team).ToList();
     }
 
     private string PrintUrl(string slug) => $"{SiteUrls.Value.AviBaseUrl.TrimEnd('/')}/dynamicqr/{slug}";
@@ -145,7 +162,8 @@
     private async Task CreateAsync()
     {
         var slug = New!.Slug!.Trim().ToLowerInvariant();
-        error = DynamicQrRules.CheckSlug(slug) ?? DynamicQrRules.CheckTarget(New.Target);
+        var owner = Team ?? (string.IsNullOrWhiteSpace(New.Owner) ? null : New.Owner);
+        error = DynamicQrRules.CheckSlug(slug) ?? DynamicQrRules.CheckTeamSlug(slug, owner) ?? DynamicQrRules.CheckTarget(New.Target);
         if (error is not null) return;
         var ok = await Codes.CreateAsync(new DynamicQr
         {
@@ -153,6 +171,7 @@
             Target = New.Target!.Trim(),
             Campaign = string.IsNullOrWhiteSpace(New.Campaign) ? slug : New.Campaign.Trim(),
             Note = string.IsNullOrWhiteSpace(New.Note) ? null : New.Note.Trim(),
+            Team = owner,
         });
         if (!ok) { error = $"There's already a code called {slug}."; return; }
         Nav.NavigateTo($"/admin/qr?saved={Uri.EscapeDataString(slug)}");
@@ -162,7 +181,8 @@
     {
         var b = Batch!;
         var prefix = (b.Prefix ?? "").Trim().ToLowerInvariant();
-        batchError = DynamicQrRules.CheckSlug(prefix + "-1") ?? DynamicQrRules.CheckTarget(b.Target);
+        batchError = DynamicQrRules.CheckSlug(prefix + "-1") ?? DynamicQrRules.CheckTeamSlug(prefix + "-1", Team) ?? DynamicQrRules.CheckTarget(b.Target);
+        var batchOwner = Team ?? (prefix.Split('-')[0] is var p0 && AdminOpts.Value.Teams.ContainsKey(p0) ? p0 : null);
         if (batchError is null && (b.To < b.From || b.To - b.From >= 100)) batchError = "Pick a range of up to 100 numbers.";
         if (batchError is not null) return;
         var made = new List<string>();
@@ -175,6 +195,7 @@
                 Slug = slug,
                 Target = b.Target!.Trim(),
                 Campaign = string.IsNullOrWhiteSpace(b.Campaign) ? slug : b.Campaign.Trim().Replace("{n}", n.ToString()),
+                Team = batchOwner,
             });
             if (ok) made.Add(slug); else skipped++;
         }
@@ -197,5 +218,6 @@
         [Required(ErrorMessage = "Where should it go?")] public string? Target { get; set; }
         [StringLength(80)] public string? Campaign { get; set; }
         [StringLength(120)] public string? Note { get; set; }
+        public string? Owner { get; set; }
     }
 }

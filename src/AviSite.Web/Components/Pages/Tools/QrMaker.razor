@@ -43,6 +43,20 @@
                                 <select id="qr-wsec" data-qr="wsec"><option value="WPA">WPA / WPA2 / WPA3</option><option value="WEP">WEP</option><option value="nopass">None (open)</option></select></div>
                             <label class="check"><input type="checkbox" data-qr="whidden" /> Hidden network</label>
                         </div>
+                        <div class="qr-kind qr-grid" data-kind="event" hidden>
+                            <div class="field qr-grid__wide"><label class="label" for="qr-evtitle">Event</label><input id="qr-evtitle" data-qr="evtitle" placeholder="AVI general meeting" /></div>
+                            <div class="field"><label class="label" for="qr-evstart">Starts</label><input id="qr-evstart" type="datetime-local" data-qr="evstart" /></div>
+                            <div class="field"><label class="label" for="qr-evend">Ends</label><input id="qr-evend" type="datetime-local" data-qr="evend" /></div>
+                            <div class="field qr-grid__wide"><label class="label" for="qr-evwhere">Where</label><input id="qr-evwhere" data-qr="evwhere" placeholder="EE 389, Fresno State" /></div>
+                            <div class="field qr-grid__wide"><label class="label" for="qr-evnote">Details <span class="muted">(optional)</span></label><input id="qr-evnote" data-qr="evnote" /></div>
+                            <span class="field__hint qr-grid__wide">Scanning offers to add it to the phone's calendar, at the time shown on this computer's clock.</span>
+                        </div>
+                        <div class="qr-kind qr-grid" data-kind="geo" hidden>
+                            <div class="field qr-grid__wide"><label class="label" for="qr-place">Address or place</label><input id="qr-place" data-qr="place" placeholder="Lyles College of Engineering, Fresno State" /></div>
+                            <div class="field"><label class="label" for="qr-lat">Or latitude</label><input id="qr-lat" inputmode="decimal" data-qr="lat" placeholder="36.8135" /></div>
+                            <div class="field"><label class="label" for="qr-lng">Longitude</label><input id="qr-lng" inputmode="decimal" data-qr="lng" placeholder="-119.7449" /></div>
+                            <span class="field__hint qr-grid__wide">Opens in the phone's maps app. Coordinates win if you fill both.</span>
+                        </div>
                         <div class="qr-kind qr-grid" data-kind="email" hidden>
                             <div class="field"><label class="label" for="qr-email">To</label><input id="qr-email" type="email" data-qr="email" placeholder="contact@avirobotics.org" /></div>
                             <div class="field"><label class="label" for="qr-esub">Subject</label><input id="qr-esub" data-qr="esub" /></div>
@@ -101,6 +115,18 @@
                         </button>
                     }
                 </div>
+            </div>
+
+            <div class="qr-saved" data-qr-saved-wrap>
+                <div class="qr-saved__list" data-qr-saved aria-label="Your saved looks"></div>
+                <div class="qr-saved__actions">
+                    <label class="visually-hidden" for="qr-savename">Name for this look</label>
+                    <input id="qr-savename" data-qr-savename placeholder="Name this look, e.g. Outreach flyer" maxlength="30" />
+                    <button class="btn btn--ghost btn--sm" type="button" data-qr-save>Save look</button>
+                    <button class="btn btn--ghost btn--sm" type="button" data-qr-share>Copy link to this look</button>
+                </div>
+                <label class="check"><input type="checkbox" data-qr-remember /> Remember my look in this browser next time</label>
+                <p class="field__hint" data-qr-savehint>Nothing is kept unless you tick that box or save a look, and then only in this browser (<a href="/privacy">privacy</a>). Share the link so your team gets the same look.</p>
             </div>
 
             @* ---------- Customize (closed until wanted) ---------- *@
@@ -200,6 +226,8 @@
                     <div class="qr-grid">
                         <div class="field"><label class="label" for="qr-size">Image size: <output data-out="size">1200</output> px</label><input id="qr-size" type="range" min="300" max="4000" step="100" value="1200" data-qr="size" /></div>
                         <div class="field"><label class="label" for="qr-margin">Quiet zone: <output data-out="margin">4</output> dots</label><input id="qr-margin" type="range" min="0" max="10" step="1" value="4" data-qr="margin" /></div>
+                        <div class="field"><label class="label" for="qr-pdfsize">PDF print width</label>
+                            <select id="qr-pdfsize" data-qr="pdfsize"><option value="1">1 in (2.5 cm)</option><option value="2">2 in (5 cm)</option><option value="3" selected>3 in (7.6 cm)</option><option value="4">4 in (10 cm)</option><option value="6">6 in (15 cm)</option><option value="8">8 in (20 cm)</option></select></div>
                         <div class="field"><label class="label" for="qr-ecl">Error correction</label>
                             <select id="qr-ecl" data-qr="ecl"><option value="auto">Automatic</option><option value="L">Low (7%), fewest dots</option><option value="M">Medium (15%)</option><option value="Q">Quartile (25%)</option><option value="H">High (30%), best with logos</option></select></div>
                     </div>
@@ -216,6 +244,7 @@
                 <div class="qr-tool__actions">
                     <button class="btn btn--accent" type="button" data-qr-download="png">Download PNG</button>
                     <div class="qr-tool__more">
+                        <button class="btn btn--ghost btn--sm" type="button" data-qr-download="pdf">PDF</button>
                         <button class="btn btn--ghost btn--sm" type="button" data-qr-download="svg">SVG</button>
                         <button class="btn btn--ghost btn--sm" type="button" data-qr-download="jpg">JPG</button>
                         <button class="btn btn--ghost btn--sm" type="button" data-qr-copy>Copy</button>
@@ -230,7 +259,8 @@
                     <button class="btn btn--accent" type="button" data-qr-zip="png">Download all (ZIP of PNGs)</button>
                     <div class="qr-tool__more">
                         <button class="btn btn--ghost btn--sm" type="button" data-qr-zip="svg">ZIP of SVGs</button>
-                        <button class="btn btn--ghost btn--sm" type="button" data-qr-print>Print a sheet</button>
+                        <button class="btn btn--ghost btn--sm" type="button" data-qr-pdfsheet>PDF sheet</button>
+                        <button class="btn btn--ghost btn--sm" type="button" data-qr-print>Print</button>
                         <label class="qr-tool__per">Per page
                             <select data-qr="perpage"><option value="6">6</option><option value="12" selected>12</option><option value="20">20</option><option value="30">30</option></select></label>
                     </div>
@@ -253,7 +283,7 @@
     [SupplyParameterFromQuery] public string? Style { get; set; }
 
     private static readonly (string, string)[] Kinds =
-        [("url", "Link"), ("wifi", "Wi-Fi"), ("vcard", "Contact card"), ("email", "Email"), ("tel", "Phone call"), ("sms", "Text message"), ("text", "Plain text")];
+        [("url", "Link"), ("wifi", "Wi-Fi"), ("vcard", "Contact card"), ("event", "Calendar event"), ("geo", "Location"), ("email", "Email"), ("tel", "Phone call"), ("sms", "Text message"), ("text", "Plain text")];
     private static readonly (string, string)[] Themes =
         [("avi", "AVI"), ("sms", "SMS"), ("classic", "Classic"), ("ocean", "Ocean"), ("sunset", "Sunset"), ("forest", "Forest"), ("mono", "Mono")];
     private static readonly (string, string)[] Tabs =

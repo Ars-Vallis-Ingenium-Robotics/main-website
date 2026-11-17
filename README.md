@@ -65,7 +65,8 @@ admin pickup + CSV, phone layout, and the mobile menu.
 |---|---|---|
 | `PayPal:Mode` | env | `Fake` (dev only), `Sandbox`, `Live`, `Off` (no online payments; donate page shows offline giving). Outside Development, Sandbox needs `PayPal:AllowSandboxOutsideDevelopment` |
 | `PayPal:ClientId` / `ClientSecret` / `WebhookId` | env / user-secrets | From developer.paypal.com → Apps & Credentials |
-| `Admin:PasswordHash` | env | `dotnet run --project src/AviSite.Web -- hash-password` |
+| `Admin:PasswordHash` | env | Officers. `dotnet run --project src/AviSite.Web -- hash-password` |
+| `Admin:Teams:<team>` | env, e.g. `Admin__Teams__sms=pbkdf2-sha256$…` | Team-lead password (same hash tool). Opens only that team's QR codes, named `<team>-…`. Dev: `sms-dev-password` |
 | `Site:*` | appsettings / env | Discord, Instagram, email, portal URL |
 | `Store:OrdersOpen` | appsettings / env | Products visible, checkout closed |
 | `Store:ComingSoon` | appsettings / env | Between drops: /shop shows "next drop" (content/pages/shop.md › coming-soon); product/cart/checkout redirect to /shop |
@@ -78,9 +79,15 @@ PayPal webhook URL to register: `https://avirobotics.org/api/paypal/webhook`
 ## Tools
 
 - `/tools/qr`: public QR code maker (all in the browser; `wwwroot/js/qr-tool.js` + `wwwroot/lib/qrcode-generator.js`, MIT).
+  PDF export lazy-loads `wwwroot/lib/jspdf/` (jsPDF + svg2pdf, MIT). Looks are stored in `localStorage` only when the visitor saves or ticks "Remember".
 - `/dynamicqr/{name}`: printed dynamic codes. Redirect + scan count (`App_Data/dynamic-qr.json`) + Google Sheet row in prod.
-  Officers change targets and add codes at `/admin/qr` (same admin password as orders). `one`–`four` are seeded from the old site.
+  Officers change targets and add codes at `/admin/qr` (same admin password as orders); team leads see only their team's codes.
+  Each code's page shows scans by day, weekday, hour (Pacific) and device type. `one`–`four` are seeded from the old site.
 - `/countdown`: events managed by officers at `/admin/countdowns` (`App_Data/countdowns.json`).
+
+## Privacy
+
+`/privacy` (content/pages/privacy.md) lists every cookie, browser-storage key and third party. Only strictly necessary cookies are used, so there's no banner; anything optional must be opt-in. **If a feature starts storing or sending something new, update that page.** YouTube loads only on click (`media.js`).
 
 ## Environments
 
