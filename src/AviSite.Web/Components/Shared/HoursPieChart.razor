@@ -12,14 +12,14 @@ else
             @if (slices.Count == 1)
             {
                 var slice = slices[0];
-                <circle cx="120" cy="120" r="104" class="@SliceClass(0)"><title>@SliceTitle(slice)</title></circle>
+                <circle cx="120" cy="120" r="104" class="@SliceClass(0)" data-pie-wedge data-pie-label="@slice.Label" data-pie-hours="@F(slice.Value)"><title>@SliceTitle(slice)</title></circle>
             }
             else
             {
                 @for (var i = 0; i < slices.Count; i++)
                 {
                     var slice = slices[i];
-                    <path d="@Wedge(slice)" class="@SliceClass(i)"><title>@SliceTitle(slice)</title></path>
+                    <path d="@Wedge(slice)" class="@SliceClass(i)" data-pie-wedge data-pie-label="@slice.Label" data-pie-hours="@F(slice.Value)"><title>@SliceTitle(slice)</title></path>
                 }
             }
         </svg>
@@ -101,7 +101,8 @@ else
         return (Center + Radius * Math.Cos(radians), Center + Radius * Math.Sin(radians));
     }
 
-    private static string F(double value) => value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+    // Round-trip precision keeps tiny-but-positive sectors from collapsing to identical SVG points.
+    private static string F(double value) => value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
 
     private sealed record Slice(string Label, double Value, double StartAngle, double EndAngle);
 }

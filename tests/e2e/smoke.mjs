@@ -1091,9 +1091,30 @@ await test("hours: report with charts and CSV; leaderboard is each organization'
     assert.ok(await op.locator(`#${titleId}`).count() === 1 && await op.locator(`#${descriptionId}`).count() === 1, "accessible title and description resolve");
     const percentages = await pie.locator(".hours-pie__share").allTextContents();
     assert.ok(percentages.every((value) => /^(?:<0\.1|\d{1,3}(?:\.\d)?)%$/.test(value.trim())), `share labels are concise: ${percentages.join(", ")}`);
+    const legendEntries = await pie.locator("[data-pie-slice]").evaluateAll((items) => items.map((item) => ({
+      label: item.getAttribute("data-pie-label"), hours: Number(item.getAttribute("data-pie-hours")),
+    })));
+    const wedgeEntries = await pie.locator("[data-pie-wedge]").evaluateAll((items) => items.map((item) => ({
+      label: item.getAttribute("data-pie-label"), hours: Number(item.getAttribute("data-pie-hours")),
+      tag: item.tagName.toLowerCase(), path: item.getAttribute("d"),
+    })));
+    assert.equal(wedgeEntries.length, legendEntries.length, "every category has a rendered slice");
+    assert.deepEqual(wedgeEntries.map(({ label, hours }) => ({ label, hours })), legendEntries, "slice data matches the complete legend");
+    assert.ok(wedgeEntries.every(({ hours }) => Number.isFinite(hours) && hours > 0), "rendered slices have positive finite values");
+    for (const { label, tag, path } of wedgeEntries) {
+      if (tag !== "path") continue; // Single-category charts render as a full circle.
+      const parts = path.trim().split(" ");
+      assert.equal(parts.length, 8, `slice path grammar for ${label}`);
+      const start = parts[1].slice(1).split(",").map(Number);
+      const end = parts[6].split(",").map(Number);
+      assert.ok(start.every(Number.isFinite) && end.every(Number.isFinite), `finite SVG points for ${label}`);
+      assert.ok(start[0] !== end[0] || start[1] !== end[1], `non-degenerate SVG arc for ${label}`);
+    }
+    const renderedTotal = wedgeEntries.reduce((sum, item) => sum + item.hours, 0);
     const chartTotal = Number(await pie.getAttribute("data-total-hours"));
     const reportTotal = Number(await op.locator(".hours__totals").getAttribute("data-report-total-hours"));
     assert.ok(Number.isFinite(chartTotal) && Number.isFinite(reportTotal) && Math.abs(chartTotal - reportTotal) < 0.01, `pie total ${chartTotal} matches filtered report total ${reportTotal}`);
+    assert.ok(Math.abs(renderedTotal - reportTotal) < 0.01, `rendered slices total ${renderedTotal} matches filtered report total ${reportTotal}`);
   };
   await assertPieMatchesReport();
   assert.ok(await op.locator(".report__block .hbars li").count() > 0, "team / person bars");
