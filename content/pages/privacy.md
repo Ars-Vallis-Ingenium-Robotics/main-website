@@ -9,7 +9,7 @@ description: What avirobotics.org stores, which cookies it uses, and who else is
 kicker: Privacy
 title: The short version.
 
-No ads, no analytics, no tracking pixels. We only keep what the site needs to work, and we never sell anything about you.
+No ads or tracking pixels. The site keeps limited first-party counts for its tools and printed QR codes; we never sell information about you.
 
 <!-- One block per topic. -->
 ## list
@@ -45,7 +45,7 @@ To hand over a shirt or send a receipt we keep your name, email, optional phone 
 Videos come from YouTube, but nothing loads from YouTube until you press play. The preview picture is fetched from YouTube's image server without telling it which page you're on. After you press play, [YouTube's privacy policy](https://policies.google.com/privacy) applies (we use their privacy-enhanced mode).
 
 ### Our QR codes
-When you scan one of our printed codes we count the scan: the day and hour, and whether the phone is an iPhone, Android or computer. We also send the code's name and your browser's description (its "user agent") to a Google Sheet the officers use. No location, no IP address, nothing that identifies you.
+When you scan one of our printed codes, we record the day and hour and a broad device category from your browser's user agent. In production, the code's name and full browser user agent are also sent to the officers' Google Sheet. The scan record and sheet do not include your IP address or precise location; the web server's temporary request logs may include the IP address, as explained below.
 
 ### Server logs
 Like every website, our server briefly logs requests (address, page, time) to keep the site running and safe. We don't use them for anything else.

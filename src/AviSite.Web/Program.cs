@@ -6,6 +6,7 @@ using AviSite.Web.Security;
 using AviSite.Web.Store;
 using AviSite.Web.Store.Payments;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
 
@@ -106,6 +107,13 @@ var storeLimit = builder.Environment.IsDevelopment() ? 1000 : 30; // dev: test s
 services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.OnRejected = (context, _) =>
+    {
+        // Don't let the branded 404 re-execution turn a rate-limit response into a misleading 404/400.
+        if (context.HttpContext.Features.Get<IStatusCodePagesFeature>() is { } statusPages)
+            statusPages.Enabled = false;
+        return ValueTask.CompletedTask;
+    };
     o.AddPolicy(AdminEndpoints.LoginRateLimit, ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(5) }));
@@ -117,6 +125,11 @@ services.AddRateLimiter(o =>
     o.AddPolicy(StoreRateLimit, ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = storeLimit, Window = TimeSpan.FromMinutes(10) }));
+    // QR scans update SQLite and can fan out to Google Sheets. Keep a high per-IP ceiling for event bursts,
+    // while preventing one source from hammering the anonymous scan path.
+    o.AddPolicy(DynamicQrEndpoints.ScanRateLimit, ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 300, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 });
 
 // nginx terminates TLS on the same box and forwards to Kestrel on loopback (same as SecWeb).

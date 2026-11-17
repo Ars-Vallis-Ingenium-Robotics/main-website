@@ -235,7 +235,7 @@
   .eyebrow a { text-decoration: none; } .eyebrow a:hover { text-decoration: underline; }
   .eyebrow__num { color: var(--fg); padding-right: var(--s-3); border-right: 1px solid var(--line-strong); }
   .eyebrow--on-ink { color: var(--on-ink-muted); } .eyebrow--on-ink .eyebrow__num { color: var(--accent-on-ink); border-color: var(--line-on-ink); }
-  .eyebrow--on-accent { color: rgb(255 255 255 / 0.85); } .eyebrow--on-accent .eyebrow__num { color: var(--white); border-color: rgb(255 255 255 / 0.4); }
+  .eyebrow--on-accent { color: var(--white); } .eyebrow--on-accent .eyebrow__num { color: var(--white); border-color: rgb(255 255 255 / 0.4); }
   .eyebrow--plain { margin-bottom: var(--s-3); }
 
   /* Headings */
@@ -629,7 +629,7 @@
   .team-card__desc { color: var(--on-ink-muted); max-width: 44ch; }
   .team-card .link-arrow { justify-self: start; color: var(--white); }
   .team-card--forming { background: transparent; color: var(--fg); border: 2px dashed var(--line-strong); min-height: 0; }
-  .team-card--forming .team-card__kicker { color: var(--slate); }
+  .team-card--forming .team-card__kicker { color: var(--text-muted); }
   .team-card--forming .team-card__desc { color: var(--text-muted); }
   .team-card--forming .link-arrow { color: var(--fg); }
 
@@ -1142,7 +1142,7 @@
   .levels { list-style: none; display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
   .level { display: grid; align-content: start; gap: var(--s-2); padding: var(--s-5); border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
   .level:first-child { background: var(--accent); color: var(--white); border-color: var(--accent); }
-  .level:first-child .level__perks { color: rgb(255 255 255 / 0.88); }
+  .level:first-child .level__perks { color: var(--white); }
   .level__name { font-family: var(--font-display); text-transform: uppercase; font-size: var(--step-1); }
   .level__amount { font-size: var(--step-1); font-weight: 700; }
   .level__perks { padding-left: 1.1rem; display: grid; gap: var(--s-1); font-size: 0.9rem; color: var(--text-muted); }
@@ -1794,7 +1794,6 @@
   .countdown__clock small { margin-right: var(--s-2); color: var(--text-muted); font-size: 0.8rem; }
   .countdown__lead { flex-basis: 100%; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
   .countdown__link { justify-self: start; margin-top: var(--s-2); }
-  .countdowns--done .countdown { opacity: 0.7; }
   .countdowns--done .countdown::before { background: var(--line); }
   .countdowns__done-title { margin-top: var(--s-8); }
   .countdowns__empty { font-size: var(--step-1); color: var(--text-muted); padding: var(--s-6) 0; }

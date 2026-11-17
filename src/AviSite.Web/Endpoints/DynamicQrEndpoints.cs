@@ -1,4 +1,5 @@
 using AviSite.Web.Store;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 namespace AviSite.Web.Endpoints;
@@ -9,10 +10,14 @@ namespace AviSite.Web.Endpoints;
 /// </summary>
 public static class DynamicQrEndpoints
 {
+    public const string ScanRateLimit = "dynamic-qr-scan";
+
     public static void MapDynamicQrEndpoints(this WebApplication app)
     {
-        app.MapMethods("/dynamicqr/{slug}", ["GET", "HEAD"], Handle);
-        app.MapMethods("/dynamicqr/{slug}/index.html", ["GET", "HEAD"], Handle);
+        app.MapMethods("/dynamicqr/{slug}", ["GET"], Handle).RequireRateLimiting(ScanRateLimit);
+        app.MapMethods("/dynamicqr/{slug}", ["HEAD"], Handle);
+        app.MapMethods("/dynamicqr/{slug}/index.html", ["GET"], Handle).RequireRateLimiting(ScanRateLimit);
+        app.MapMethods("/dynamicqr/{slug}/index.html", ["HEAD"], Handle);
     }
 
     private static async Task<IResult> Handle(string slug, HttpContext http, IDynamicQrStore store,
