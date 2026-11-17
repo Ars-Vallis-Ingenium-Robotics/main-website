@@ -13,16 +13,22 @@
         </li>
     }
     @{ var join = site["nav.join"].Link(); var joinShort = site["nav.join"].Text("short"); }
-    <li>
-        <a class="btn btn--accent btn--sm nav__join" aria-label="@join.PlainText" href="@join.Href" target="@join.Target" rel="@join.Rel">
-            @* Full label when there's room; the short one ("Join") when the bar gets tight. *@
-            <span class="nav__join-long">@join.Text</span><span class="nav__join-short" aria-hidden="true">@joinShort</span>
-        </a>
-    </li>
+    <AccountNav Sheet="Sheet">
+        <Join>
+            <li>
+                <a class="btn btn--accent btn--sm nav__join" aria-label="@join.PlainText" href="@join.Href" target="@join.Target" rel="@join.Rel">
+                    @* Full label when there's room; the short one ("Join") when the bar gets tight. *@
+                    <span class="nav__join-long">@join.Text</span><span class="nav__join-short" aria-hidden="true">@joinShort</span>
+                </a>
+            </li>
+        </Join>
+    </AccountNav>
 </ul>
 
 @code {
     [Parameter] public int CartCount { get; set; }
+    /// <summary>True inside the phone menu sheet (account links as a plain list there).</summary>
+    [Parameter] public bool Sheet { get; set; }
     private PageCopy site = default!;
     protected override void OnInitialized() => site = Copy.Site;
 }

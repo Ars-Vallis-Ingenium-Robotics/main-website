@@ -239,6 +239,13 @@ public static class HoursText
         return h == 0 ? $"{m} min" : m == 0 ? $"{h} h" : $"{h} h {m} min";
     }
 
+    /// <summary>"1:02:37": hours, minutes and seconds (for the running timer and entry lengths).</summary>
+    public static string Clock(TimeSpan t)
+    {
+        if (t < TimeSpan.Zero) t = TimeSpan.Zero;
+        return $"{(int)t.TotalHours}:{t.Minutes:00}:{t.Seconds:00}";
+    }
+
     public static string Hours(double h) => h.ToString(h < 10 ? "0.0" : "0", System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>Pacific wall clock → UTC (for times people type in).</summary>

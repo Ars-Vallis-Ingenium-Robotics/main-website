@@ -1,0 +1,149 @@
+@page "/admin/hours/week"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
+@using AviSite.Web.Endpoints
+@inject IAccountStore Accounts
+@inject HoursStore Store
+
+<PageTitle>Add a week of time · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+<script src="/js/hours-week.js" defer></script>
+
+<section class="section admin hours">
+    <div class="wrap">
+        <AdminNav Current="hours" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow"><a href="/admin/hours">Hours</a> / Week</p>
+                <h1 class="h1">Catch up on a week</h1>
+                <p class="muted">Drag down a day to draw a block of time (or tap a day, or press +), fix the times below if you need to, then save them all at once.</p>
+            </div>
+            <div class="hours__leadlinks">
+                <a class="btn btn--ghost btn--sm" href="/admin/hours/week?start=@monday.AddDays(-7).ToString("yyyy-MM-dd")" aria-label="Previous week">← Previous</a>
+                <a class="btn btn--ghost btn--sm" href="/admin/hours/week">This week</a>
+                @if (monday < thisMonday) { <a class="btn btn--ghost btn--sm" href="/admin/hours/week?start=@monday.AddDays(7).ToString("yyyy-MM-dd")" aria-label="Next week">Next →</a> }
+            </div>
+        </div>
+
+        @if (Message is { } m) { <p class="alert @(Done is not null ? "alert--ok" : "")" role="status">@m</p> }
+
+        <p class="wk__range">@monday.ToString("MMM d") – @monday.AddDays(6).ToString("MMM d, yyyy")</p>
+
+        @if (teams.Count == 0)
+        {
+            <p class="alert">You're not on a team yet, so there's nowhere to log hours.</p>
+        }
+        else
+        {
+            <div class="wk" data-week data-first-hour="@FirstHour" data-last-hour="@LastHour" style="--hours: @(LastHour - FirstHour)">
+                <div class="wk__axis" aria-hidden="true">
+                    <div class="wk__head"></div>
+                    <div class="wk__times">
+                        @for (var h = FirstHour; h < LastHour; h += 2) { <span style="--at: @(h - FirstHour)">@Hour(h)</span> }
+                    </div>
+                </div>
+                @for (var i = 0; i < 7; i++)
+                {
+                    var day = monday.AddDays(i);
+                    var future = day > today;
+                    <div class="wk__day @(day == today ? "is-today" : "") @(future ? "is-future" : "")">
+                        <div class="wk__head">
+                            <span>@day.ToString("ddd")</span><strong>@day.Day</strong>
+                            @if (!future) { <button type="button" class="wk__add" data-week-add="@day.ToString("yyyy-MM-dd")" aria-label="Add time on @day.ToString("dddd, MMM d")"></button> }
+                        </div>
+                        <div class="wk__col" data-week-col="@(future ? "" : day.ToString("yyyy-MM-dd"))">
+                            @foreach (var e in mine.Where(e => DateOnly.FromDateTime(e.StartUtc.ToPacific().DateTime) == day))
+                            {
+                                var s = e.StartUtc.ToPacific(); var en = (e.EndUtc ?? Store.Now).ToPacific();
+                                var top = Math.Clamp((s.Hour + s.Minute / 60.0 - FirstHour) / (LastHour - FirstHour), 0, 1);
+                                var bottom = Math.Clamp(((en.Date > s.Date ? 24 : en.Hour + en.Minute / 60.0) - FirstHour) / (LastHour - FirstHour), 0, 1);
+                                <a class="wk__block" href="/admin/hours?edit=@e.Id#entry-@e.Id" data-week-entry data-start="@s.ToString("HH:mm")" data-end="@en.ToString("HH:mm")"
+                                   style="top: @(Pct(top)); height: @(Pct(Math.Max(bottom - top, 0.02)))" title="@Tree.Name(e.Team) · @e.Category, @s.ToString("h:mm tt")–@en.ToString("h:mm tt")">
+                                    <span>@e.Category</span><span class="wk__time">@s.ToString("h:mm")–@en.ToString("h:mm")</span>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* The new blocks, one row each, filled in by hours-week.js. Each row is real form fields, so it all posts in one go. *@
+            <form method="post" action="/admin/hours/save-week" class="wk__new" data-week-form hidden>
+                <AntiforgeryToken />
+                <input type="hidden" name="week" value="@monday.ToString("yyyy-MM-dd")" />
+                <h2 class="h4">New time</h2>
+                <ol class="wk__rows" data-week-rows></ol>
+                <div class="hours-form__actions">
+                    <button class="btn btn--accent" type="submit" data-week-save>Save</button>
+                    <button class="btn btn--ghost btn--sm" type="button" data-week-clear>Clear</button>
+                </div>
+            </form>
+            <template data-week-row>
+                <li class="wk__row">
+                    <span class="wk__row-day" data-row-day></span>
+                    <input type="hidden" name="date" data-row-date />
+                    <label><span class="visually-hidden">From</span><input type="time" name="start" step="300" data-row-start required /></label>
+                    <span aria-hidden="true">–</span>
+                    <label><span class="visually-hidden">To</span><input type="time" name="end" step="300" data-row-end required /></label>
+                    <label><span class="visually-hidden">Team</span>
+                        <select name="team">@foreach (var g in teams) { <option value="@g.Id" selected="@(g.Id == defTeam)">@g.Name</option> }</select>
+                    </label>
+                    <label><span class="visually-hidden">Category</span>
+                        <select name="category">@foreach (var c in categories) { <option value="@c" selected="@(c == defCategory)">@c</option> }</select>
+                    </label>
+                    <span class="wk__row-dur mono" data-row-dur></span>
+                    <button type="button" class="team-chip__x wk__row-x" data-row-remove aria-label="Remove this block"></button>
+                </li>
+            </template>
+            <noscript><p class="muted">The calendar needs JavaScript. You can still <a href="/admin/hours">add time by hand</a>.</p></noscript>
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery] public string? Start { get; set; }
+    [SupplyParameterFromQuery] public string? Done { get; set; }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromQuery] public int? N { get; set; }
+
+    private const int FirstHour = 6, LastHour = 24;
+    private DateOnly monday, thisMonday, today;
+    private List<AccountGroup> teams = [];
+    private List<string> categories = [];
+    private string defTeam = "", defCategory = "";
+    private List<HoursEntry> mine = [];
+    private GroupTree Tree = new([]);
+
+    private static string Hour(int h) => h == 0 || h == 24 ? "12a" : h < 12 ? $"{h}a" : h == 12 ? "12p" : $"{h - 12}p";
+    private static string Pct(double f) => (f * 100).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + "%";
+
+    private string? Message => (Done, Error) switch
+    {
+        ("added", _) => $"Saved {N} {(N == 1 ? "block" : "blocks")}.",
+        (_, "overlap") => "Some of those overlap each other or time you already logged. Nothing was saved; adjust and try again.",
+        (_, "too-long") => "A block can be at most 24 hours.",
+        (_, "future") => "That's in the future.",
+        (_, "empty") => "Draw at least one block first.",
+        (_, { }) => "Something in that week didn't work (check the times and teams). Nothing was saved.",
+        _ => null,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var access = await Http!.AccessAsync(Accounts);
+        Tree = access.Tree;
+        today = DateOnly.FromDateTime(Store.Now.ToPacific().DateTime);
+        thisMonday = HoursText.WeekStart(today);
+        monday = DateOnly.TryParseExact(Start, "yyyy-MM-dd", out var d) ? HoursText.WeekStart(d) : thisMonday;
+        if (monday > thisMonday) monday = thisMonday;
+        teams = HoursRules.LoggableTeams(access);
+        categories = teams.Select(g => HoursRules.OrgOf(g.Id, Tree)).Distinct().SelectMany(Store.Categories).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var email = access.Account?.Email ?? "";
+        var last = email.Length > 0 ? Store.LastUsed(email) : null;
+        defTeam = last is { } l && teams.Any(g => g.Id == l.Team) ? l.Team : teams.FirstOrDefault()?.Id ?? "";
+        defCategory = last is { } l2 && categories.Contains(l2.Category) ? l2.Category : categories.FirstOrDefault() ?? "";
+        mine = email.Length > 0
+            ? Store.List(emails: [email], from: HoursText.StartOfDayPacific(monday), to: HoursText.StartOfDayPacific(monday.AddDays(7)))
+            : [];
+    }
+}

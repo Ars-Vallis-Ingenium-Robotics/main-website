@@ -7,7 +7,7 @@ namespace AviSite.Web.Endpoints;
 /// Saved looks for dynamic QR codes. The QR maker (/tools/qr?code=…) reads and writes these with fetch(),
 /// so "QR image" always opens with the code's look and whoever reprints it gets the same design.
 ///
-/// CSRF: the admin cookie is SameSite=Strict (never sent from other sites), the POST must be JSON
+/// CSRF: the admin cookie is SameSite=Lax (never sent on cross-site POSTs), the POST must be JSON
 /// (a cross-site form can't send that), and the Origin header must be this site.
 /// </summary>
 public static class QrLookEndpoints

@@ -47,6 +47,7 @@ public static class AdminEndpoints
             // No form-bound parameters, so the antiforgery middleware won't check this one for us.
             if (!await af.IsRequestValidAsync(http)) return Results.BadRequest();
             await http.SignOutAsync(Scheme);
+            AccountAuth.ForgetOldCookie(http);
             return Results.LocalRedirect("/");
         });
 
@@ -89,14 +90,17 @@ public static class AdminAuthSetup
 {
     public static IServiceCollection AddAdminAuth(this IServiceCollection services, bool isDevelopment)
     {
-        services.AddAuthentication() // no default scheme: stays out of the way if ASP.NET Identity is added later
+        // The sign-in cookie covers the whole site, so public pages can show a signed-in header (Hours, account menu).
+        services.AddAuthentication(o => o.DefaultAuthenticateScheme = AdminEndpoints.Scheme)
             .AddCookie(AdminEndpoints.Scheme, o =>
             {
                 o.Cookie.Name = "avi_admin";
                 o.Cookie.HttpOnly = true;
-                o.Cookie.SameSite = SameSiteMode.Strict;
+                // Lax: arriving from Discord or a QR code keeps you signed in. Cross-site POSTs still can't use it,
+                // and every form also carries an antiforgery token.
+                o.Cookie.SameSite = SameSiteMode.Lax;
                 o.Cookie.SecurePolicy = isDevelopment ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
-                o.Cookie.Path = "/admin";
+                o.Cookie.Path = "/";
                 o.LoginPath = "/admin/login";
                 o.AccessDeniedPath = "/admin/login";
                 o.ExpireTimeSpan = TimeSpan.FromDays(30); // Google accounts stay signed in (persistent); shared-password logins end with the browser

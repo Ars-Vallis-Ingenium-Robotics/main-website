@@ -18,13 +18,15 @@
             <NavLinks CartCount="cartCount" />
         </nav>
 
+        <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Dark mode"><span class="theme-toggle__icon" aria-hidden="true"></span></button>
+
         <details class="nav nav--narrow">
             <summary class="nav__toggle">
                 <span class="nav__toggle-open">Menu</span><span class="nav__toggle-close" aria-hidden="true">Close</span>
                 @if (cartCount > 0) { <span class="badge" aria-hidden="true">@cartCount</span><span class="visually-hidden">, @cartCount @(cartCount == 1 ? "item" : "items") in cart</span> }
             </summary>
             <nav class="nav__sheet" aria-label="Main (menu)">
-                <NavLinks CartCount="cartCount" />
+                <NavLinks CartCount="cartCount" Sheet="true" />
                 <ul class="nav__more">
                     @foreach (var l in site["nav.more"].Links()) { <li><CopyLink Link="l" /></li> }
                 </ul>

@@ -52,11 +52,12 @@
                         }
                     </fieldset>
                 </div>
+                @* Tap 1 opens the confirm; its button takes the exact place of the first one, so tap 2 needs no aiming. *@
                 <details class="clock__confirm">
                     <summary class="btn btn--accent clock__btn">Clock in</summary>
                     <div class="clock__sure">
-                        <p>Clock in to <strong data-clock-what>@access.Tree.Name(defTeam) · @defCategory</strong> now?</p>
                         <button class="btn btn--accent clock__btn" type="submit">Yes, clock in</button>
+                        <p>Clock in to <strong data-clock-what>@access.Tree.Name(defTeam) · @defCategory</strong> now? <a href="/admin/hours" data-clock-cancel>Not now</a></p>
                     </div>
                 </details>
             </form>
@@ -70,7 +71,7 @@
                     <strong>@access.Tree.Name(running.Team) · @running.Category</strong>
                     <span>since @Time(running.StartUtc)@(SameDay(running.StartUtc) ? "" : ", " + Day(running.StartUtc))</span>
                 </p>
-                <p class="clock__elapsed" data-clock-since="@running.StartUtc.ToUnixTimeSeconds()" aria-live="off">@HoursText.Duration(running.Duration(Store.Now))</p>
+                <p class="clock__elapsed" data-clock-since="@running.StartUtc.ToUnixTimeSeconds()" aria-live="off">@HoursText.Clock(running.Duration(Store.Now))</p>
                 @if (long_)
                 {
                     <p class="alert" role="alert">That's over 24 hours: you probably forgot to clock out. Clocking out now keeps 24 hours; fix the end time below.</p>
@@ -80,11 +81,12 @@
                     <details class="clock__confirm">
                         <summary class="btn btn--tools clock__btn">Clock out</summary>
                         <div class="clock__sure">
+                            <button class="btn btn--tools clock__btn" type="submit">Yes, clock out</button>
+                            <p>Clock out now? <a href="/admin/hours" data-clock-cancel>Not now</a></p>
                             <label class="field">
-                                <span class="label">What did you get done? <span class="muted">(optional)</span></span>
+                                <span class="label">What did you get done? <span class="muted">(optional, type it before tapping)</span></span>
                                 <input name="note" maxlength="200" autocomplete="off" placeholder="e.g. wired the thrusters" />
                             </label>
-                            <button class="btn btn--tools clock__btn" type="submit">Yes, clock out</button>
                         </div>
                     </details>
                 </form>
@@ -126,6 +128,9 @@
 
         @* ---------- My entries ---------- *@
         <h2 class="h3 qr-admin__h">Your time</h2>
+        <div class="hours__catchup">
+            <a class="btn btn--ghost btn--sm" href="/admin/hours/week">Catch up on a week (calendar)</a>
+        </div>
         <details class="people-admin__more" open="@(Error is not null && Done is null)">
             <summary>Add time by hand</summary>
             <HoursEntryForm Teams="teams" Categories="categories" Tree="access.Tree" DefaultTeam="@defTeam" DefaultCategory="@defCategory" Back="/admin/hours" />
@@ -139,16 +144,16 @@
             <ul class="entries" role="list">
                 @foreach (var e in mine)
                 {
-                    <li class="entry @(e.Running ? "entry--running" : "")">
+                    <li class="entry @(e.Running ? "entry--running" : "")" id="entry-@e.Id">
                         <div class="entry__main">
                             <span class="entry__when">@Day(e.StartUtc) · @Time(e.StartUtc)–@(e.EndUtc is { } end ? Time(end) : "now")</span>
                             <span class="entry__what">@access.Tree.Name(e.Team) · @e.Category@(e.Source == "lead" ? " · added by a lead" : "")</span>
                             @if (e.Note is not null) { <span class="entry__note">@e.Note</span> }
                         </div>
-                        <span class="entry__dur mono">@HoursText.Duration(e.Duration(Store.Now))</span>
+                        <span class="entry__dur mono" title="hours:minutes:seconds">@HoursText.Clock(e.Duration(Store.Now))</span>
                         @if (!e.Running)
                         {
-                            <details class="entry__edit">
+                            <details class="entry__edit" open="@(Edit == e.Id)">
                                 <summary>Edit</summary>
                                 <HoursEntryForm Entry="e" Teams="teams" Categories="categories" Tree="access.Tree" Back="/admin/hours" />
                             </details>
@@ -166,6 +171,8 @@
     [SupplyParameterFromQuery] public string? Error { get; set; }
     [SupplyParameterFromQuery(Name = "team")] public string? QueryTeam { get; set; }
     [SupplyParameterFromQuery(Name = "category")] public string? QueryCategory { get; set; }
+    /// <summary>Opened from the week calendar: show this entry's edit form.</summary>
+    [SupplyParameterFromQuery] public long? Edit { get; set; }
 
     private Access access = new();
     private string me = "";
@@ -234,6 +241,7 @@
 
         all = me.Length > 0 ? Store.List(emails: [me]) : [];
         mine = all.Take(40).ToList();
+        if (Edit is { } editId && mine.All(e => e.Id != editId) && all.FirstOrDefault(e => e.Id == editId) is { } older) mine.Add(older);
 
         var today = DateOnly.FromDateTime(Store.Now.ToPacific().DateTime);
         weekFrom = HoursText.StartOfDayPacific(HoursText.WeekStart(today));

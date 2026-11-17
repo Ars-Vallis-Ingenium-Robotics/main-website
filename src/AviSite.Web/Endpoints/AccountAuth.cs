@@ -174,8 +174,13 @@ public static class AccountAuth
         }
     }
 
+    /// <summary>Before the cookie covered the whole site it lived at /admin; drop that copy so it can't outlive a sign-out.</summary>
+    public static void ForgetOldCookie(HttpContext http) =>
+        http.Response.Cookies.Delete("avi_admin", new CookieOptions { Path = "/admin" });
+
     private static async Task SignInAsync(HttpContext http, Account account, IAccountStore store)
     {
+        ForgetOldCookie(http);
         // Stay signed in on this device (30 days, renewed as you use it) so clocking in stays two taps.
         // Removing someone still ends it on their next click (ValidateAsync).
         await http.SignInAsync(AdminEndpoints.Scheme, PrincipalFor(account), new AuthenticationProperties { IsPersistent = true });

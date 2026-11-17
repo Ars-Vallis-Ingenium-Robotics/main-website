@@ -150,6 +150,39 @@ public static class HoursEndpoints
             return Back(to, done: "added");
         });
 
+        // The week calendar: many blocks of your own time at once. All or nothing, so a mistake never saves half a week.
+        hours.MapPost("/save-week", async (HttpContext http, IAccountStore accounts, HoursStore store, Microsoft.AspNetCore.Antiforgery.IAntiforgery af) =>
+        {
+            // Reads the form itself (repeated fields), so the antiforgery middleware won't check it for us.
+            if (!await af.IsRequestValidAsync(http)) return Results.BadRequest();
+            var form = await http.Request.ReadFormAsync();
+            var me = await http.AccessAsync(accounts);
+            var week = form["week"].ToString();
+            var back = "/admin/hours/week?start=" + Uri.EscapeDataString(week);
+            IResult Fail(string why) => Results.LocalRedirect(back + "&error=" + why);
+            if (me.Account is null) return Fail("account");
+            var dates = form["date"]; var starts = form["start"]; var ends = form["end"]; var teams = form["team"]; var cats = form["category"];
+            var n = dates.Count;
+            if (n == 0) return Fail("empty");
+            if (n > 100 || starts.Count != n || ends.Count != n || teams.Count != n || cats.Count != n) return Fail("bad");
+            var loggable = HoursRules.LoggableTeams(me).Select(g => g.Id).ToHashSet();
+            var blocks = new List<HoursEntry>();
+            for (var i = 0; i < n; i++)
+            {
+                var err = HoursRules.ParseTimes(dates[i], starts[i], ends[i], store.Now, out var st, out var en);
+                if (err is not null) return Fail(err);
+                if (!loggable.Contains(teams[i]!)) return Fail("team");
+                if (!store.Categories(HoursRules.OrgOf(teams[i]!, me.Tree)).Contains(cats[i]!)) return Fail("category");
+                blocks.Add(new HoursEntry { Email = me.Account.Email, Team = teams[i]!, Category = cats[i]!, StartUtc = st, EndUtc = en, Source = "manual" });
+            }
+            // No overlaps with each other or with time already logged (a running session counts up to now).
+            var existing = store.List(emails: [me.Account.Email], from: blocks.Min(b => b.StartUtc), to: blocks.Max(b => b.EndUtc!.Value));
+            var all = blocks.Select(b => (b.StartUtc, End: b.EndUtc!.Value)).Concat(existing.Select(e => (e.StartUtc, End: e.EndUtc ?? store.Now))).OrderBy(x => x.StartUtc).ToList();
+            for (var i = 1; i < all.Count; i++) if (all[i].StartUtc < all[i - 1].End) return Fail("overlap");
+            foreach (var b in blocks) store.Add(b, me.Account.Email);
+            return Results.LocalRedirect(back + "&done=added&n=" + blocks.Count);
+        });
+
         hours.MapPost("/delete", async ([FromForm] long id, [FromForm] string? back, HttpContext http, IAccountStore accounts, HoursStore store) =>
         {
             var me = await http.AccessAsync(accounts);

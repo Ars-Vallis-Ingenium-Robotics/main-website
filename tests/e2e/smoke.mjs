@@ -11,7 +11,7 @@ const results = [];
 // ONLY=layout node smoke.mjs runs just the tests whose name contains "layout".
 const ONLY = process.env.ONLY;
 async function test(name, fn) {
-  if (ONLY && !name.includes(ONLY)) return;
+  if (ONLY && !name.includes(ONLY) && !new RegExp(ONLY).test(name)) return;
   try { await fn(); results.push(["PASS", name]); }
   catch (e) { results.push(["FAIL", name, e.message.split("\n")[0]]); }
 }
@@ -190,7 +190,7 @@ await test("donate: pick an amount → fake PayPal → receipt with IRS language
   await page.locator('label.chip:has-text("$100")').click();
   await page.fill("#name", "Test Donor");
   await page.fill("#email", "donor@example.com");
-  await page.click('button[type="submit"]');
+  await page.click('main button[type="submit"]');
   await page.waitForURL(/\/shop\/pay\//);
   assert.match(await page.locator("h1").innerText(), /donation/i);
   await page.click("#fake-pay");
@@ -207,7 +207,7 @@ await test("donate: amount outside $5–$10,000 is refused", async () => {
   await page.fill("#custom", "2");
   await page.fill("#name", "Test Donor");
   await page.fill("#email", "donor@example.com");
-  await page.click('button[type="submit"]');
+  await page.click('main button[type="submit"]');
   assert.match(page.url(), /\/donate/);
   assert.ok(await page.locator(".alert, .field__error").count() > 0);
 });
@@ -510,8 +510,9 @@ await test("every pop-up keeps its close button in view while scrolling (sticky)
 });
 
 await test("join button never wraps: full label when roomy, \"Join\" when tight", async () => {
+  const anon = await browser.newContext(); const page = await anon.newPage(); // signed out: signed in, the header shows the clock instead
   try {
-    for (const [w, label] of [[920, "Join"], [1280, "Join the club"]]) {
+    for (const [w, label] of [[1000, "Join"], [1280, "Join the club"]]) {
       await page.setViewportSize({ width: w, height: 700 });
       await page.goto(BASE + "/about");
       const j = page.locator(".nav--wide .nav__join");
@@ -521,7 +522,7 @@ await test("join button never wraps: full label when roomy, \"Join\" when tight"
       assert.equal(await page.evaluate(() => { const b = document.querySelector(".site-header__bar"); return b.scrollWidth <= b.clientWidth + 1; }), true, `header fits at ${w}px`);
     }
   } finally {
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await anon.close();
   }
 });
 
@@ -1010,10 +1011,10 @@ await test("hours: members add, edit and delete their own time; bad times are re
   assert.match(await add("2030-01-01", "10:00", "11:00"), /future/i);
   assert.match(await add("2026-10-02", "22:00", "01:30"), /Added/, "past midnight is fine");
   const first = pg.locator(".entry", { hasText: "Thu, Oct 1" });
-  assert.match(await first.innerText(), /2 h 30 min/);
+  assert.match(await first.innerText(), /2:30:00/);
   await first.locator(".entry__edit > summary").click();
   await first.locator('input[name="end"]').fill("21:00"); await first.locator('button', { hasText: "Save" }).click(); await pg.waitForLoadState();
-  assert.match(await pg.locator(".entry", { hasText: "Thu, Oct 1" }).innerText(), /3 h 30 min/, "edited");
+  assert.match(await pg.locator(".entry", { hasText: "Thu, Oct 1" }).innerText(), /3:30:00/, "edited");
   const myId = await pg.locator(".entry", { hasText: "Thu, Oct 1" }).locator('input[name="id"]').first().inputValue();
   await pg.locator(".entry", { hasText: "Fri, Oct 2" }).locator(".entry__edit > summary").click();
   await pg.locator(".entry", { hasText: "Fri, Oct 2" }).locator(".hours-form__delete summary").click();
@@ -1140,6 +1141,110 @@ async function assertButtonsBreathe(pg, label) {
   assert.deepEqual(bad, [], `${label}: buttons touching or overlapping: ${[...new Set(bad)].slice(0, 5).join("; ")}`);
 }
 
+await test("hours: the second tap lands where the first one was (no mouse move); the timer shows seconds", async () => {
+  const id = Date.now().toString(36).slice(-5), who = `tap-${id}@example.com`;
+  const [oc, op] = await signIn("owner@example.com");
+  await addPerson(op, who, "sms");
+  const [c, pg] = await signIn(who);
+  await pg.goto(BASE + "/admin/hours");
+  for (const [first, second] of [["Clock in", "Yes, clock in"], ["Clock out", "Yes, clock out"]]) {
+    const a = await pg.locator(".clock__confirm > summary").boundingBox();
+    await pg.mouse.click(a.x + a.width / 2, a.y + a.height / 2); // tap 1
+    const b = await pg.getByRole("button", { name: second }).boundingBox();
+    const inside = (x, y) => x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height;
+    assert.ok(inside(a.x + a.width / 2, a.y + a.height / 2), `${second} sits under the ${first} tap (${JSON.stringify(a)} vs ${JSON.stringify(b)})`);
+    assert.ok(Math.abs(a.x - b.x) <= 2 && Math.abs(a.y - b.y) <= 2, `${second} starts where ${first} was`);
+    await Promise.all([pg.waitForLoadState(), pg.mouse.click(a.x + a.width / 2, a.y + a.height / 2)]); // tap 2, same spot
+    if (first === "Clock in") {
+      await pg.locator(".clock--on").waitFor();
+      await pg.waitForTimeout(1200);
+      assert.match(await pg.locator("[data-clock-since]").first().innerText(), /^\d+:\d\d:\d\d$/, "running timer counts seconds");
+    }
+  }
+  await pg.locator(".clock__confirm > summary", { hasText: "Clock in" }).waitFor();
+  await c.close(); await oc.close();
+});
+
+await test("header: Sign in when signed out; Clock in + account menu when signed in (sign-in works on public pages)", async () => {
+  const anon = await browser.newContext({ viewport: { width: 1280, height: 900 } }); const ap = await anon.newPage();
+  await ap.goto(BASE + "/about");
+  assert.equal(await ap.locator("header .nav--wide .nav__signin").isVisible(), true, "Sign in link in the header");
+  assert.equal(await ap.locator("header .account-menu").count(), 0);
+  await anon.close();
+  const [c, pg] = await signIn("owner@example.com");
+  await pg.goto(BASE + "/about");
+  assert.equal(await pg.locator("header .nav--wide .nav__signin").count(), 0, "no Sign in once signed in");
+  assert.equal(await pg.locator("header .nav--wide .nav__clock").isVisible(), true, "clock button in the header");
+  await pg.locator("header .nav--wide .account-menu > summary").click();
+  for (const label of ["My hours", "QR codes", "People"]) assert.equal(await pg.locator("header .nav--wide .account-menu__panel a", { hasText: label }).isVisible(), true, label);
+  await pg.locator("header .nav--wide .account-menu__panel a", { hasText: "QR codes" }).click();
+  assert.equal(new URL(pg.url()).pathname, "/admin/qr");
+  await c.close();
+});
+
+await test("dark mode: the toggle switches, remembers, and follows the system until pressed", async () => {
+  const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" }); const pg = await c.newPage();
+  await pg.goto(BASE + "/about");
+  const bg = () => pg.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const darkBg = await bg();
+  assert.equal(await pg.locator("[data-theme-toggle]").getAttribute("aria-pressed"), "true", "system dark shows as on");
+  await pg.click("[data-theme-toggle]");
+  assert.equal(await pg.evaluate(() => document.documentElement.dataset.theme), "light");
+  assert.notEqual(await bg(), darkBg, "page went light");
+  await pg.reload();
+  assert.equal(await pg.evaluate(() => document.documentElement.dataset.theme), "light", "choice survives a reload");
+  await pg.click("[data-theme-toggle]");
+  assert.equal(await pg.locator("[data-theme-toggle]").getAttribute("aria-pressed"), "true");
+  assert.equal(await bg(), darkBg);
+  await c.close();
+});
+
+await test("hours week: drag, tap and + add blocks; one save makes them all; overlaps are refused whole", async () => {
+  const id = Date.now().toString(36).slice(-5), who = `wk-${id}@example.com`;
+  const [oc, op] = await signIn("owner@example.com");
+  await addPerson(op, who, "sms");
+  const [c, pg] = await signIn(who);
+  await pg.goto(BASE + "/admin/hours");
+  await pg.click("text=Catch up on a week");
+  await pg.click("text=← Previous"); // a week that's all in the past
+  const days = await pg.locator("[data-week-add]").evaluateAll((bs) => bs.map((b) => b.dataset.weekAdd));
+  assert.equal(days.length, 7);
+  const col = pg.locator(`[data-week-col="${days[1]}"]`);
+  await col.evaluate((el) => window.scrollTo(0, el.getBoundingClientRect().top + scrollY - 140));
+  const bx = await col.boundingBox(), hour = bx.height / 18; // 6am–midnight
+  await pg.mouse.move(bx.x + 30, bx.y + 3 * hour); await pg.mouse.down(); // 9:00
+  await pg.mouse.move(bx.x + 30, bx.y + 5.5 * hour, { steps: 6 }); await pg.mouse.up(); // → 11:30
+  assert.equal(await pg.inputValue("[data-week-rows] li >> nth=0 >> [data-row-start]"), "09:00");
+  assert.equal(await pg.inputValue("[data-week-rows] li >> nth=0 >> [data-row-end]"), "11:30");
+  await pg.click(`[data-week-add="${days[3]}"]`);
+  assert.equal(await pg.locator("[data-week-rows] li").count(), 2);
+  assert.match(await pg.locator("[data-week-save]").innerText(), /Save 2 blocks \(4:30\)/);
+  // Drawing over an existing new block flags it and blocks the save.
+  await pg.click(`[data-week-add="${days[1]}"]`);
+  const extra = pg.locator(`[data-week-rows] li:has([data-row-date][value="${days[1]}"]) >> nth=1`);
+  await extra.locator("[data-row-start]").fill("10:00"); await extra.locator("[data-row-start]").dispatchEvent("change");
+  await pg.locator("[data-week-rows] li.is-clash").first().waitFor();
+  await pg.click("[data-week-save]");
+  assert.equal(await pg.locator("[data-week-form] .alert").isVisible(), true, "overlap warning");
+  await pg.locator("[data-week-rows] li.is-clash >> nth=-1 >> [data-row-remove]").click();
+  await Promise.all([pg.waitForURL(/done=added/), pg.click("[data-week-save]")]);
+  assert.match(await pg.locator(".alert").first().innerText(), /Saved 2 blocks/);
+  assert.equal(await pg.locator(`[data-week-col="${days[1]}"] [data-week-entry]`).count(), 1, "the block is on the calendar now");
+  // The server refuses overlap with saved time, and saves nothing from that batch.
+  const tok = await pg.locator('input[name="__RequestVerificationToken"]').first().inputValue();
+  const body = new URLSearchParams([["__RequestVerificationToken", tok], ["week", days[0]],
+    ["date", days[2]], ["start", "08:00"], ["end", "09:00"], ["team", "sms"], ["category", "Build"],
+    ["date", days[1]], ["start", "10:00"], ["end", "12:00"], ["team", "sms"], ["category", "Build"]]);
+  const r = await pg.request.post(BASE + "/admin/hours/save-week", { data: body.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" }, maxRedirects: 0 });
+  assert.match(r.headers().location, /error=overlap/);
+  await pg.reload();
+  assert.equal(await pg.locator(`[data-week-col="${days[2]}"] [data-week-entry]`).count(), 0, "nothing from the refused batch was saved");
+  // Blocks link to their edit form.
+  await pg.locator(`[data-week-col="${days[1]}"] [data-week-entry]`).click();
+  assert.equal(await pg.locator(".entry__edit[open]").count(), 1, "opened straight to Edit");
+  await c.close(); await oc.close();
+});
+
 await test("layout: icons sit in the middle of their buttons", async () => {
   const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 }); const pg = await c.newPage();
   // Customize toggle (+ drawn in a circle)
@@ -1178,7 +1283,7 @@ await test("layout: buttons never touch or overlap (admin, QR maker, sign-in, ho
   const openAll = () => pg.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
   await pg.goto(BASE + "/admin/login"); await openAll(); await assertButtonsBreathe(pg, "/admin/login");
   await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
-  for (const path of ["/admin/people", "/admin/qr", "/admin/qr/three", "/admin/usage", "/admin/hours", "/admin/hours/team", "/admin/hours/report", "/admin/hours/settings", "/tools/qr", "/"]) {
+  for (const path of ["/admin/people", "/admin/qr", "/admin/qr/three", "/admin/usage", "/admin/hours", "/admin/hours/team", "/admin/hours/report", "/admin/hours/settings", "/admin/hours/week", "/tools/qr", "/", "/about"]) {
     for (const w of [1440, 1024, 768, 390]) {
       await pg.setViewportSize({ width: w, height: 900 });
       await pg.goto(BASE + path); await openAll();

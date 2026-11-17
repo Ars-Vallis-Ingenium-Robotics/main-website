@@ -40,7 +40,7 @@
                             <span class="entry__what"><strong>@Name(e.Email)</strong> · @access.Tree.Name(e.Team) · @e.Category</span>
                             <span class="entry__when">since @Stamp(e.StartUtc)</span>
                         </div>
-                        <span class="entry__dur mono">@HoursText.Duration(e.Duration(Store.Now))</span>
+                        <span class="entry__dur mono" title="hours:minutes:seconds">@HoursText.Clock(e.Duration(Store.Now))</span>
                         @if (Editable(e))
                         {
                             <details class="entry__edit" open="@(e.Id == Fix)">
@@ -100,7 +100,7 @@
                         <span class="entry__when">@Stamp(e.StartUtc)–@e.EndUtc!.Value.ToPacific().ToString("h:mm tt")</span>
                         @if (e.Note is not null) { <span class="entry__note">@e.Note</span> }
                     </div>
-                    <span class="entry__dur mono">@HoursText.Duration(e.Duration(Store.Now))</span>
+                    <span class="entry__dur mono" title="hours:minutes:seconds">@HoursText.Clock(e.Duration(Store.Now))</span>
                     @if (Editable(e))
                     {
                         <details class="entry__edit">
