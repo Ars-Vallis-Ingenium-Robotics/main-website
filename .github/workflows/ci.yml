@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Discord signed interaction E2E
+        run: node tests/e2e/discord-interactions.mjs
       - name: E2E smoke tests
         working-directory: tests/e2e
         run: |

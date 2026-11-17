@@ -1,0 +1,77 @@
+@page "/admin/discord"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
+@using AviSite.Web.Endpoints
+@using AviSite.Web.Options
+@using AviSite.Web.Store
+@inject IAccountStore Accounts
+@inject Microsoft.Extensions.Options.IOptions<DiscordOptions> Discord
+
+<PageTitle>Discord link · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin">
+    <div class="wrap">
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Account</p>
+                <h1 class="h1">Discord link</h1>
+                <p class="muted">Connect Discord to your AVI account to use private Hours slash commands.</p>
+            </div>
+        </div>
+
+        @if (account is null)
+        {
+            <p class="alert" role="status">Discord linking requires your personal AVI account. A shared team login cannot be linked.</p>
+        }
+        else if (account.DiscordUserId is { } discordId)
+        {
+            <p class="alert alert--ok" role="status">Discord is connected to this account (ID ending in @discordId[^4..]).</p>
+            <form method="post" action="/admin/discord/unlink" class="hours-form__actions">
+                <AntiforgeryToken />
+                <button class="btn btn--ghost" type="submit">Unlink Discord</button>
+            </form>
+        }
+        else if (!Discord.Value.LinkingConfigured)
+        {
+            <p class="alert" role="status">Discord linking is not configured on this site yet. No account data has been sent to Discord.</p>
+        }
+        else
+        {
+            <p class="small">The link uses Discord OAuth <code>identify</code> only. AVI stores your Discord user ID, not an OAuth token. Hours replies are private to you; team totals require existing AVI lead/officer/owner access.</p>
+            <a class="btn btn--accent" href="/admin/discord/link">Link Discord account</a>
+        }
+
+        @if (Status is { } status)
+        {
+            <p class="alert @(status.Success ? "alert--ok" : "")" role="status">@status.Text</p>
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery(Name = "linked")] public string? Linked { get; set; }
+    [SupplyParameterFromQuery(Name = "unlinked")] public string? Unlinked { get; set; }
+    [SupplyParameterFromQuery(Name = "link")] public string? LinkError { get; set; }
+
+    private Account? account;
+    private (string Text, bool Success)? Status =>
+        Linked == "1" ? ("Discord is now linked.", true) :
+        Unlinked == "1" ? ("Discord has been unlinked.", true) :
+        LinkError switch
+        {
+            "not-configured" => ("Discord linking is not configured on this site.", false),
+            "already-linked" => ("This AVI account already has a Discord link. Unlink it first.", false),
+            "conflict" => ("That Discord account is already linked to another AVI account, or this link changed. No account was linked.", false),
+            "account" => ("Sign in to the personal AVI account you intend to link.", false),
+            "expired" => ("The Discord linking request expired or could not be verified. Start again.", false),
+            "failed" => ("Discord could not verify the link. No token was saved; try again.", false),
+            _ => null,
+        };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var email = Http?.User.FindFirst(AccountAuth.EmailClaim)?.Value;
+        if (email is not null) account = await Accounts.FindAsync(email);
+    }
+}

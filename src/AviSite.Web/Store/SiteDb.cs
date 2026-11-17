@@ -9,7 +9,7 @@ namespace AviSite.Web.Store;
 /// No server to run; back it up by copying the data folder (SQLite's online backup is used by <see cref="BackupTo"/>).
 ///
 /// Schema changes are numbered steps in <see cref="Migrations"/>: append a new step, never edit an old one.
-/// On start the site applies any steps the file hasn't seen yet, in one transaction each.
+/// On start the app takes a SQLite write lock, then applies all pending steps in one transaction so parallel starters cannot race.
 /// </summary>
 public sealed class SiteDb
 {
@@ -134,22 +134,31 @@ public sealed class SiteDb
         CREATE INDEX profiles_by_slug ON profiles(slug);
         CREATE TABLE profile_photos (id TEXT PRIMARY KEY, email TEXT NOT NULL, small BLOB NOT NULL, large BLOB NOT NULL, type TEXT NOT NULL, created_utc TEXT NOT NULL);
         """,
+        // 4: cross-instance unique Discord account links.
+        """
+        CREATE TABLE discord_links (
+            email TEXT PRIMARY KEY,
+            discord_user_id TEXT NOT NULL UNIQUE
+        );
+        """,
     ];
 
     private static void Migrate(SqliteConnection c)
     {
-        Exec(c, "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)");
-        using (var cmd = Cmd(c, "SELECT COUNT(*) FROM schema_version"))
-            if ((long)cmd.ExecuteScalar()! == 0) Exec(c, "INSERT INTO schema_version VALUES (0)");
+        // Acquire SQLite's writer lock before reading schema_version. Otherwise concurrent instances can
+        // both decide to create the same migration objects and one of them fails during startup.
+        using var tx = c.BeginTransaction(deferred: false);
+        Exec(c, "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)", tx);
+        using (var cmd = Cmd(c, "SELECT COUNT(*) FROM schema_version", tx))
+            if ((long)cmd.ExecuteScalar()! == 0) Exec(c, "INSERT INTO schema_version VALUES (0)", tx);
         long version;
-        using (var cmd = Cmd(c, "SELECT version FROM schema_version")) version = (long)cmd.ExecuteScalar()!;
+        using (var cmd = Cmd(c, "SELECT version FROM schema_version", tx)) version = (long)cmd.ExecuteScalar()!;
         for (var v = (int)version; v < Migrations.Length; v++)
         {
-            using var tx = c.BeginTransaction();
             Exec(c, Migrations[v], tx);
             Exec(c, "UPDATE schema_version SET version = $v", tx, ("$v", v + 1));
-            tx.Commit();
         }
+        tx.Commit();
     }
 
     // ---------- Value helpers (dates as ISO 8601 UTC text, which sorts correctly) ----------

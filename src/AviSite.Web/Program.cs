@@ -27,6 +27,7 @@ services.Configure<SiteOptions>(builder.Configuration.GetSection(SiteOptions.Sec
 services.Configure<StoreOptions>(builder.Configuration.GetSection(StoreOptions.Section));
 services.Configure<PayPalOptions>(builder.Configuration.GetSection(PayPalOptions.Section));
 services.Configure<AdminOptions>(builder.Configuration.GetSection(AdminOptions.Section));
+services.Configure<DiscordOptions>(builder.Configuration.GetSection(DiscordOptions.Section));
 
 services.AddRazorComponents();
 services.AddHttpContextAccessor();
@@ -51,6 +52,11 @@ services.AddSingleton<HoursStore>();
 services.AddSingleton<ProfileStore>();
 services.AddHttpClient("google-sheet");
 services.AddHttpClient("google-signin", c => c.Timeout = TimeSpan.FromSeconds(15));
+services.AddHttpClient("discord-oauth", c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(15);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("AVI-Hours-Discord-Link/1.0");
+});
 // Countdowns (/countdown, edited in /admin/countdowns)
 services.AddSingleton<ICountdownStore, JsonCountdownStore>();
 services.AddSingleton<IToolUsageStore, JsonToolUsageStore>();
@@ -193,6 +199,8 @@ app.MapAccountAuth();
 app.MapPeopleAdminEndpoints();
 app.MapQrLookEndpoints();
 app.MapHoursEndpoints();
+app.MapDiscordInteractionEndpoints();
+app.MapDiscordAccountEndpoints();
 app.MapPeopleEndpoints();
 app.MapProfileEndpoints();
 app.MapDynamicQrEndpoints();
