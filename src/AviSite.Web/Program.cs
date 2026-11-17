@@ -104,8 +104,12 @@ else
 
 services.AddAdminAuth(builder.Environment.IsDevelopment());
 var storeLimit = builder.Environment.IsDevelopment() ? 1000 : 30; // dev: test suites hit checkout repeatedly
+var globalLimit = builder.Environment.IsDevelopment() ? 20_000 : 3_600; // generous per-IP fixed-window backstop; route-specific caps remain tighter where needed
 services.AddRateLimiter(o =>
 {
+    o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = globalLimit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     o.OnRejected = (context, _) =>
     {
@@ -157,7 +161,7 @@ app.UseRouting(); // explicit, so routing sees the rewritten /sms path
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/error", createScopeForErrors: true);
-    app.UseHsts();
+    // Nginx terminates TLS and sets HSTS; emitting it here produced a duplicate header.
 }
 app.UseBaselineSecurityHeaders();
 if (app.Configuration.GetValue<bool>("Site:NoIndex"))
