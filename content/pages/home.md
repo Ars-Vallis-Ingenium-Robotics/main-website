@@ -21,6 +21,7 @@ label: AVI Robotics: Ars Vallis Ingenium, the Valley of Artistic Ingenuity
 - [Join the club](/join)
 - [Our story](/history)
 - [Projects & workshops](/projects)
+- [Free tools](/tools)
 
 ## intro
 eyebrow: Fresno State · Student-led · {status}
