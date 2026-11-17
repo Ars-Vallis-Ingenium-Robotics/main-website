@@ -41,13 +41,21 @@
   const folds = document.querySelectorAll("details[data-fold]");
   if (!folds.length) return;
   const key = (d) => "avi-fold:" + d.dataset.fold;
+  const remember = (d, open = d.open) => {
+    try { open ? localStorage.removeItem(key(d)) : localStorage.setItem(key(d), "0"); } catch { /* fine */ }
+  };
   folds.forEach((d) => {
     try { if (localStorage.getItem(key(d)) === "0") d.open = false; } catch { /* storage off: everything open */ }
-    d.addEventListener("toggle", () => { try { d.open ? localStorage.removeItem(key(d)) : localStorage.setItem(key(d), "0"); } catch { /* fine */ } });
+    const summary = d.querySelector(":scope > summary");
+    summary?.addEventListener("click", (e) => {
+      if (e.target.closest("a, button, input, select, textarea, form, label")) return;
+      remember(d, !d.open); // Save before the browser's queued <details> toggle event.
+    });
+    d.addEventListener("toggle", () => remember(d));
   });
   document.querySelectorAll("[data-fold-all]").forEach((b) => b.addEventListener("click", () => {
     const open = b.dataset.open === "true";
-    document.querySelectorAll(`details[data-fold^="${b.dataset.foldAll}:"]`).forEach((d) => { d.open = open; });
+    document.querySelectorAll(`details[data-fold^="${b.dataset.foldAll}:"]`).forEach((d) => { d.open = open; remember(d, open); });
   }));
 })();
 

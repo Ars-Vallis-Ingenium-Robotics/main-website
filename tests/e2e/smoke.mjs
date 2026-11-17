@@ -1259,6 +1259,7 @@ await test("team trees fold, and stay folded after a reload (People, Team hours)
   const sms = pg.locator('details[data-fold="people-teams:sms"]');
   assert.equal(await sms.evaluate((d) => d.open), true, "open by default");
   await sms.locator("> summary").click({ position: { x: 8, y: 8 } });
+  assert.equal(await sms.evaluate((d) => localStorage.getItem("avi-fold:" + d.dataset.fold)), "0", "collapse saved immediately");
   await pg.reload();
   assert.equal(await sms.evaluate((d) => d.open), false, "remembered");
   await pg.click("text=Expand all");
