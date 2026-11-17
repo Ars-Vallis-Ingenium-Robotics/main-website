@@ -1875,3 +1875,25 @@
 @layer components {
   .qr-lookline { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; margin-bottom: var(--s-5); }
 }
+@layer components {
+  .team-tree { list-style: none; padding: 0; display: grid; gap: var(--s-1); margin-bottom: var(--s-4); }
+  .team-tree__item { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: baseline; padding: var(--s-2) var(--s-4); margin-left: calc(var(--depth, 0) * 1.5rem); border-left: 3px solid var(--line-strong); background: var(--white); border-radius: 0 10px 10px 0; }
+  .team-tree__item[style*="--depth: 0"] { border-left-color: var(--accent); }
+  .team-tree__name { font-weight: 600; color: var(--text); }
+  .people-admin__more { margin: var(--s-3) 0 var(--s-5); }
+  .people-admin__more > summary, .people-admin__edit > summary { cursor: pointer; font-weight: 600; }
+  .people-admin__edit { margin-top: var(--s-2); }
+  .people-admin__edit[open] { display: grid; gap: var(--s-2); }
+  .people-admin__edit > summary { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); }
+  .people-admin__teams { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--s-1); }
+  .team-chip { display: inline-flex; align-items: center; gap: 0.15rem; padding: 0.15rem 0.2rem 0.15rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 0.82rem; background: var(--white); }
+  .team-chip--lead { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .team-chip form { display: contents; }
+  .team-chip__x { border: 0; background: none; cursor: pointer; font: inherit; line-height: 1; width: 1.5rem; height: 1.5rem; border-radius: 50%; color: var(--text-muted); }
+  .team-chip__x:hover, .team-chip__x:focus-visible { background: var(--danger); color: var(--white); outline: none; }
+  .people-admin__officer { align-self: end; padding-bottom: var(--s-2); }
+  .people-admin textarea, #add-list { width: 100%; font-family: var(--font-mono); font-size: 0.9rem; }
+}
+@layer components {
+  .team-tree__remove { margin-left: auto; }
+}

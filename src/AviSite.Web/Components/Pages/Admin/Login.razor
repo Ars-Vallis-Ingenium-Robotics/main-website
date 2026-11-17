@@ -33,7 +33,7 @@
                 <label class="field">
                     <span class="label">Local testing: sign in as</span>
                     <select name="email">
-                        @foreach (var a in accounts) { <option value="@a.Email">@a.Email · @AccountRules.Label(a.Role)@(a.Group is null ? "" : $" · {a.Group}")</option> }
+                        @foreach (var a in accounts) { <option value="@a.Email">@a.Email@(a.SiteWide ? " · " + AccountRules.Label(a.Role) : "")@(a.Teams.Count > 0 ? " · " + string.Join(", ", a.Teams.Select(t => t.Group + (t.Role == AccountRole.Lead ? " (lead)" : ""))) : "")</option> }
                     </select>
                 </label>
                 <button class="btn btn--ghost" type="submit">Sign in (dev only)</button>
@@ -68,6 +68,7 @@
     {
         null => null,
         "1" => "Wrong password.",
+        "no-teams" => "You're not on any team right now. Ask a lead or an officer to add you to one.",
         "not-listed" => "That Google account isn't on the list. Ask an officer (or your group's lead) to add the email you signed in with.",
         "cancelled" => "Sign-in was cancelled. Try again?",
         "expired" => "That sign-in took too long or was opened in another tab. Try again.",

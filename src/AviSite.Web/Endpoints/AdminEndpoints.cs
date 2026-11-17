@@ -17,7 +17,7 @@ public static class AdminEndpoints
     /// <summary>Officers and team logins: dynamic QR codes only.</summary>
     public const string QrPolicy = "QrEditor";
     public const string TeamClaim = "avi:team";
-    /// <summary>/admin/people: owners (everyone) and group leads (their own members).</summary>
+    /// <summary>/admin/people: owners and officers (everyone without site-wide access), and team leads (their teams).</summary>
     public const string PeoplePolicy = "People";
     public const string LoginRateLimit = "admin-login";
 
@@ -106,7 +106,7 @@ public static class AdminAuthSetup
         services.AddAuthorizationBuilder()
             .AddPolicy(AdminEndpoints.Policy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Admin"))
             .AddPolicy(AdminEndpoints.QrPolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Admin", "Team"))
-            .AddPolicy(AdminEndpoints.PeoplePolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Owner", "Lead"));
+            .AddPolicy(AdminEndpoints.PeoplePolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Owner", "Admin", "Lead"));
         return services;
     }
 }

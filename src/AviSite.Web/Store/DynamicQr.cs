@@ -66,14 +66,16 @@ public static partial class DynamicQrRules
     public static string? CheckTeamSlug(string slug, string? team) =>
         team is null || slug.StartsWith(team + "-", StringComparison.Ordinal) ? null : $"Your team's codes start with \"{team}-\".";
 
-    /// <summary>Who may see and change a code: officers any; leads their group's; members the ones they made.</summary>
-    public static bool CanAccess(System.Security.Claims.ClaimsPrincipal user, DynamicQr code)
-    {
-        if (user.IsInRole("Admin")) return true;
-        var team = user.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value;
-        if (team is null || code.Team != team) return false;
-        return !user.IsInRole("Member") || code.CreatedBy == user.FindFirst(AviSite.Web.Endpoints.AccountAuth.EmailClaim)?.Value;
-    }
+    /// <summary>Who may see and change a code: site-wide people any; team leads their teams' (and sub-teams');
+    /// members the ones they made on their teams.</summary>
+    public static bool CanAccess(Access a, DynamicQr code) =>
+        a.SiteWide
+        || (code.Team is not null && a.Manages.Contains(code.Team))
+        || (code.Team is not null && a.BelongsTo.Contains(code.Team) && code.CreatedBy is not null && code.CreatedBy == a.Account?.Email);
+
+    /// <summary>Teams someone can make codes for (null = club-wide, site-wide people only).</summary>
+    public static IEnumerable<string?> CreatableTeams(Access a) =>
+        a.SiteWide ? [null, .. a.Tree.Ordered().Select(g => g.Id)] : a.Tree.Ordered(g => a.BelongsTo.Contains(g.Id)).Select(g => (string?)g.Id);
 
     /// <summary>Absolute http(s) links, or a path on this site like /join.</summary>
     public static string? CheckTarget(string? target)

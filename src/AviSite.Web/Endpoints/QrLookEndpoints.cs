@@ -21,10 +21,10 @@ public static class QrLookEndpoints
     {
         var looks = app.MapGroup("/admin/qr/{slug}/look").RequireAuthorization(AdminEndpoints.QrPolicy);
 
-        looks.MapGet("", async (string slug, HttpContext http, IDynamicQrStore codes) =>
+        looks.MapGet("", async (string slug, HttpContext http, IDynamicQrStore codes, IAccountStore store) =>
         {
             var c = await codes.GetAsync(slug);
-            if (c is null || !DynamicQrRules.CanAccess(http.User, c)) return Results.NotFound();
+            if (c is null || !DynamicQrRules.CanAccess(await http.AccessAsync(store), c)) return Results.NotFound();
             http.Response.Headers.CacheControl = "no-store";
             return Results.Json(new
             {
@@ -35,12 +35,12 @@ public static class QrLookEndpoints
             });
         });
 
-        looks.MapPost("", async (string slug, LookBody body, HttpContext http, IDynamicQrStore codes, TimeProvider clock) =>
+        looks.MapPost("", async (string slug, LookBody body, HttpContext http, IDynamicQrStore codes, IAccountStore store, TimeProvider clock) =>
         {
             var origin = http.Request.Headers.Origin.ToString();
             if (origin != $"{http.Request.Scheme}://{http.Request.Host}") return Results.BadRequest();
             var c = await codes.GetAsync(slug);
-            if (c is null || !DynamicQrRules.CanAccess(http.User, c)) return Results.NotFound();
+            if (c is null || !DynamicQrRules.CanAccess(await http.AccessAsync(store), c)) return Results.NotFound();
 
             string? look = null;
             if (body.Look is { ValueKind: JsonValueKind.Object } l)

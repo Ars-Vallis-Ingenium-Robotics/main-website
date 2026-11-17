@@ -1,6 +1,8 @@
 @page "/admin/qr/{Slug}"
 @attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
 @using System.ComponentModel.DataAnnotations
+@using AviSite.Web.Endpoints
+@inject IAccountStore Store
 @inject IDynamicQrStore Codes
 @inject IOptions<SmsSiteOptions> SiteUrls
 @inject NavigationManager Nav
@@ -122,7 +124,8 @@
 
     public sealed class DeleteModel { public bool Confirm { get; set; } }
 
-    private string QrStyle => Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value is "sms" ? "sms" : "avi";
+    private Access access = new();
+    private string QrStyle => qr?.Team is { } t && access.Tree.WithDescendants(["sms"]).Contains(t) ? "sms" : "avi";
     [Parameter] public string Slug { get; set; } = "";
     [CascadingParameter] public HttpContext? Http { get; set; }
     private static readonly string[] Days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -143,7 +146,8 @@
     protected override async Task OnInitializedAsync()
     {
         qr = await Codes.GetAsync(Slug);
-        if (qr is null || Http is null || !DynamicQrRules.CanAccess(Http.User, qr)) { qr = null; Nav.NotFound(); return; }
+        access = await Http!.AccessAsync(Store);
+        if (qr is null || !DynamicQrRules.CanAccess(access, qr)) { qr = null; Nav.NotFound(); return; }
         Edit ??= new() { Target = qr.Target, Campaign = qr.Campaign, Note = qr.Note, Active = qr.Active };
         Delete ??= new();
         var today = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, Pacific).Date;

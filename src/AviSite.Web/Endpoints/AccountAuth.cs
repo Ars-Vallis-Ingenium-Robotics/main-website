@@ -41,13 +41,21 @@ public static class AccountAuth
             new(AccountRoleClaim, a.Role.ToString()),
             new(ClaimTypes.Role, a.Role.ToString()),
         };
-        if (a.Role is AccountRole.Owner or AccountRole.Officer) claims.Add(new(ClaimTypes.Role, "Admin"));
-        else
-        {
-            claims.Add(new(ClaimTypes.Role, "Team"));
-            if (a.Group is not null) claims.Add(new(AdminEndpoints.TeamClaim, a.Group));
-        }
+        // Coarse gates only (which admin pages open). What someone can see inside a page comes from Access.For.
+        if (a.SiteWide) claims.Add(new(ClaimTypes.Role, "Admin"));
+        if (a.Teams.Count > 0) claims.Add(new(ClaimTypes.Role, "Team"));
+        if (a.Teams.Any(t => t.Role == AccountRole.Lead)) claims.Add(new(ClaimTypes.Role, "Lead"));
         return new ClaimsPrincipal(new ClaimsIdentity(claims, AdminEndpoints.Scheme));
+    }
+
+    /// <summary>What the person behind this request may do (accounts, or the old shared passwords).</summary>
+    public static async Task<Access> AccessAsync(this HttpContext http, IAccountStore store)
+    {
+        var tree = await store.GroupsAsync();
+        if (http.User.FindFirst(EmailClaim)?.Value is { } email) return Access.For(await store.FindAsync(email), tree);
+        if (http.User.IsInRole("Admin")) return Access.ForOfficerPassword(tree);
+        if (http.User.FindFirst(AdminEndpoints.TeamClaim)?.Value is { } team) return Access.ForTeamPassword(team, tree);
+        return Access.For(null, tree);
     }
 
     /// <summary>The account behind this request, or null for the shared-password logins.</summary>
@@ -60,7 +68,7 @@ public static class AccountAuth
         if (ctx.Principal?.FindFirst(EmailClaim)?.Value is not { } email) return; // shared-password login
         var store = ctx.HttpContext.RequestServices.GetRequiredService<IAccountStore>();
         var account = await store.FindAsync(email);
-        if (account is null)
+        if (account is null || (!account.SiteWide && account.Teams.Count == 0))
         {
             ctx.RejectPrincipal();
             await ctx.HttpContext.SignOutAsync(AdminEndpoints.Scheme);
@@ -141,6 +149,7 @@ public static class AccountAuth
 
             var account = await store.FindAsync(Str(idToken, "email") ?? "");
             if (account is null) return Fail("not-listed");
+            if (!account.SiteWide && account.Teams.Count == 0) return Fail("no-teams");
             if (account.Name == account.Email && Str(idToken, "name") is { Length: > 0 } googleName && !account.FromConfig)
             {
                 account.Name = googleName; // first sign-in fills in the name if the owner didn't
@@ -158,6 +167,7 @@ public static class AccountAuth
             {
                 var account = await store.FindAsync(email);
                 if (account is null) return Results.LocalRedirect("/admin/login?error=not-listed");
+                if (!account.SiteWide && account.Teams.Count == 0) return Results.LocalRedirect("/admin/login?error=no-teams");
                 await SignInAsync(http, account, store);
                 return Results.LocalRedirect(Home(account, null));
             });
@@ -172,7 +182,7 @@ public static class AccountAuth
 
     public static string Home(Account a, string? returnUrl)
     {
-        var admin = a.Role is AccountRole.Owner or AccountRole.Officer;
+        var admin = a.SiteWide;
         var target = SafeReturn(returnUrl) ?? (admin ? "/admin" : "/admin/qr");
         return admin || target.StartsWith("/admin/qr", StringComparison.Ordinal) || target.StartsWith("/admin/people", StringComparison.Ordinal) ? target : "/admin/qr";
     }

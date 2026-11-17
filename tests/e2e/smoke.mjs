@@ -716,7 +716,7 @@ await test("QR maker works by keyboard: tab rows use arrow keys, preview says wh
   assert.equal(await page.locator('[data-qr-panel="size"]').isVisible(), true);
 });
 
-await test("accounts: owner adds a partner group, lead and member; each sees only what they should; removal is immediate", async () => {
+await test("accounts: organizations with sub-teams, bulk add, leads manage everything below them, removal is immediate", async () => {
   const as = async (email) => {
     const c = await browser.newContext(); const pg = await c.newPage();
     await pg.goto(BASE + "/admin/login");
@@ -726,60 +726,83 @@ await test("accounts: owner adds a partner group, lead and member; each sees onl
     return [c, pg];
   };
   const id = Date.now().toString(36).slice(-5);
-  const grp = "ccc" + id, lead = `lead-${id}@example.com`, mem = `mem-${id}@example.com`, mem2 = `mem2-${id}@example.com`;
+  const er = "er" + id, cd = "cd" + id, el = "el" + id;
+  const erLead = `erlead-${id}@example.com`, cdLead = `cdlead-${id}@example.com`, m1 = `m1-${id}@example.com`, m2 = `m2-${id}@example.com`;
+  const addTeam = async (pg, parent, name, tid) => {
+    await pg.click("text=Add a team");
+    await pg.selectOption("#g-parent", parent); await pg.fill("#g-name", name); await pg.fill("#g-id", tid);
+    await pg.getByRole("button", { name: "Add team" }).click();
+    assert.match(await pg.locator("main").innerText(), /Team added/);
+  };
+  const addPeople = async (pg, list, team, role = "Member") => {
+    await pg.fill("#add-list", list); await pg.selectOption("#add-team", team); await pg.selectOption("#add-role", role);
+    await pg.getByRole("button", { name: "Add", exact: true }).click();
+    await pg.locator(".alert").first().waitFor();
+  };
 
   const [oc, op] = await as("owner@example.com");
   assert.equal(new URL(op.url()).pathname, "/admin", "owners land on the officer dashboard");
   await op.goto(BASE + "/admin/people");
-  await op.fill("#g-name", "CCC Engineering Renaissance " + id); await op.fill("#g-id", grp); await op.selectOption("#g-kind", "partner");
-  await op.getByRole("button", { name: "Add group" }).click();
-  assert.match(await op.locator("main").innerText(), /Group added/);
-  for (const [email, role] of [[lead, "Lead"], [mem, "Member"]]) {
-    await op.fill("#new-email", email); await op.selectOption("#new-role", role); await op.selectOption("#new-group", grp);
-    await op.getByRole("button", { name: "Add", exact: true }).click();
-    assert.match(await op.locator("main").innerText(), /Added/);
-  }
-  assert.equal(await op.locator('[data-person="owner@example.com"] button').count(), 0, "config owners can't be removed here");
+  assert.equal(await op.locator('[data-team="sms"]').count(), 1, "SMS is a team under AVI Robotics");
+  await addTeam(op, "", "Engineering Renaissance " + id, er);
+  await addTeam(op, er, "Crush Depth " + id, cd);
+
   // A mistake keeps what was typed.
-  await op.fill("#new-email", `typo-${id}@example.com`); await op.fill("#new-name", "Kept Name");
-  await op.selectOption("#new-role", "Member"); await op.selectOption("#new-group", "");
+  await op.fill("#add-list", `typo-${id}@example.com, Kept Name`); await op.selectOption("#add-team", "");
   await op.getByRole("button", { name: "Add", exact: true }).click();
-  assert.match(await op.locator("main").innerText(), /need a group/);
-  assert.equal(await op.inputValue("#new-email"), `typo-${id}@example.com`, "email kept after an error");
-  assert.equal(await op.inputValue("#new-name"), "Kept Name", "name kept after an error");
-  await op.goto(BASE + "/admin/people");
-  assert.equal(await op.inputValue("#new-group"), "sms", "group defaults to a real group");
+  assert.match(await op.locator("main").innerText(), /Pick a team/);
+  assert.equal(await op.inputValue("#add-list"), `typo-${id}@example.com, Kept Name`, "list kept after an error");
 
-  // Lead: their group's people and codes only; can add a member, can't make an officer.
-  const [lc, lp] = await as(lead);
-  assert.equal(new URL(lp.url()).pathname, "/admin/qr");
-  assert.equal(await lp.locator('nav a[href="/admin"]').count(), 0, "no shop for leads");
+  // Bulk: good lines are added, bad ones stay in the box.
+  await addPeople(op, `${erLead}, ER Lead`, er, "Lead");
+  await addPeople(op, `${cdLead}`, cd, "Lead");
+  await addPeople(op, `${m1}, Member One\nMember Two <${m2}>\nnot-an-email`, cd);
+  assert.match(await op.locator("main").innerText(), /Added 2 new people to Crush Depth[\s\S]*Skipped 1/);
+  assert.equal(await op.inputValue("#add-list"), "not-an-email", "only the bad line is left");
+  await addPeople(op, cdLead, er); // same person, second team
+  const chips = await op.locator(`[data-person="${cdLead}"] .team-chip`).allInnerTexts();
+  assert.ok(chips.some((c) => c.includes(`Crush Depth ${id} · Lead`)) && chips.some((c) => c.startsWith(`Engineering Renaissance ${id}`) && !c.includes("Lead")), "one person, two teams, two roles: " + chips.join(" | "));
+
+  // The ER lead manages everything under ER, including sub-teams they create.
+  const [lc, lp] = await as(erLead);
   await lp.goto(BASE + "/admin/people");
-  assert.equal(await lp.locator('[data-person="owner@example.com"]').count(), 0, "leads see only their group");
-  await lp.fill("#new-email", mem2); await lp.getByRole("button", { name: "Add", exact: true }).click();
-  assert.match(await lp.locator("main").innerText(), /Added/);
-  await lp.evaluate(() => { const f = document.querySelector("form:has(#new-email)"); const i = document.createElement("input"); i.type = "hidden"; i.name = "Add.Role"; i.value = "Officer"; f.append(i); });
-  await lp.fill("#new-email", `sneaky-${id}@example.com`); await lp.getByRole("button", { name: "Add", exact: true }).click();
-  assert.match(await lp.locator(`[data-person="sneaky-${id}@example.com"]`).innerText(), /member/i, "a lead can't make officers, even by editing the form");
+  assert.equal(await lp.locator('[data-person="owner@example.com"]').count(), 0, "leads only see their teams' people");
+  assert.ok(await lp.locator(`[data-person="${m1}"]`).count() === 1, "…including sub-teams");
+  assert.equal(await lp.locator("text=Add a team").count(), 0, "only the owner adds teams");
+  await addTeam(op, cd, "Electrical " + id, el);
+  await lp.goto(BASE + "/admin/people");
+  assert.equal(await lp.locator(`[data-team="${el}"]`).count(), 1, "leads see new sub-teams under them");
+  await addPeople(lp, m1, el, "Lead");
 
-  // Member: own codes only, named after the group; no people page.
-  const [mc, mp] = await as(mem);
-  await mp.fill("#slug", `${grp}-flyer`); await mp.fill("#target", "/join"); await mp.fill("#campaign", "e2e");
+  // The Crush Depth lead can't touch ER-level memberships.
+  const [cc, cp] = await as(cdLead);
+  await cp.goto(BASE + "/admin/people?team=" + er);
+  assert.equal(await cp.locator(`[data-person="${erLead}"] .team-chip__x`).count(), 0, "no power above their own team");
+
+  // Members: own codes only; leads above see them.
+  const [mc, mp] = await as(m2);
+  await mp.fill("#slug", `${cd}-flyer`); await mp.fill("#target", "/join"); await mp.fill("#campaign", "e2e");
   await mp.getByRole("button", { name: "Add code" }).click();
   await mp.waitForURL(/saved=/);
-  assert.equal(await mp.locator(`[data-qr-row="${grp}-flyer"]`).count(), 1);
-  const [m2c, m2p] = await as(mem2);
-  assert.equal(await m2p.locator(`[data-qr-row="${grp}-flyer"]`).count(), 0, "members don't see each other's codes");
-  assert.equal((await m2p.goto(BASE + `/admin/qr/${grp}-flyer`)).status(), 404);
-  await m2p.goto(BASE + "/admin/people"); assert.match(m2p.url(), /\/admin\/login/, "members can't manage people");
-  await lp.goto(BASE + "/admin/qr"); assert.equal(await lp.locator(`[data-qr-row="${grp}-flyer"]`).count(), 1, "the lead sees the group's codes");
+  const [m1c, m1p] = await as(m1);
+  assert.equal(await m1p.locator(`[data-qr-row="${cd}-flyer"]`).count(), 0, "members don't see each other's codes");
+  await m1p.goto(BASE + "/admin/people"); assert.equal(new URL(m1p.url()).pathname, "/admin/people", "m1 leads Electrical, so they get People");
+  await mp.goto(BASE + "/admin/people"); assert.match(mp.url(), /\/admin\/login/, "plain members can't manage people");
+  for (const pg of [lp, cp]) { await pg.goto(BASE + "/admin/qr"); assert.equal(await pg.locator(`[data-qr-row="${cd}-flyer"]`).count(), 1, "leads above see team codes"); }
 
-  // Owner removes the member: their very next click is signed out.
-  await op.goto(BASE + "/admin/people");
-  await op.locator(`[data-person="${mem}"]`).getByRole("button", { name: "Remove" }).click();
-  assert.match(await op.locator("main").innerText(), /Removed/);
+  // Taking someone off their only team removes them, and they're out on their next click.
+  await lp.goto(BASE + "/admin/people?team=" + cd);
+  await lp.locator(`[data-person="${m2}"] .team-chip__x`).click();
+  assert.match(await lp.locator("main").innerText(), /Removed/);
   await mp.goto(BASE + "/admin/qr"); assert.match(mp.url(), /\/admin\/login/, "removed member is out");
-  for (const c of [oc, lc, mc, m2c]) await c.close();
+  // Only empty teams can be removed, and only by the owner.
+  await op.goto(BASE + "/admin/people");
+  assert.equal(await op.locator(`[data-team="${cd}"] .team-tree__remove`).count(), 0, "a team with people can't be removed");
+  await addTeam(op, er, "Scratch " + id, "sc" + id);
+  await op.locator(`[data-team="sc${id}"] .team-tree__remove button`).click();
+  assert.match(await op.locator("main").innerText(), /Team removed/);
+  assert.equal(await op.locator(`[data-team="sc${id}"]`).count(), 0);
+  for (const c of [oc, lc, cc, mc, m1c]) await c.close();
 });
 
 await test("Google sign-in refuses bad callbacks; unknown emails can't use the dev picker", async () => {

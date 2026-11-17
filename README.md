@@ -93,7 +93,18 @@ PayPal webhook URL to register: `https://avirobotics.org/api/paypal/webhook`
 
 ## Admin accounts
 
-`/admin/people` (Store/Accounts.cs, `App_Data/accounts.json`). Owners come only from `Admin:Owners`; they add Officers, Group leads and Members by Google email and create groups (AVI teams or partner clubs like CCC). Group ids prefix their QR code names. Leads add/remove their own group's members; members see only the codes they made. Every admin request re-checks the account (`AccountAuth.ValidateAsync`), so removals and role changes apply on the person's next click.
+`/admin/people` (Store/Accounts.cs, `App_Data/accounts.json`).
+
+- **Teams** form a tree: organizations at the top (AVI Robotics, partner clubs), teams and sub-teams under them
+  (AVI Robotics → Sequoia Marine Solutions; Engineering Renaissance → Crush Depth → Electrical). A team's id starts its
+  QR code names and is unique across the tree. Only owners add or remove teams; a team can be removed once it has
+  no people, sub-teams or QR codes.
+- **People** sign in with Google and can be on several teams, each as **Member** or **Lead**. A lead manages the people
+  and QR codes of their team and everything under it. **Officers** (site-wide) get the shop, countdowns, usage and
+  every team. **Owners** come only from `Admin:Owners` and manage everyone.
+- Add one person or a whole roster at once: one email per line, optional name after a comma.
+- `Access.For(account, tree)` is the single place that answers "what can this person do"; reuse it in new admin tools.
+- Every admin request re-checks the account (`AccountAuth.ValidateAsync`): removals and changes apply on the next click.
 
 ## Privacy
 

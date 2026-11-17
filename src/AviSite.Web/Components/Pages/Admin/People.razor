@@ -2,6 +2,7 @@
 @attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.PeoplePolicy)]
 @using AviSite.Web.Endpoints
 @inject IAccountStore Store
+@inject NavigationManager Nav
 
 <PageTitle>People · AVI Robotics admin</PageTitle>
 <HeadContent><meta name="robots" content="noindex" /></HeadContent>
@@ -11,145 +12,201 @@
         <AdminNav Current="people" />
         <div class="section__head">
             <div>
-                <p class="eyebrow">@(isOwner ? "Owner" : $"Lead · {GroupName(me?.Group)}")</p>
+                <p class="eyebrow">@(access.IsOwner ? "Owner" : access.SiteWide ? "Officer" : "Team lead")</p>
                 <h1 class="h1">People</h1>
-                <p class="muted">
-                    @if (isOwner)
-                    {
-                        <text>Everyone who can sign in. Add someone by the Google email they'll use; remove them and they're out on their next click.</text>
-                    }
-                    else
-                    {
-                        <text>Members of @GroupName(me?.Group) can make and edit their own QR codes. Add them by the Google email they'll use.</text>
-                    }
-                </p>
+                <p class="muted">Everyone who can sign in, and the teams they're on. People sign in with Google, so add them by the email they'll use. Remove someone and they're out on their next click.</p>
             </div>
         </div>
 
         @if (Message is { } m) { <p class="alert @(Done is not null ? "alert--ok" : "")" role="status">@m</p> }
 
+        @* ---------- Teams ---------- *@
+        <h2 class="h3">Teams</h2>
+        <p class="muted small">Organizations at the top, teams and sub-teams under them, as deep as you like. A lead manages the people and QR codes of their team and everything under it. Each team's id starts its QR code names.@(access.IsOwner ? "" : " Only the owner adds or removes teams.")</p>
+        <ul class="team-tree" role="list">
+            @foreach (var g in visibleTeams)
+            {
+                var count = all.Count(a => a.Teams.Any(t => t.Group == g.Id));
+                var leads = all.Where(a => a.Teams.Any(t => t.Group == g.Id && t.Role == AccountRole.Lead)).Select(JsonAccountStore.DisplayName).ToList();
+                <li class="team-tree__item" style="--depth: @access.Tree.Depth(g.Id)" data-team="@g.Id">
+                    <a href="/admin/people?team=@g.Id" class="team-tree__name">@g.Name</a>
+                    <span class="mono small muted">@g.Id-…</span>
+                    <span class="small muted">@count @(count == 1 ? "person" : "people")@(leads.Count > 0 ? $" · led by {string.Join(", ", leads)}" : "")</span>
+                    @if (access.IsOwner && count == 0 && !access.Tree.Children(g.Id).Any() && g.Id != JsonAccountStore.AviRoot)
+                    {
+                        <form method="post" action="/admin/people/team/delete" class="team-tree__remove">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="id" value="@g.Id" />
+                            <button class="btn btn--ghost btn--sm btn--danger" type="submit" aria-label="Remove the team @g.Name">Remove</button>
+                        </form>
+                    }
+                </li>
+            }
+        </ul>
+
+        @if (access.IsOwner)
+        {
+            <details class="people-admin__more" open="@(groupError is not null)">
+                <summary>Add a team</summary>
+                <EditForm Model="NewGroup!" FormName="group-add" OnSubmit="AddGroupAsync" method="post" class="form qr-admin__form" novalidate>
+                    <div class="qr-admin__grid">
+                        <div class="field">
+                            <label class="label" for="g-parent">Under</label>
+                            <InputSelect id="g-parent" @bind-Value="NewGroup!.Parent">
+                                <option value="">Nothing (a new organization)</option>
+                                @foreach (var g in parentChoices) { <option value="@g.Id">@Indent(g)@g.Name</option> }
+                            </InputSelect>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="g-name">Team name</label>
+                            <InputText id="g-name" @bind-Value="NewGroup!.Name" placeholder="e.g. Electrical" />
+                        </div>
+                        <div class="field">
+                            <label class="label" for="g-id">Short id</label>
+                            <InputText id="g-id" @bind-Value="NewGroup!.Id" placeholder="e.g. electrical" aria-describedby="g-id-hint" autocomplete="off" />
+                            <p class="field__hint" id="g-id-hint">Lowercase, numbers, dashes. Starts the team's QR code names. Can't be changed later.</p>
+                        </div>
+                    </div>
+                    @if (groupError is not null) { <p class="alert" role="alert">@groupError</p> }
+                    <div><button class="btn btn--ghost" type="submit">Add team</button></div>
+                </EditForm>
+            </details>
+        }
+
+        @* ---------- Add people (one or many). Posts back to this page, so a mistake keeps everything typed. ---------- *@
+        <h2 class="h3 qr-admin__h">Add people</h2>
+        <EditForm Model="Add!" FormName="people-add" OnSubmit="AddPeopleAsync" method="post" class="form qr-admin__form" novalidate>
+            <div class="field">
+                <label class="label" for="add-list">Google emails, one per line</label>
+                <InputTextArea id="add-list" @bind-Value="Add!.List" rows="4" aria-describedby="add-list-hint"
+                               placeholder="ada@gmail.com, Ada Lovelace&#10;grace@avirobotics.org" />
+                <p class="field__hint" id="add-list-hint">Add a name after a comma if you like (otherwise it's filled in from Google). Paste a column from a sign-up sheet to add a whole roster. People already here just get the team added.</p>
+            </div>
+            <div class="qr-admin__grid">
+                <div class="field">
+                    <label class="label" for="add-team">Team</label>
+                    <InputSelect id="add-team" @bind-Value="Add!.Team">
+                        @foreach (var g in manageable) { <option value="@g.Id">@Indent(g)@g.Name</option> }
+                        @if (access.IsOwner) { <option value="">No team (officers only)</option> }
+                    </InputSelect>
+                </div>
+                <div class="field">
+                    <label class="label" for="add-role">Role on the team</label>
+                    <InputSelect id="add-role" @bind-Value="Add!.TeamRole">
+                        <option value="@AccountRole.Member">Member</option>
+                        <option value="@AccountRole.Lead">Lead</option>
+                    </InputSelect>
+                </div>
+                @if (access.IsOwner)
+                {
+                    <label class="check people-admin__officer"><InputCheckbox @bind-Value="Add!.Officer" /> Also make them officers (shop, countdowns, every team)</label>
+                }
+            </div>
+            <ul class="small muted people-admin__roles">
+                <li><strong>Member</strong>: makes and edits their own QR codes for the team.</li>
+                <li><strong>Lead</strong>: all of the team's QR codes and sub-teams, and adds or removes the team's people.</li>
+                @if (access.IsOwner) { <li><strong>Officer</strong>: everything except managing owners.</li> }
+            </ul>
+            @if (addError is not null) { <p class="alert" role="alert">@addError</p> }
+            @if (addReport is not null) { <div class="alert alert--ok" role="status">@addReport</div> }
+            <div><button class="btn btn--accent" type="submit">Add</button></div>
+        </EditForm>
+
+        @* ---------- Everyone ---------- *@
+        <h2 class="h3 qr-admin__h">@(Team == "officers" ? "Officers and owners" : Team is null ? "Everyone" : access.Tree.Path(Team))</h2>
+        <form method="get" action="/admin/people" class="qr-filter" role="search" aria-label="Find people">
+            <div class="field qr-filter__q">
+                <label class="label" for="p-q">Search</label>
+                <input id="p-q" name="q" type="search" value="@Q" placeholder="Name or email" />
+            </div>
+            <div class="field">
+                <label class="label" for="p-team">Team</label>
+                <select id="p-team" name="team">
+                    <option value="" selected="@(Team is null)">@(access.SiteWide ? "Everyone" : "All my teams")</option>
+                    @if (access.SiteWide) { <option value="officers" selected="@(Team == "officers")">Officers and owners</option> }
+                    @foreach (var g in visibleTeams) { <option value="@g.Id" selected="@(Team == g.Id)">@Indent(g)@g.Name</option> }
+                </select>
+            </div>
+            <div class="qr-filter__go">
+                <button class="btn btn--ink btn--sm" type="submit">Show</button>
+                @if (Team is not null || !string.IsNullOrWhiteSpace(Q)) { <a class="btn btn--ghost btn--sm" href="/admin/people">Clear</a> }
+            </div>
+        </form>
+        <p class="small muted qr-filter__count" role="status">@shown.Count @(shown.Count == 1 ? "person" : "people")</p>
+
         <div class="table-scroll">
             <table class="table people-admin">
-                <thead><tr><th scope="col">Person</th><th scope="col">Access</th><th scope="col">Last sign-in</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+                <thead><tr><th scope="col">Person</th><th scope="col">Teams</th><th scope="col">Last sign-in</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
                 <tbody>
-                    @foreach (var a in visible)
+                    @foreach (var a in shown)
                     {
-                        var editable = me is not null && a.Email != me.Email && AccountRules.CanManage(me, a, a.Role, a.Group);
+                        var self = a.Email == access.Account?.Email;
                         <tr data-person="@a.Email">
-                            <th scope="row"><strong>@JsonAccountStore.DisplayName(a)</strong><div class="small muted mono">@a.Email</div></th>
+                            <th scope="row">
+                                <strong>@JsonAccountStore.DisplayName(a)</strong>
+                                <div class="small muted mono">@a.Email</div>
+                                @if (a.SiteWide) { <span class="tag">@AccountRules.Label(a.Role)</span> }
+                                @if (a.FromConfig) { <span class="small muted"> Set in server config</span> }
+                            </th>
                             <td>
-                                @if (editable && isOwner)
+                                <ul class="people-admin__teams" role="list">
+                                    @foreach (var t in a.Teams.OrderBy(t => access.Tree.Path(t.Group)))
+                                    {
+                                        <li class="team-chip @(t.Role == AccountRole.Lead ? "team-chip--lead" : "")">
+                                            <span title="@access.Tree.Path(t.Group)">@access.Tree.Name(t.Group)@(t.Role == AccountRole.Lead ? " · Lead" : "")</span>
+                                            @if (!self && access.CanManageGroup(t.Group))
+                                            {
+                                                <form method="post" action="/admin/people/team/remove">
+                                                    <AntiforgeryToken />
+                                                    <input type="hidden" name="email" value="@a.Email" /><input type="hidden" name="group" value="@t.Group" />
+                                                    <button type="submit" class="team-chip__x" aria-label="Take @a.Email off @access.Tree.Name(t.Group)">×</button>
+                                                </form>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                                @if (!self && !a.FromConfig && manageable.Count > 0)
                                 {
-                                    <form method="post" action="/admin/people/save" class="people-admin__access">
-                                        <AntiforgeryToken />
-                                        <input type="hidden" name="email" value="@a.Email" />
-                                        <input type="hidden" name="name" value="@a.Name" />
-                                        <label class="visually-hidden" for="role-@a.Email">Access for @a.Email</label>
-                                        <select id="role-@a.Email" name="role">
-                                            @foreach (var r in AssignableRoles) { <option value="@r" selected="@(a.Role == r)">@AccountRules.Label(r)</option> }
-                                        </select>
-                                        <label class="visually-hidden" for="group-@a.Email">Group for @a.Email</label>
-                                        <select id="group-@a.Email" name="group">
-                                            <option value="">No group (officers)</option>
-                                            @foreach (var g in groups) { <option value="@g.Id" selected="@(a.Group == g.Id)">@g.Name</option> }
-                                        </select>
-                                        <button class="btn btn--ghost btn--sm" type="submit">Save</button>
-                                    </form>
-                                }
-                                else
-                                {
-                                    <span class="tag">@AccountRules.Label(a.Role)</span>
-                                    @if (a.Group is not null) { <span class="small"> · @GroupName(a.Group)</span> }
-                                    @if (a.FromConfig) { <div class="small muted">Set in server config</div> }
+                                    <details class="people-admin__edit">
+                                        <summary>Change</summary>
+                                        <form method="post" action="/admin/people/team/add" class="people-admin__access">
+                                            <AntiforgeryToken />
+                                            <input type="hidden" name="email" value="@a.Email" />
+                                            <label class="visually-hidden" for="t-@a.Email">Team for @a.Email</label>
+                                            <select id="t-@a.Email" name="group">@foreach (var g in manageable) { <option value="@g.Id">@Indent(g)@g.Name</option> }</select>
+                                            <label class="visually-hidden" for="r-@a.Email">Role for @a.Email</label>
+                                            <select id="r-@a.Email" name="role"><option value="@AccountRole.Member">Member</option><option value="@AccountRole.Lead">Lead</option></select>
+                                            <button class="btn btn--ghost btn--sm" type="submit">Add to team / set role</button>
+                                        </form>
+                                        @if (access.IsOwner)
+                                        {
+                                            <form method="post" action="/admin/people/access" class="people-admin__access">
+                                                <AntiforgeryToken />
+                                                <input type="hidden" name="email" value="@a.Email" />
+                                                <input type="hidden" name="role" value="@(a.Role == AccountRole.Officer ? AccountRole.Member : AccountRole.Officer)" />
+                                                <button class="btn btn--ghost btn--sm" type="submit">@(a.Role == AccountRole.Officer ? "Remove officer access" : "Make officer")</button>
+                                            </form>
+                                        }
+                                    </details>
                                 }
                             </td>
-                            <td class="small">@(a.LastSignInUtc is { } t ? t.ToLocalTime().ToString("MMM d, yyyy") : "Not yet")</td>
+                            <td class="small">@(a.LastSignInUtc is { } seen ? seen.ToLocalTime().ToString("MMM d, yyyy") : "Not yet")</td>
                             <td class="qr-admin__actions">
-                                @if (editable)
+                                @if (self) { <span class="small muted">You</span> }
+                                else if (AccountAdminEndpoints.CanRemove(access, a))
                                 {
                                     <form method="post" action="/admin/people/remove">
                                         <AntiforgeryToken />
                                         <input type="hidden" name="email" value="@a.Email" />
-                                        <button class="btn btn--ghost btn--sm people-admin__remove" type="submit" aria-label="Remove @a.Email">Remove</button>
+                                        <button class="btn btn--ghost btn--sm btn--danger" type="submit" aria-label="Remove @a.Email">Remove</button>
                                     </form>
                                 }
-                                else if (a.Email == me?.Email) { <span class="small muted">You</span> }
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-
-        <h2 class="h3 qr-admin__h">Add someone</h2>
-        @* Posts back to this page (not to an endpoint), so a mistake keeps everything typed. *@
-        <EditForm Model="Add!" FormName="person-add" OnSubmit="AddPersonAsync" method="post" class="form qr-admin__form" novalidate>
-            <div class="qr-admin__grid">
-                <div class="field">
-                    <label class="label" for="new-email">Google email</label>
-                    <InputText id="new-email" type="email" @bind-Value="Add!.Email" autocomplete="off" placeholder="name@avirobotics.org" />
-                </div>
-                <div class="field">
-                    <label class="label" for="new-name">Name <span class="muted">(optional)</span></label>
-                    <InputText id="new-name" @bind-Value="Add!.Name" autocomplete="off" placeholder="Filled in from Google if blank" />
-                </div>
-                @if (isOwner)
-                {
-                    <div class="field">
-                        <label class="label" for="new-role">Access</label>
-                        <InputSelect id="new-role" @bind-Value="Add!.Role">
-                            @foreach (var r in AssignableRoles) { <option value="@r">@AccountRules.Label(r)</option> }
-                        </InputSelect>
-                    </div>
-                    <div class="field">
-                        <label class="label" for="new-group">Group <span class="muted">(leads and members)</span></label>
-                        <InputSelect id="new-group" @bind-Value="Add!.Group">
-                            @foreach (var g in groups) { <option value="@g.Id">@g.Name</option> }
-                            <option value="">None (officers)</option>
-                        </InputSelect>
-                    </div>
-                }
-            </div>
-            <ul class="small muted people-admin__roles">
-                <li><strong>Officer</strong>: shop orders, countdowns, tool usage and every QR code.</li>
-                <li><strong>Group lead</strong>: all of their group's QR codes, and adds or removes the group's members.</li>
-                <li><strong>Member</strong>: makes and edits their own QR codes, named after their group.</li>
-            </ul>
-            @if (addError is not null) { <p class="alert" role="alert">@addError</p> }
-            <div><button class="btn btn--accent" type="submit">Add</button></div>
-        </EditForm>
-
-        @if (isOwner)
-        {
-            <h2 class="h3 qr-admin__h">Groups</h2>
-            <p class="muted small">A group's id starts its QR code names (<span class="mono">sms-…</span>). Teams inside AVI and outside clubs or schools both work.</p>
-            <ul class="people-admin__groups" role="list">
-                @foreach (var g in groups)
-                {
-                    <li><strong>@g.Name</strong> <span class="mono small">@g.Id-…</span> <span class="tag">@(g.Kind == "partner" ? "Partner" : "AVI team")</span>
-                        <span class="small muted">@all.Count(a => a.Group == g.Id) people</span></li>
-                }
-            </ul>
-            <EditForm Model="NewGroup!" FormName="group-add" OnSubmit="AddGroupAsync" method="post" class="form qr-admin__form" novalidate>
-                <div class="qr-admin__grid">
-                    <div class="field">
-                        <label class="label" for="g-name">Group name</label>
-                        <InputText id="g-name" @bind-Value="NewGroup!.Name" placeholder="CCC Engineering Renaissance" />
-                    </div>
-                    <div class="field">
-                        <label class="label" for="g-id">Short id</label>
-                        <InputText id="g-id" @bind-Value="NewGroup!.Id" placeholder="ccc-er" aria-describedby="g-id-hint" autocomplete="off" />
-                        <p class="field__hint" id="g-id-hint">Lowercase, numbers, dashes. Can't be changed later.</p>
-                    </div>
-                    <div class="field">
-                        <label class="label" for="g-kind">Kind</label>
-                        <InputSelect id="g-kind" @bind-Value="NewGroup!.Kind"><option value="avi">AVI team</option><option value="partner">Partner club or school</option></InputSelect>
-                    </div>
-                </div>
-                @if (groupError is not null) { <p class="alert" role="alert">@groupError</p> }
-                <div><button class="btn btn--ghost" type="submit">Add group</button></div>
-            </EditForm>
-        }
     </div>
 </section>
 
@@ -157,84 +214,102 @@
     [CascadingParameter] public HttpContext? Http { get; set; }
     [SupplyParameterFromQuery] public string? Done { get; set; }
     [SupplyParameterFromQuery] public string? Error { get; set; }
-    [SupplyParameterFromForm(FormName = "person-add")] public AddModel? Add { get; set; }
+    [SupplyParameterFromQuery] public string? Team { get; set; }
+    [SupplyParameterFromQuery] public string? Q { get; set; }
+    [SupplyParameterFromForm(FormName = "people-add")] public AddModel? Add { get; set; }
     [SupplyParameterFromForm(FormName = "group-add")] public GroupModel? NewGroup { get; set; }
-    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    private Access access = new();
+    private IReadOnlyList<Account> all = [];
+    private List<Account> shown = [];
+    /// <summary>Teams this person can add people to (and put sub-teams under).</summary>
+    private List<AccountGroup> manageable = [], parentChoices = [], visibleTeams = [];
     private string? addError, groupError;
+    private MarkupString? addReport;
 
     public sealed class AddModel
     {
-        public string? Email { get; set; }
-        public string? Name { get; set; }
-        public AccountRole Role { get; set; } = AccountRole.Member;
-        public string? Group { get; set; }
+        public string? List { get; set; }
+        public string? Team { get; set; }
+        public AccountRole TeamRole { get; set; } = AccountRole.Member;
+        public bool Officer { get; set; }
     }
 
     public sealed class GroupModel
     {
+        public string? Parent { get; set; }
         public string? Name { get; set; }
         public string? Id { get; set; }
-        public string? Kind { get; set; } = "avi";
     }
 
-    private static readonly AccountRole[] AssignableRoles = [AccountRole.Officer, AccountRole.Lead, AccountRole.Member];
-    private Account? me;
-    private bool isOwner;
-    private IReadOnlyList<Account> all = [], visible = [];
-    private IReadOnlyList<AccountGroup> groups = [];
-
-    private string GroupName(string? id) => groups.FirstOrDefault(g => g.Id == id)?.Name ?? id ?? "";
+    private string Indent(AccountGroup g) => new string(' ', access.Tree.Depth(g.Id) * 3);
 
     private static string Explain(string code) => code switch
     {
-        "email" => "That doesn't look like an email address.",
-        "group" => "Leads and members need a group. Pick one, or set Access to Officer.",
-        "group-id" => "Give the group a name and a short id (lowercase letters, numbers, dashes).",
-        "group-taken" => "There's already a group with that id.",
+        "group" => "Pick a team (only owners can add people with no team, as officers).",
+        "empty" => "Add at least one email.",
+        "too-many" => "That's more than 300 lines. Split it up.",
+        "group-id" => "Give the team a name and a short id (lowercase letters, numbers, dashes).",
+        "group-taken" => "That id is already used by another team. Ids are shared across all organizations; try adding the organization's initials.",
         "self" => "You can't change your own access here.",
-        _ => "You can't change that person.",
+        "no-teams" => "Put them on a team first, or they'd have no access at all.",
+        "team-busy" => "Only empty teams can be removed: take everyone off it and remove its sub-teams first.",
+        "team-has-codes" => "That team still has QR codes. Delete them first (old prints of deleted codes go to the home page).",
+        _ => "You can't change that.",
     };
 
-    private async Task AddPersonAsync()
+    private string? Message => (Done, Error) switch
     {
-        if (me is null) { addError = Explain("denied"); return; }
-        var result = await AccountAdminEndpoints.SaveAsync(me, Add!.Email, Add.Name, isOwner ? Add.Role : AccountRole.Member, isOwner ? Add.Group : me.Group, Store);
-        if (result is "added" or "saved") { Nav.NavigateTo("/admin/people?done=" + result); return; }
-        addError = Explain(result);
+        ("saved", _) => "Saved. It applies on their next click.",
+        ("removed", _) => "Removed. They're signed out on their next click.",
+        ("group", _) => "Team added.",
+        ("team-removed", _) => "Team removed.",
+        (_, { } e) => Explain(e),
+        _ => null,
+    };
+
+    private async Task AddPeopleAsync()
+    {
+        var r = await AccountAdminEndpoints.AddPeopleAsync(access, Add!.List, Add.Team, Add.TeamRole, access.IsOwner && Add.Officer, Store);
+        if (r.Error is not null) { addError = Explain(r.Error); return; }
+        var team = string.IsNullOrEmpty(Add.Team) ? "as officers" : $"to {access.Tree.Name(Add.Team)}";
+        var html = System.Net.WebUtility.HtmlEncode($"Added {r.Added} new {(r.Added == 1 ? "person" : "people")} {team}" + (r.Updated > 0 ? $", and updated {r.Updated} already here" : "") + ".");
+        if (r.Skipped.Count > 0)
+        {
+            html += $" Skipped {r.Skipped.Count} (left in the box to fix):<ul>{string.Join("", r.Skipped.Select(x => $"<li>{System.Net.WebUtility.HtmlEncode(x)}</li>"))}</ul>";
+            Add.List = string.Join("\n", r.Skipped.Select(x => x[..x.LastIndexOf(" (", StringComparison.Ordinal)]));
+        }
+        else Add.List = "";
+        addReport = new MarkupString(html);
+        await LoadAsync();
     }
 
     private async Task AddGroupAsync()
     {
-        if (me is null) { groupError = Explain("denied"); return; }
-        var result = await AccountAdminEndpoints.AddGroupAsync(me, NewGroup!.Id, NewGroup.Name, NewGroup.Kind, Store);
+        var result = await AccountAdminEndpoints.AddGroupAsync(access, NewGroup!.Id, NewGroup.Name, NewGroup.Parent, Store);
         if (result == "group") { Nav.NavigateTo("/admin/people?done=group"); return; }
         groupError = Explain(result);
     }
 
-    private string? Message => (Done, Error) switch
-    {
-        ("added", _) => "Added. They can sign in with Google now.",
-        ("saved", _) => "Saved. It applies on their next click.",
-        ("removed", _) => "Removed. They're signed out on their next click.",
-        ("group", _) => "Group added.",
-        (_, "email") => "That doesn't look like an email address.",
-        (_, "group") => "Leads and members need a group.",
-        (_, "group-id") => "Give the group a name and a short id (lowercase letters, numbers, dashes).",
-        (_, "group-taken") => "There's already a group with that id.",
-        (_, "self") => "You can't change your own access here.",
-        (_, "denied") => "You can't change that person.",
-        _ => null,
-    };
-
     protected override async Task OnInitializedAsync()
     {
-        if (Http is null) return;
-        me = await Http.CurrentAsync(Store);
-        isOwner = me?.Role == AccountRole.Owner;
+        await LoadAsync();
+        Add ??= new() { Team = manageable.FirstOrDefault()?.Id ?? "" };
+        NewGroup ??= new() { Parent = "" };
+    }
+
+    private async Task LoadAsync()
+    {
+        access = await Http!.AccessAsync(Store);
         all = await Store.ListAsync();
-        groups = await Store.GroupsAsync();
-        visible = isOwner ? all : all.Where(a => me is not null && a.Group == me.Group).ToList();
-        Add ??= new() { Group = groups.FirstOrDefault()?.Id }; // a real group by default, so a new member just works
-        NewGroup ??= new();
+        manageable = access.Tree.Ordered(g => access.CanManageGroup(g.Id)).ToList();
+        parentChoices = access.IsOwner ? access.Tree.Ordered().ToList() : [];
+        visibleTeams = access.Tree.Ordered(g => access.SiteWide || access.BelongsTo.Contains(g.Id)).ToList();
+
+        IEnumerable<Account> f = access.SiteWide ? all : all.Where(a => a.Teams.Any(t => access.Manages.Contains(t.Group)) || a.Email == access.Account?.Email);
+        if (Team == "officers") f = f.Where(a => a.SiteWide);
+        else if (Team is not null) { var under = access.Tree.WithDescendants([Team]); f = f.Where(a => a.Teams.Any(t => under.Contains(t.Group))); }
+        if (!string.IsNullOrWhiteSpace(Q)) f = f.Where(a => a.Email.Contains(Q.Trim(), StringComparison.OrdinalIgnoreCase) || a.Name.Contains(Q.Trim(), StringComparison.OrdinalIgnoreCase));
+        shown = f.ToList();
     }
 }
