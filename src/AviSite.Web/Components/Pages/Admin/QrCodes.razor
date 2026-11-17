@@ -22,6 +22,58 @@
         </div>
 
         @if (Saved is not null) { <p class="alert alert--ok" role="status">Saved <strong>@Saved</strong>.</p> }
+        @if (Deleted is not null) { <p class="alert alert--ok" role="status">Deleted <strong>@Deleted</strong>. Anyone scanning an old print lands on the home page.</p> }
+
+        @* Sifting: a plain GET form, so filters live in the URL (bookmarkable, back button works, no script). *@
+        @if (codes.Count > 0)
+        {
+            <form method="get" action="/admin/qr" class="qr-filter" role="search" aria-label="Find codes">
+                <div class="field qr-filter__q">
+                    <label class="label" for="f-q">Search</label>
+                    <input id="f-q" name="q" type="search" value="@Q" placeholder="Name, link, note or sheet name" />
+                </div>
+                @if (Team is null && groupIds.Count > 0)
+                {
+                    <div class="field">
+                        <label class="label" for="f-group">Group</label>
+                        <select id="f-group" name="group">
+                            <option value="" selected="@(string.IsNullOrEmpty(Group))">All groups</option>
+                            <option value="club" selected="@(Group == "club")">Club-wide only</option>
+                            @foreach (var (id, name) in groupIds) { <option value="@id" selected="@(Group == id)">@name</option> }
+                        </select>
+                    </div>
+                }
+                @if (myEmail is not null && memberEmail is null)
+                {
+                    <div class="field">
+                        <label class="label" for="f-who">Made by</label>
+                        <select id="f-who" name="who">
+                            <option value="" selected="@(Who != "me")">Anyone</option>
+                            <option value="me" selected="@(Who == "me")">Me</option>
+                        </select>
+                    </div>
+                }
+                <div class="field">
+                    <label class="label" for="f-status">Status</label>
+                    <select id="f-status" name="status">
+                        <option value="" selected="@(string.IsNullOrEmpty(Status))">On and off</option>
+                        <option value="on" selected="@(Status == "on")">On</option>
+                        <option value="off" selected="@(Status == "off")">Off</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="label" for="f-sort">Sort</label>
+                    <select id="f-sort" name="sort">
+                        @foreach (var (v, label) in Sorts) { <option value="@v" selected="@(SortKey == v)">@label</option> }
+                    </select>
+                </div>
+                <div class="qr-filter__go">
+                    <button class="btn btn--ink btn--sm" type="submit">Show</button>
+                    @if (Filtering) { <a class="btn btn--ghost btn--sm" href="/admin/qr">Clear</a> }
+                </div>
+            </form>
+            <p class="small muted qr-filter__count" role="status">@(Filtering ? $"Showing {shown.Count} of {codes.Count} codes" : $"{codes.Count} codes")</p>
+        }
 
         <div class="table-scroll">
             <table class="table qr-admin">
@@ -29,7 +81,11 @@
                     <tr><th scope="col">Code</th><th scope="col">Goes to</th><th scope="col" class="num">Scans</th><th scope="col" class="num">Last 7 days</th><th scope="col">Last scan</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr>
                 </thead>
                 <tbody>
-                    @foreach (var q in codes)
+                    @if (shown.Count == 0 && codes.Count > 0)
+                    {
+                        <tr><td colspan="6" class="muted">No codes match. <a href="/admin/qr">Show all</a></td></tr>
+                    }
+                    @foreach (var q in shown)
                     {
                         var url = PrintUrl(q.Slug);
                         <tr class="@(q.Active ? "" : "is-off")" data-qr-row="@q.Slug">
@@ -39,6 +95,7 @@
                                 @if (Team is null && q.Team is not null) { <span class="tag">@q.Team.ToUpperInvariant()</span> }
                                 <div class="mono small muted">@url</div>
                                 @if (q.Note is not null) { <div class="small">@q.Note</div> }
+                                @if (memberEmail is null && q.CreatedBy is not null) { <div class="small muted">Made by @(q.CreatedBy == myEmail ? "you" : q.CreatedBy)</div> }
                             </th>
                             <td><a class="qr-admin__target" href="@q.Target" target="_blank" rel="noopener">@q.Target</a><div class="small muted">Sheet: @q.Campaign</div></td>
                             <td class="num">@q.Scans</td>
@@ -134,6 +191,15 @@
     private string QrStyle => Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value is "sms" ? "sms" : "avi";
     [SupplyParameterFromForm(FormName = "qr-new")] public NewCode? New { get; set; }
     [SupplyParameterFromQuery] public string? Saved { get; set; }
+    [SupplyParameterFromQuery] public string? Deleted { get; set; }
+    [SupplyParameterFromQuery] public string? Q { get; set; }
+    [SupplyParameterFromQuery] public string? Group { get; set; }
+    [SupplyParameterFromQuery] public string? Who { get; set; }
+    [SupplyParameterFromQuery] public string? Status { get; set; }
+    [SupplyParameterFromQuery(Name = "sort")] public string? SortKey { get; set; }
+    private static readonly (string, string)[] Sorts = [("", "Newest first"), ("scans", "Most scans"), ("week", "Busiest this week"), ("last", "Scanned most recently"), ("name", "Name A–Z")];
+    private bool Filtering => !string.IsNullOrWhiteSpace(Q) || !string.IsNullOrEmpty(Group) || Who == "me" || !string.IsNullOrEmpty(Status);
+    private List<DynamicQr> shown = [];
     [SupplyParameterFromQuery] public string? BatchMade { get; set; }
     [CascadingParameter] public HttpContext? Http { get; set; }
     /// <summary>Set for team logins: they only see and make codes named "&lt;team&gt;-…".</summary>
@@ -160,6 +226,25 @@
         groupIds = (await Accounts.GroupsAsync()).Select(g => (g.Id, g.Name))
             .Concat(AdminOpts.Value.Teams.Keys.Select(t => (t.ToLowerInvariant(), t.ToUpperInvariant())))
             .DistinctBy(g => g.Item1).ToList();
+
+        IEnumerable<DynamicQr> f = codes;
+        if (!string.IsNullOrWhiteSpace(Q))
+        {
+            var q = Q.Trim();
+            f = f.Where(c => new[] { c.Slug, c.Target, c.Campaign, c.Note, c.CreatedBy }.Any(x => x?.Contains(q, StringComparison.OrdinalIgnoreCase) == true));
+        }
+        if (Team is null && Group == "club") f = f.Where(c => c.Team is null);
+        else if (Team is null && !string.IsNullOrEmpty(Group)) f = f.Where(c => c.Team == Group);
+        if (Who == "me" && myEmail is not null) f = f.Where(c => c.CreatedBy == myEmail);
+        if (Status == "on") f = f.Where(c => c.Active); else if (Status == "off") f = f.Where(c => !c.Active);
+        shown = (SortKey switch
+        {
+            "scans" => f.OrderByDescending(c => c.Scans),
+            "week" => f.OrderByDescending(Last7),
+            "last" => f.OrderByDescending(c => c.LastScanUtc ?? DateTimeOffset.MinValue),
+            "name" => f.OrderBy(c => c.Slug, StringComparer.Ordinal),
+            _ => f.OrderByDescending(c => c.CreatedUtc),
+        }).ToList();
     }
 
     private string PrintUrl(string slug) => $"{SiteUrls.Value.AviBaseUrl.TrimEnd('/')}/dynamicqr/{slug}";
@@ -185,7 +270,7 @@
             Team = owner,
             CreatedBy = myEmail,
         });
-        if (!ok) { error = $"There's already a code called {slug}."; return; }
+        if (!ok) { error = $"The name {slug} is taken (or was used by a deleted code, whose old prints still exist). Pick another."; return; }
         Nav.NavigateTo($"/admin/qr?saved={Uri.EscapeDataString(slug)}");
     }
 

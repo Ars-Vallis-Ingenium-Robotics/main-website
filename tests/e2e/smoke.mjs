@@ -788,6 +788,43 @@ await test("Google sign-in refuses bad callbacks; unknown emails can't use the d
   assert.match(r.headers().location, /error=google-off/, "button is off until Admin:Google is set");
 });
 
+await test("dynamic QR: delete needs a tick, old prints go home, and the name can't be reused", async () => {
+  await page.goto(BASE + "/admin/qr");
+  const slug = "e2e-del-" + Date.now().toString(36);
+  await page.fill("#slug", slug); await page.fill("#target", "/join"); await page.fill("#campaign", "e2e");
+  await page.getByRole("button", { name: "Add code" }).click(); await page.waitForURL(/saved=/);
+  await page.goto(BASE + "/admin/qr/" + slug);
+  await page.click("text=Delete this code");
+  await page.getByRole("button", { name: "Delete " + slug }).click();
+  assert.match(await page.locator("main").innerText(), /Tick the box first/);
+  await page.check(".qr-delete input[type=checkbox]");
+  await page.getByRole("button", { name: "Delete " + slug }).click();
+  await page.waitForURL(/deleted=/);
+  assert.equal(await page.locator(`[data-qr-row="${slug}"]`).count(), 0, "gone from the list");
+  const r = await page.request.get(BASE + "/dynamicqr/" + slug, { maxRedirects: 0 });
+  assert.equal(r.headers().location, "/", "old prints land on the home page");
+  assert.equal((await page.goto(BASE + "/admin/qr/" + slug)).status(), 404);
+  await page.goto(BASE + "/admin/qr");
+  await page.fill("#slug", slug); await page.fill("#target", "https://example.com"); await page.fill("#campaign", "e2e");
+  await page.getByRole("button", { name: "Add code" }).click();
+  assert.match(await page.locator("main").innerText(), /is taken/, "can't re-point old prints");
+});
+
+await test("dynamic QR list: search, group, status and sort filters live in the URL", async () => {
+  await page.goto(BASE + "/admin/qr");
+  const total = await page.locator("[data-qr-row]").count();
+  await page.fill("#f-q", "discord"); await page.getByRole("button", { name: "Show" }).click();
+  await page.waitForURL(/q=discord/);
+  assert.equal(await page.locator("[data-qr-row]").count(), 1, "search matches the link");
+  assert.match(await page.locator(".qr-filter__count").innerText(), new RegExp(`Showing 1 of ${total}`));
+  await page.goto(BASE + "/admin/qr?group=club&sort=name");
+  const names = await page.locator("[data-qr-row]").evaluateAll((rows) => rows.map((r) => r.dataset.qrRow));
+  assert.ok(names.length > 0 && names.every((n) => !n.startsWith("sms-")), "club-wide only");
+  assert.deepEqual(names, [...names].sort(), "sorted by name");
+  await page.goto(BASE + "/admin/qr?q=zzz-nothing");
+  assert.match(await page.locator("main").innerText(), /No codes match/);
+});
+
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });
 
 await browser.close();

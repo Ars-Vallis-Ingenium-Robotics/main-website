@@ -32,6 +32,10 @@ public sealed class DynamicQr
     public string? Team { get; set; }
     /// <summary>Email of the account that made it. Members only see codes they made.</summary>
     public string? CreatedBy { get; set; }
+    /// <summary>Set when deleted. The name stays reserved forever so nobody can re-point old printed copies,
+    /// and scans of it go to the home page.</summary>
+    public DateTimeOffset? DeletedUtc { get; set; }
+    public string? DeletedBy { get; set; }
 }
 
 public sealed class DynamicQrOptions
@@ -75,6 +79,10 @@ public interface IDynamicQrStore
     Task<DynamicQr?> ScanAsync(string slug, string? userAgent = null, CancellationToken ct = default);
     Task<bool> CreateAsync(DynamicQr code, CancellationToken ct = default);
     Task<bool> UpdateAsync(string slug, Action<DynamicQr> change, CancellationToken ct = default);
+    /// <summary>Hides the code everywhere and sends its scans to the home page. Its name can't be used again.</summary>
+    Task<bool> DeleteAsync(string slug, string? by, CancellationToken ct = default);
+    /// <summary>True if the name was ever used (including deleted codes).</summary>
+    Task<bool> IsTakenAsync(string slug, CancellationToken ct = default);
 }
 
 /// <summary>Same draft storage as orders: one JSON file in the data directory, atomic rewrite.</summary>
@@ -110,14 +118,14 @@ public sealed class JsonDynamicQrStore : IDynamicQrStore
     public async Task<IReadOnlyList<DynamicQr>> ListAsync(CancellationToken ct = default)
     {
         await _lock.WaitAsync(ct);
-        try { return _codes.Select(Clone).ToList()!; }
+        try { return _codes.Where(c => c.DeletedUtc is null).Select(Clone).ToList()!; }
         finally { _lock.Release(); }
     }
 
     public async Task<DynamicQr?> GetAsync(string slug, CancellationToken ct = default)
     {
         await _lock.WaitAsync(ct);
-        try { return Clone(Find(slug)); }
+        try { return Find(slug) is { DeletedUtc: null } c ? Clone(c) : null; }
         finally { _lock.Release(); }
     }
 
@@ -137,6 +145,7 @@ public sealed class JsonDynamicQrStore : IDynamicQrStore
         {
             var c = Find(slug);
             if (c is null) return null;
+            if (c.DeletedUtc is not null) return new DynamicQr { Slug = c.Slug, Active = false }; // old prints → home page
             if (c.Active)
             {
                 var now = _clock.GetUtcNow();
@@ -179,13 +188,36 @@ public sealed class JsonDynamicQrStore : IDynamicQrStore
         try
         {
             var c = Find(slug);
-            if (c is null) return false;
+            if (c is null || c.DeletedUtc is not null) return false;
             change(c);
             c.Slug = slug; // the printed address never changes
             c.UpdatedUtc = _clock.GetUtcNow();
             Save();
             return true;
         }
+        finally { _lock.Release(); }
+    }
+
+    public async Task<bool> DeleteAsync(string slug, string? by, CancellationToken ct = default)
+    {
+        await _lock.WaitAsync(ct);
+        try
+        {
+            var c = Find(slug);
+            if (c is null || c.DeletedUtc is not null) return false;
+            c.DeletedUtc = c.UpdatedUtc = _clock.GetUtcNow();
+            c.DeletedBy = by;
+            c.Active = false;
+            Save();
+            return true;
+        }
+        finally { _lock.Release(); }
+    }
+
+    public async Task<bool> IsTakenAsync(string slug, CancellationToken ct = default)
+    {
+        await _lock.WaitAsync(ct);
+        try { return Find(slug) is not null; }
         finally { _lock.Release(); }
     }
 

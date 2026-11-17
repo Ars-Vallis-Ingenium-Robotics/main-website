@@ -87,11 +87,35 @@
                 </div>
                 <p class="muted small">Times are Pacific. Devices come from the browser's own description; nothing personal is stored.</p>
             }
+
+            <details class="qr-delete" open="@(deleteError is not null)">
+                <summary>Delete this code</summary>
+                <p class="small">It disappears from this list and its scans stop being counted. Anyone who scans a copy that's already printed lands on the AVI home page.
+                    The name <span class="mono">@qr.Slug</span> stays reserved so nobody can point old prints somewhere else.
+                    To pause it instead, untick <strong>On</strong> above.</p>
+                <EditForm Model="Delete!" FormName="qr-delete" OnSubmit="DeleteAsync" method="post" class="form" novalidate>
+                    <label class="check"><InputCheckbox @bind-Value="Delete!.Confirm" /> I understand printed copies will stop going to @qr.Target</label>
+                    @if (deleteError is not null) { <p class="alert" role="alert">@deleteError</p> }
+                    <div><button class="btn btn--ghost btn--danger" type="submit">Delete @qr.Slug</button></div>
+                </EditForm>
+            </details>
         </div>
     </section>
 }
 
 @code {
+    [SupplyParameterFromForm(FormName = "qr-delete")] public DeleteModel? Delete { get; set; }
+    private string? deleteError;
+
+    private async Task DeleteAsync()
+    {
+        if (!Delete!.Confirm) { deleteError = "Tick the box first: printed copies stop going where they go now."; return; }
+        await Codes.DeleteAsync(qr!.Slug, Http?.User.FindFirst(AviSite.Web.Endpoints.AccountAuth.EmailClaim)?.Value ?? Http?.User.Identity?.Name);
+        Nav.NavigateTo($"/admin/qr?deleted={Uri.EscapeDataString(qr.Slug)}");
+    }
+
+    public sealed class DeleteModel { public bool Confirm { get; set; } }
+
     private string QrStyle => Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value is "sms" ? "sms" : "avi";
     [Parameter] public string Slug { get; set; } = "";
     [CascadingParameter] public HttpContext? Http { get; set; }
@@ -118,6 +142,7 @@
         var email = Http?.User.FindFirst(AviSite.Web.Endpoints.AccountAuth.EmailClaim)?.Value;
         if (qr is null || (team is not null && qr.Team != team) || (member && qr.CreatedBy != email)) { qr = null; Nav.NotFound(); return; }
         Edit ??= new() { Target = qr.Target, Campaign = qr.Campaign, Note = qr.Note, Active = qr.Active };
+        Delete ??= new();
         var today = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, Pacific).Date;
         days = Enumerable.Range(0, 30).Select(i => today.AddDays(i - 29).ToString("yyyy-MM-dd"))
             .Select(d => (d, qr.Daily.GetValueOrDefault(d))).ToList();
