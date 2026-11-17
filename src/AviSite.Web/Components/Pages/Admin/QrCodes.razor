@@ -7,6 +7,7 @@
 @inject NavigationManager Nav
 
 <PageTitle>Dynamic QR codes · AVI Robotics admin</PageTitle>
+<script src="/js/admin-qr.js" defer></script>
 <HeadContent><meta name="robots" content="noindex" /></HeadContent>
 
 <section class="section admin">
@@ -117,7 +118,7 @@
             <div class="qr-admin__grid">
                 <div class="field">
                     <label class="label" for="slug">Name in the link</label>
-                    <InputText id="slug" @bind-Value="New!.Slug" placeholder="@(Example(New!.Owner, "flyer"))" autocomplete="off" aria-describedby="slug-hint" />
+                    <InputText id="slug" @bind-Value="New!.Slug" placeholder="team prefix, then a name" autocomplete="off" aria-describedby="slug-hint" />
                     <span id="slug-hint" class="field__hint mono">@PrintUrl(string.IsNullOrWhiteSpace(New!.Slug) ? "…" : New.Slug.Trim().ToLowerInvariant())</span>
                 </div>
                 <div class="field">
@@ -132,8 +133,8 @@
                 {
                     <div class="field">
                         <label class="label" for="owner">Team</label>
-                        <InputSelect id="owner" @bind-Value="New!.Owner">
-                            @foreach (var id in creatable) { <option value="@(id ?? "")">@TeamOption(id)</option> }
+                        <InputSelect id="owner" @bind-Value="New!.Owner" data-prefix-for="slug">
+                            @foreach (var id in creatable) { <option value="@(id ?? "")" data-prefix="@PrefixOf(id)">@TeamOption(id)</option> }
                         </InputSelect>
                     </div>
                 }
@@ -153,15 +154,15 @@
             <div class="qr-admin__grid">
                 <div class="field">
                     <label class="label" for="b-prefix">Name in the link</label>
-                    <InputText id="b-prefix" @bind-Value="Batch!.Prefix" placeholder="@(Example(Batch!.Owner, "sign-in"))" autocomplete="off" />
+                    <InputText id="b-prefix" @bind-Value="Batch!.Prefix" placeholder="team prefix, then a name like sign-in" autocomplete="off" />
                     <span class="field__hint mono">…/dynamicqr/@(string.IsNullOrWhiteSpace(Batch!.Prefix) ? "sign-in" : Batch.Prefix.Trim().ToLowerInvariant())-@Batch.From</span>
                 </div>
                 @if (creatable.Count > 1)
                 {
                     <div class="field">
                         <label class="label" for="b-owner">Team</label>
-                        <InputSelect id="b-owner" @bind-Value="Batch!.Owner">
-                            @foreach (var id in creatable) { <option value="@(id ?? "")">@TeamOption(id)</option> }
+                        <InputSelect id="b-owner" @bind-Value="Batch!.Owner" data-prefix-for="b-prefix">
+                            @foreach (var id in creatable) { <option value="@(id ?? "")" data-prefix="@PrefixOf(id)">@TeamOption(id)</option> }
                         </InputSelect>
                     </div>
                 }
@@ -200,6 +201,7 @@
     private string StyleFor(string? team) => team is not null && access.Tree.WithDescendants(["sms"]).Contains(team) ? "sms" : "avi";
     private string Indent(AccountGroup g) => new string('\u00a0', access.Tree.Depth(g.Id) * 3);
     private string TeamOption(string? id) => id is null ? "Club-wide (officers)" : $"{Indent(access.Tree.Find(id)!)}{access.Tree.Name(id)} ({DynamicQrRules.PrefixFor(id, access.Tree)}…)";
+    private string PrefixOf(string? owner) => string.IsNullOrEmpty(owner) ? "" : DynamicQrRules.PrefixFor(owner, access.Tree);
     private string Example(string? owner, string name) => "e.g. " + (string.IsNullOrEmpty(owner) ? name : DynamicQrRules.PrefixFor(owner, access.Tree) + name);
     [SupplyParameterFromForm(FormName = "qr-new")] public NewCode? New { get; set; }
     [SupplyParameterFromQuery] public string? Saved { get; set; }
@@ -238,6 +240,9 @@
         filterTeams = access.Tree.Ordered(g => access.CanSee(g.Id)).ToList();
         New.Owner ??= creatable.FirstOrDefault() ?? "";
         Batch.Owner ??= creatable.FirstOrDefault() ?? "";
+        // Start the name with the team's prefix; admin-qr.js swaps it when the team changes.
+        New.Slug ??= PrefixOf(New.Owner);
+        Batch.Prefix ??= PrefixOf(Batch.Owner);
 
         IEnumerable<DynamicQr> f = codes;
         if (!string.IsNullOrWhiteSpace(Q))
@@ -269,9 +274,9 @@
 
     private async Task CreateAsync()
     {
-        var slug = New!.Slug!.Trim().ToLowerInvariant();
-        var owner = string.IsNullOrWhiteSpace(New.Owner) ? null : New.Owner;
-        error = !creatable.Contains(owner) ? "Pick one of your teams." : DynamicQrRules.CheckSlug(slug) ?? DynamicQrRules.CheckTeamSlug(slug, owner, access.Tree) ?? DynamicQrRules.CheckTarget(New.Target);
+        var owner = string.IsNullOrWhiteSpace(New!.Owner) ? null : New.Owner;
+        var slug = DynamicQrRules.WithPrefix(New.Slug!.Trim().ToLowerInvariant(), owner, access.Tree);
+        error = !creatable.Contains(owner) ? "Pick one of your teams." : DynamicQrRules.CheckTeamSlug(slug, owner, access.Tree) ?? DynamicQrRules.CheckSlug(slug) ?? DynamicQrRules.CheckTarget(New.Target);
         if (error is not null) return;
         var ok = await Codes.CreateAsync(new DynamicQr
         {
@@ -289,8 +294,8 @@
     private async Task CreateBatchAsync()
     {
         var b = Batch!;
-        var prefix = (b.Prefix ?? "").Trim().ToLowerInvariant();
         var batchOwner = string.IsNullOrWhiteSpace(b.Owner) ? null : b.Owner;
+        var prefix = DynamicQrRules.WithPrefix((b.Prefix ?? "").Trim().ToLowerInvariant().TrimEnd('-'), batchOwner, access.Tree).TrimEnd('-');
         batchError = !creatable.Contains(batchOwner) ? "Pick one of your teams." : DynamicQrRules.CheckSlug(prefix + "-1") ?? DynamicQrRules.CheckTeamSlug(prefix + "-1", batchOwner, access.Tree) ?? DynamicQrRules.CheckTarget(b.Target);
         if (batchError is null && (b.To < b.From || b.To - b.From >= 100)) batchError = "Pick a range of up to 100 numbers.";
         if (batchError is not null) return;

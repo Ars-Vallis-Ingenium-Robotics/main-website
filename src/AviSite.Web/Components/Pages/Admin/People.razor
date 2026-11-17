@@ -328,6 +328,9 @@
 
     private async Task LoadAsync()
     {
+        // "Everyone" sends ?team= (empty): that means no filter, not "the team with no name".
+        if (string.IsNullOrWhiteSpace(Team)) Team = null;
+        if (string.IsNullOrWhiteSpace(Q)) Q = null;
         access = await Http!.AccessAsync(Store);
         all = await Store.ListAsync();
         manageable = access.Tree.Ordered(g => access.CanManageGroup(g.Id)).ToList();

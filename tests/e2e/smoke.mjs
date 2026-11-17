@@ -639,13 +639,12 @@ await test("team login sees only its own QR codes, under its own prefix", async 
   assert.equal(await tp.locator('[data-qr-row="one"]').count(), 0, "club codes hidden");
   assert.equal((await tp.goto(BASE + "/admin/qr/one")).status(), 404, "club code edit blocked");
   await tp.goto(BASE + "/admin/qr");
-  await tp.fill("#slug", "flyer-" + Date.now().toString(36)); await tp.fill("#target", "/join"); await tp.fill("#campaign", "e2e");
+  assert.equal(await tp.inputValue("#slug"), "avi-sms-", "the name starts filled in with the team's prefix");
+  const name = "flyer-" + Date.now().toString(36);
+  await tp.fill("#slug", name); await tp.fill("#target", "/join"); await tp.fill("#campaign", "e2e");
   await tp.getByRole("button", { name: "Add code" }).click();
-  assert.match(await tp.locator("main").innerText(), /start with "avi-sms-"/, "codes are named organization-team-name");
-  const slug = "avi-sms-e2e-" + Date.now().toString(36);
-  await tp.fill("#slug", slug); await tp.getByRole("button", { name: "Add code" }).click();
   await tp.waitForURL(/saved=/);
-  assert.equal(await tp.locator(`[data-qr-row="${slug}"]`).count(), 1);
+  assert.equal(await tp.locator(`[data-qr-row="avi-sms-${name}"]`).count(), 1, "a name typed without the prefix gets it added");
   await tc.close();
 });
 
@@ -811,9 +810,10 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
 
   // Members: own codes only; leads above see them.
   const [mc, mp] = await as(m2);
-  await mp.fill("#slug", `${cd}-flyer`); await mp.fill("#target", "/join"); await mp.fill("#campaign", "e2e");
+  assert.equal(await mp.inputValue("#slug"), `${er}-${cd}-`, "sub-team codes start with the whole chain: organization, then team");
+  await mp.fill("#slug", `${er}-${cd}-`); await mp.fill("#target", "/join"); await mp.fill("#campaign", "e2e");
   await mp.getByRole("button", { name: "Add code" }).click();
-  assert.match(await mp.locator("main").innerText(), new RegExp(`start with "${er}-${cd}-"`), "sub-team codes carry the organization's id first");
+  assert.match(await mp.locator("main").innerText(), /then a name/, "a prefix alone isn't a name");
   await mp.fill("#slug", `${er}-${cd}-flyer`); await mp.fill("#target", "/join"); await mp.fill("#campaign", "e2e");
   await mp.getByRole("button", { name: "Add code" }).click();
   await mp.waitForURL(/saved=/);
@@ -849,6 +849,26 @@ await test("accounts: the owner can also be on teams (e.g. lead of SMS); co-lead
   assert.match(await pg.locator('[data-person="owner@example.com"]').innerText(), /Sequoia Marine Solutions · Lead/i, "owner leads SMS");
   assert.match(await pg.locator('[data-person="owner@example.com"]').innerText(), /owner/i, "and is still the owner");
   assert.match(await pg.locator('[data-team="sms"]').innerText(), /led by .*owner@example\.com.*,|led by .*,.*owner@example\.com/, "two co-leads");
+  await c.close();
+});
+
+await test("team prefixes follow the whole chain, swap with the team picker; People 'Everyone' shows everyone", async () => {
+  const c = await browser.newContext(); const pg = await c.newPage();
+  await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
+  await pg.goto(BASE + "/admin/people?q=&team=");
+  assert.ok(await pg.locator("tbody tr[data-person]").count() > 0, "an empty team filter means everyone, not nobody");
+  const sub = "sub" + Date.now().toString(36).slice(-5);
+  if (await pg.locator(`[data-team="${sub}"]`).count() === 0) {
+    await pg.click("text=Add a team"); await pg.selectOption("#g-parent", "sms"); await pg.fill("#g-name", "Electrical " + sub); await pg.fill("#g-id", sub);
+    await pg.getByRole("button", { name: "Add team" }).click();
+  }
+  assert.match(await pg.locator(`[data-team="${sub}"]`).innerText(), new RegExp(`avi-sms-${sub}-`), "Electrical in SMS in AVI → avi-sms-electrical-");
+  await pg.goto(BASE + "/admin/qr");
+  await pg.selectOption("#owner", "sms");
+  assert.equal(await pg.inputValue("#slug"), "avi-sms-");
+  await pg.fill("#slug", "avi-sms-pool-day");
+  await pg.selectOption("#owner", sub);
+  assert.equal(await pg.inputValue("#slug"), `avi-sms-${sub}-pool-day`, "changing the team swaps the prefix and keeps the name");
   await c.close();
 });
 

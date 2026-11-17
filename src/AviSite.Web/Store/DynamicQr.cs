@@ -55,12 +55,12 @@ public sealed class DynamicQrOptions
 
 public static partial class DynamicQrRules
 {
-    [GeneratedRegex("^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?$")]
+    [GeneratedRegex("^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$")]
     public static partial Regex SlugPattern();
 
     public static string? CheckSlug(string? slug) =>
         string.IsNullOrWhiteSpace(slug) ? "Give it a short name." :
-        !SlugPattern().IsMatch(slug) ? "Use lowercase letters, numbers and dashes (up to 60)." : null;
+        !SlugPattern().IsMatch(slug) ? "Use lowercase letters, numbers and dashes (up to 80)." : null;
 
     /// <summary>Who may see and change a code: the owner any; officers club-wide codes and AVI's; team leads their teams'
     /// (and sub-teams'); members the ones they made on their teams.</summary>
@@ -75,15 +75,20 @@ public static partial class DynamicQrRules
         (a.CanSeeClubWide ? new string?[] { null } : []).Concat(a.Tree.Ordered(g => a.CanSee(g.Id)).Select(g => (string?)g.Id));
 
     /// <summary>
-    /// Every code under a team is named after its organization, then the team: "er-electrical-flyer" for Electrical in
-    /// Engineering Renaissance, "er-flyer" for the organization itself. So a name says whose it is, and teams can't collide.
+    /// Every code under a team is named after the whole chain from its organization down: "avi-sms-electrical-flyer" for
+    /// Electrical in SMS in AVI, "avi-flyer" for AVI itself. So a name says whose it is, and teams can't collide.
     /// </summary>
     public static string PrefixFor(string team, GroupTree tree)
     {
-        var root = team;
-        for (var g = tree.Find(team); g?.Parent is not null; g = tree.Find(g.Parent)) root = g.Parent;
-        return root == team ? $"{root}-" : $"{root}-{team}-";
+        var ids = new List<string>();
+        for (var g = tree.Find(team); g is not null && ids.Count < 12; g = tree.Find(g.Parent)) ids.Insert(0, g.Id);
+        if (ids.Count == 0) ids.Add(team);
+        return string.Join("-", ids) + "-";
     }
+
+    /// <summary>"flyer" → "avi-sms-flyer": a name typed without its team prefix gets it added.</summary>
+    public static string WithPrefix(string slug, string? team, GroupTree tree) =>
+        team is null || slug.StartsWith(PrefixFor(team, tree), StringComparison.Ordinal) ? slug : PrefixFor(team, tree) + slug;
 
     public static string? CheckTeamSlug(string slug, string? team, GroupTree tree)
     {
