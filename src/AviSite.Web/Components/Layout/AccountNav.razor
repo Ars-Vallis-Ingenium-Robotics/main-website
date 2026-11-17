@@ -58,6 +58,7 @@ else
         var admin = u.IsInRole("Admin");
         if (email is not null) links.Add(("/admin/hours", "My hours"));
         if (email is not null) links.Add(("/admin/profile", "My profile"));
+        if (email is not null) links.Add(("/admin/discord", "Discord link"));
         if (email is not null && (admin || u.IsInRole("Lead"))) links.Add(("/admin/profile/review", "Profile approvals"));
         if (email is not null && Profiles.Get(email)?.DraftPhoto is { } pic) photo = $"/people/photo/{pic}/160";
         if (admin || u.IsInRole("Lead")) links.Add(("/admin/hours/team", "Team hours"));

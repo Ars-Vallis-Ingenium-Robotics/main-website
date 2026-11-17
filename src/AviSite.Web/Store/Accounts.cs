@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AviSite.Web.Options;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 
 namespace AviSite.Web.Store;
@@ -24,7 +25,9 @@ public sealed class Account
 {
     public string Email { get; set; } = "";
     public string Name { get; set; } = "";
-    /// <summary>Owner/Officer for site-wide access; Member means "only what my teams give me".</summary>
+    /// <summary>Discord snowflake linked by the account holder via OAuth identify. Never a login credential.</summary>
+    [System.Text.Json.Serialization.JsonIgnore] public string? DiscordUserId { get; set; }
+    /// <summary>Owner/Officer for site-wide access; Member means "only what my teams give them".</summary>
     public AccountRole Role { get; set; }
     public List<Membership> Teams { get; set; } = [];
     public string? AddedBy { get; set; }
@@ -210,6 +213,10 @@ public interface IAccountStore
     /// <summary>Everyone, config owners first.</summary>
     Task<IReadOnlyList<Account>> ListAsync(CancellationToken ct = default);
     Task<Account?> FindAsync(string email, CancellationToken ct = default);
+    Task<Account?> FindByDiscordUserIdAsync(string discordUserId, CancellationToken ct = default);
+    /// <summary>Links a Discord snowflake to an existing account if neither identity belongs elsewhere.</summary>
+    Task<bool> LinkDiscordAsync(string email, string discordUserId, CancellationToken ct = default);
+    Task<bool> UnlinkDiscordAsync(string email, CancellationToken ct = default);
     /// <summary>Adds or replaces (by email). Only config makes owners; for them only the name and teams are stored.</summary>
     Task<bool> SaveAsync(Account account, CancellationToken ct = default);
     Task<bool> RemoveAsync(string email, CancellationToken ct = default);
@@ -239,11 +246,13 @@ public sealed class JsonAccountStore : IAccountStore
     private readonly Data _data;
     private readonly TimeProvider _clock;
     private readonly IOptionsMonitor<AdminOptions> _options;
+    private readonly SiteDb _db;
 
-    public JsonAccountStore(IOptions<StoreOptions> options, IOptionsMonitor<AdminOptions> admin, IWebHostEnvironment env, TimeProvider clock)
+    public JsonAccountStore(IOptions<StoreOptions> options, IOptionsMonitor<AdminOptions> admin, IWebHostEnvironment env, TimeProvider clock, SiteDb db)
     {
         _clock = clock;
         _options = admin;
+        _db = db;
         var dir = Path.Combine(env.ContentRootPath, options.Value.DataDirectory);
         Directory.CreateDirectory(dir);
         _path = Path.Combine(dir, "accounts.json");
@@ -287,11 +296,22 @@ public sealed class JsonAccountStore : IAccountStore
         .Select(AccountRules.Normalize).Where(e => e.Length > 0).Distinct()
         .Select(e => new Account { Email = e, Name = e, Role = AccountRole.Owner, FromConfig = true, Stamp = "config" });
 
+    private Dictionary<string, string> ReadDiscordLinks()
+    {
+        var links = new Dictionary<string, string>(StringComparer.Ordinal);
+        using var c = _db.Open();
+        using var cmd = SiteDb.Cmd(c, "SELECT email, discord_user_id FROM discord_links");
+        using var r = cmd.ExecuteReader();
+        while (r.Read()) links[r.GetString(0)] = r.GetString(1);
+        return links;
+    }
+
     public async Task<IReadOnlyList<Account>> ListAsync(CancellationToken ct = default)
     {
         await _lock.WaitAsync(ct);
         try
         {
+            var discordLinks = ReadDiscordLinks();
             var owners = ConfigOwners().ToList();
             foreach (var o in owners)
             {
@@ -302,10 +322,16 @@ public sealed class JsonAccountStore : IAccountStore
                     o.Name = stored.Name; o.Teams = stored.Teams.Select(m => new Membership { Group = m.Group, Role = m.Role }).ToList();
                     o.Stamp = "config-" + stored.Stamp;
                 }
+                o.DiscordUserId = discordLinks.GetValueOrDefault(o.Email);
             }
             // Only config makes owners: a stored "Owner", or a stored copy of a config owner, is ignored.
             return [.. owners, .. _data.Accounts.Where(a => a.Role != AccountRole.Owner && owners.All(o => o.Email != a.Email))
-                .OrderBy(a => a.Role == AccountRole.Officer ? 0 : 1).ThenBy(a => a.Name, StringComparer.OrdinalIgnoreCase).Select(Clone)];
+                .OrderBy(a => a.Role == AccountRole.Officer ? 0 : 1).ThenBy(a => a.Name, StringComparer.OrdinalIgnoreCase).Select(a =>
+                {
+                    var copy = Clone(a);
+                    copy.DiscordUserId = discordLinks.GetValueOrDefault(copy.Email);
+                    return copy;
+                })];
         }
         finally { _lock.Release(); }
     }
@@ -314,6 +340,52 @@ public sealed class JsonAccountStore : IAccountStore
     {
         email = AccountRules.Normalize(email);
         return (await ListAsync(ct)).FirstOrDefault(a => a.Email == email);
+    }
+
+    public async Task<Account?> FindByDiscordUserIdAsync(string discordUserId, CancellationToken ct = default)
+    {
+        string? email;
+        using (var c = _db.Open())
+        using (var cmd = SiteDb.Cmd(c, "SELECT email FROM discord_links WHERE discord_user_id = $id", null, ("$id", discordUserId)))
+            email = cmd.ExecuteScalar() as string;
+        return email is null ? null : await FindLinkedAsync(email, discordUserId, ct);
+    }
+
+    private async Task<Account?> FindLinkedAsync(string email, string discordUserId, CancellationToken ct)
+    {
+        var account = await FindAsync(email, ct);
+        return account?.DiscordUserId == discordUserId ? account : null;
+    }
+
+    public async Task<bool> LinkDiscordAsync(string email, string discordUserId, CancellationToken ct = default)
+    {
+        email = AccountRules.Normalize(email);
+        if (discordUserId is null || discordUserId.Length is < 17 or > 20 || !discordUserId.All(char.IsAsciiDigit)) return false;
+        var account = await FindAsync(email, ct);
+        if (account is null || (!account.SiteWide && account.Teams.Count == 0)) return false;
+        try
+        {
+            using var c = _db.Open();
+            using var cmd = SiteDb.Cmd(c, """
+                INSERT INTO discord_links (email, discord_user_id) VALUES ($email, $id)
+                ON CONFLICT(email) DO UPDATE SET discord_user_id = excluded.discord_user_id
+                WHERE discord_links.discord_user_id = excluded.discord_user_id
+                """, null, ("$email", email), ("$id", discordUserId));
+            return cmd.ExecuteNonQuery() > 0;
+        }
+        catch (SqliteException ex) when (ex.SqliteErrorCode == 19)
+        {
+            // The unique index arbitrates simultaneous requests across every app instance.
+            return false;
+        }
+    }
+
+    public Task<bool> UnlinkDiscordAsync(string email, CancellationToken ct = default)
+    {
+        email = AccountRules.Normalize(email);
+        using var c = _db.Open();
+        using var cmd = SiteDb.Cmd(c, "DELETE FROM discord_links WHERE email = $email", null, ("$email", email));
+        return Task.FromResult(cmd.ExecuteNonQuery() > 0);
     }
 
     public async Task<bool> SaveAsync(Account account, CancellationToken ct = default)
@@ -354,6 +426,7 @@ public sealed class JsonAccountStore : IAccountStore
     {
         email = AccountRules.Normalize(email);
         if (ConfigOwners().Any(o => o.Email == email)) return false;
+        await UnlinkDiscordAsync(email, ct);
         await _lock.WaitAsync(ct);
         try
         {
@@ -428,7 +501,7 @@ public sealed class JsonAccountStore : IAccountStore
 
     private static Account Clone(Account a) => new()
     {
-        Email = a.Email, Name = a.Name, Role = a.Role, AddedBy = a.AddedBy, AddedUtc = a.AddedUtc,
+        Email = a.Email, Name = a.Name, DiscordUserId = a.DiscordUserId, Role = a.Role, AddedBy = a.AddedBy, AddedUtc = a.AddedUtc,
         LastSignInUtc = a.LastSignInUtc, Stamp = a.Stamp, FromConfig = a.FromConfig,
         Teams = a.Teams.Select(t => new Membership { Group = t.Group, Role = t.Role }).ToList(),
     };

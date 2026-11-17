@@ -140,12 +140,12 @@ public sealed class SqliteDynamicQrStore : IDynamicQrStore
         _db = db;
         _clock = clock;
         using var c = db.Open();
-        using (var cmd = SiteDb.Cmd(c, "SELECT COUNT(*) FROM qr_codes")) if ((long)cmd.ExecuteScalar()! > 0) return;
+        using var tx = c.BeginTransaction(deferred: false);
+        using (var count = SiteDb.Cmd(c, "SELECT COUNT(*) FROM qr_codes", tx)) if ((long)count.ExecuteScalar()! > 0) return;
         var json = Path.Combine(env.ContentRootPath, options.Value.DataDirectory, "dynamic-qr.json");
         var codes = File.Exists(json)
             ? JsonSerializer.Deserialize<List<DynamicQr>>(File.ReadAllText(json), JsonDefaults.Options) ?? []
             : Seed(clock.GetUtcNow());
-        using var tx = c.BeginTransaction();
         foreach (var q in codes) Insert(c, tx, q);
         tx.Commit();
         if (File.Exists(json))

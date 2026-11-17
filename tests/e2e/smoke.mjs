@@ -1285,7 +1285,12 @@ await test("header: Sign in when signed out; Clock in + account menu when signed
   assert.match(await pg.locator(".landing__actions > *").first().innerText(), /Clock|Clocked in/, "home's first button is the clock when signed in");
   await pg.goto(BASE + "/about");
   await pg.locator("header .nav--wide .account-menu > summary").click();
-  for (const label of ["My hours", "QR codes", "People"]) assert.equal(await pg.locator("header .nav--wide .account-menu__panel a", { hasText: label }).isVisible(), true, label);
+  for (const label of ["My hours", "Discord link", "QR codes", "People"]) assert.equal(await pg.locator("header .nav--wide .account-menu__panel a", { hasText: label }).isVisible(), true, label);
+  await pg.goto(BASE + "/admin/discord");
+  const discordTitle = await pg.locator("h1").innerText();
+  assert.equal(discordTitle.toLowerCase(), "discord link", `account page loads without needing Discord credentials (got ${discordTitle}; ${pg.url()})`);
+  await pg.goto(BASE + "/about");
+  await pg.locator("header .nav--wide .account-menu > summary").click();
   await pg.locator("header .nav--wide .account-menu__panel a", { hasText: "QR codes" }).click();
   assert.equal(new URL(pg.url()).pathname, "/admin/qr");
   await c.close();
