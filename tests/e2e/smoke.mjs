@@ -740,6 +740,15 @@ await test("accounts: owner adds a partner group, lead and member; each sees onl
     assert.match(await op.locator("main").innerText(), /Added/);
   }
   assert.equal(await op.locator('[data-person="owner@example.com"] button').count(), 0, "config owners can't be removed here");
+  // A mistake keeps what was typed.
+  await op.fill("#new-email", `typo-${id}@example.com`); await op.fill("#new-name", "Kept Name");
+  await op.selectOption("#new-role", "Member"); await op.selectOption("#new-group", "");
+  await op.getByRole("button", { name: "Add", exact: true }).click();
+  assert.match(await op.locator("main").innerText(), /need a group/);
+  assert.equal(await op.inputValue("#new-email"), `typo-${id}@example.com`, "email kept after an error");
+  assert.equal(await op.inputValue("#new-name"), "Kept Name", "name kept after an error");
+  await op.goto(BASE + "/admin/people");
+  assert.equal(await op.inputValue("#new-group"), "sms", "group defaults to a real group");
 
   // Lead: their group's people and codes only; can add a member, can't make an officer.
   const [lc, lp] = await as(lead);
@@ -749,9 +758,9 @@ await test("accounts: owner adds a partner group, lead and member; each sees onl
   assert.equal(await lp.locator('[data-person="owner@example.com"]').count(), 0, "leads see only their group");
   await lp.fill("#new-email", mem2); await lp.getByRole("button", { name: "Add", exact: true }).click();
   assert.match(await lp.locator("main").innerText(), /Added/);
-  await lp.evaluate(() => { const f = document.querySelector('form[action="/admin/people/save"]:has(#new-email)'); f.querySelector('[name="role"]').value = "Officer"; });
+  await lp.evaluate(() => { const f = document.querySelector("form:has(#new-email)"); const i = document.createElement("input"); i.type = "hidden"; i.name = "Add.Role"; i.value = "Officer"; f.append(i); });
   await lp.fill("#new-email", `sneaky-${id}@example.com`); await lp.getByRole("button", { name: "Add", exact: true }).click();
-  assert.equal(await lp.locator(`[data-person="sneaky-${id}@example.com"]`).count(), 0, "a lead can't make officers");
+  assert.match(await lp.locator(`[data-person="sneaky-${id}@example.com"]`).innerText(), /member/i, "a lead can't make officers, even by editing the form");
 
   // Member: own codes only, named after the group; no people page.
   const [mc, mp] = await as(mem);

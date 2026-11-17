@@ -82,37 +82,32 @@
         </div>
 
         <h2 class="h3 qr-admin__h">Add someone</h2>
-        <form method="post" action="/admin/people/save" class="form qr-admin__form">
-            <AntiforgeryToken />
+        @* Posts back to this page (not to an endpoint), so a mistake keeps everything typed. *@
+        <EditForm Model="Add!" FormName="person-add" OnSubmit="AddPersonAsync" method="post" class="form qr-admin__form" novalidate>
             <div class="qr-admin__grid">
                 <div class="field">
                     <label class="label" for="new-email">Google email</label>
-                    <input id="new-email" name="email" type="email" required autocomplete="off" placeholder="name@avirobotics.org" />
+                    <InputText id="new-email" type="email" @bind-Value="Add!.Email" autocomplete="off" placeholder="name@avirobotics.org" />
                 </div>
                 <div class="field">
                     <label class="label" for="new-name">Name <span class="muted">(optional)</span></label>
-                    <input id="new-name" name="name" autocomplete="off" placeholder="Filled in from Google if blank" />
+                    <InputText id="new-name" @bind-Value="Add!.Name" autocomplete="off" placeholder="Filled in from Google if blank" />
                 </div>
                 @if (isOwner)
                 {
                     <div class="field">
                         <label class="label" for="new-role">Access</label>
-                        <select id="new-role" name="role">
-                            @foreach (var r in AssignableRoles) { <option value="@r" selected="@(r == AccountRole.Member)">@AccountRules.Label(r)</option> }
-                        </select>
+                        <InputSelect id="new-role" @bind-Value="Add!.Role">
+                            @foreach (var r in AssignableRoles) { <option value="@r">@AccountRules.Label(r)</option> }
+                        </InputSelect>
                     </div>
                     <div class="field">
-                        <label class="label" for="new-group">Group</label>
-                        <select id="new-group" name="group">
-                            <option value="">No group (officers)</option>
+                        <label class="label" for="new-group">Group <span class="muted">(leads and members)</span></label>
+                        <InputSelect id="new-group" @bind-Value="Add!.Group">
                             @foreach (var g in groups) { <option value="@g.Id">@g.Name</option> }
-                        </select>
+                            <option value="">None (officers)</option>
+                        </InputSelect>
                     </div>
-                }
-                else
-                {
-                    <input type="hidden" name="role" value="@AccountRole.Member" />
-                    <input type="hidden" name="group" value="@me?.Group" />
                 }
             </div>
             <ul class="small muted people-admin__roles">
@@ -120,8 +115,9 @@
                 <li><strong>Group lead</strong>: all of their group's QR codes, and adds or removes the group's members.</li>
                 <li><strong>Member</strong>: makes and edits their own QR codes, named after their group.</li>
             </ul>
+            @if (addError is not null) { <p class="alert" role="alert">@addError</p> }
             <div><button class="btn btn--accent" type="submit">Add</button></div>
-        </form>
+        </EditForm>
 
         @if (isOwner)
         {
@@ -134,25 +130,25 @@
                         <span class="small muted">@all.Count(a => a.Group == g.Id) people</span></li>
                 }
             </ul>
-            <form method="post" action="/admin/groups/add" class="form qr-admin__form">
-                <AntiforgeryToken />
+            <EditForm Model="NewGroup!" FormName="group-add" OnSubmit="AddGroupAsync" method="post" class="form qr-admin__form" novalidate>
                 <div class="qr-admin__grid">
                     <div class="field">
                         <label class="label" for="g-name">Group name</label>
-                        <input id="g-name" name="name" required placeholder="CCC Engineering Renaissance" />
+                        <InputText id="g-name" @bind-Value="NewGroup!.Name" placeholder="CCC Engineering Renaissance" />
                     </div>
                     <div class="field">
                         <label class="label" for="g-id">Short id</label>
-                        <input id="g-id" name="id" required pattern="[a-z0-9-]{1,20}" placeholder="ccc-er" aria-describedby="g-id-hint" />
+                        <InputText id="g-id" @bind-Value="NewGroup!.Id" placeholder="ccc-er" aria-describedby="g-id-hint" autocomplete="off" />
                         <p class="field__hint" id="g-id-hint">Lowercase, numbers, dashes. Can't be changed later.</p>
                     </div>
                     <div class="field">
                         <label class="label" for="g-kind">Kind</label>
-                        <select id="g-kind" name="kind"><option value="avi">AVI team</option><option value="partner">Partner club or school</option></select>
+                        <InputSelect id="g-kind" @bind-Value="NewGroup!.Kind"><option value="avi">AVI team</option><option value="partner">Partner club or school</option></InputSelect>
                     </div>
                 </div>
+                @if (groupError is not null) { <p class="alert" role="alert">@groupError</p> }
                 <div><button class="btn btn--ghost" type="submit">Add group</button></div>
-            </form>
+            </EditForm>
         }
     </div>
 </section>
@@ -161,6 +157,25 @@
     [CascadingParameter] public HttpContext? Http { get; set; }
     [SupplyParameterFromQuery] public string? Done { get; set; }
     [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromForm(FormName = "person-add")] public AddModel? Add { get; set; }
+    [SupplyParameterFromForm(FormName = "group-add")] public GroupModel? NewGroup { get; set; }
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+    private string? addError, groupError;
+
+    public sealed class AddModel
+    {
+        public string? Email { get; set; }
+        public string? Name { get; set; }
+        public AccountRole Role { get; set; } = AccountRole.Member;
+        public string? Group { get; set; }
+    }
+
+    public sealed class GroupModel
+    {
+        public string? Name { get; set; }
+        public string? Id { get; set; }
+        public string? Kind { get; set; } = "avi";
+    }
 
     private static readonly AccountRole[] AssignableRoles = [AccountRole.Officer, AccountRole.Lead, AccountRole.Member];
     private Account? me;
@@ -169,6 +184,32 @@
     private IReadOnlyList<AccountGroup> groups = [];
 
     private string GroupName(string? id) => groups.FirstOrDefault(g => g.Id == id)?.Name ?? id ?? "";
+
+    private static string Explain(string code) => code switch
+    {
+        "email" => "That doesn't look like an email address.",
+        "group" => "Leads and members need a group. Pick one, or set Access to Officer.",
+        "group-id" => "Give the group a name and a short id (lowercase letters, numbers, dashes).",
+        "group-taken" => "There's already a group with that id.",
+        "self" => "You can't change your own access here.",
+        _ => "You can't change that person.",
+    };
+
+    private async Task AddPersonAsync()
+    {
+        if (me is null) { addError = Explain("denied"); return; }
+        var result = await AccountAdminEndpoints.SaveAsync(me, Add!.Email, Add.Name, isOwner ? Add.Role : AccountRole.Member, isOwner ? Add.Group : me.Group, Store);
+        if (result is "added" or "saved") { Nav.NavigateTo("/admin/people?done=" + result); return; }
+        addError = Explain(result);
+    }
+
+    private async Task AddGroupAsync()
+    {
+        if (me is null) { groupError = Explain("denied"); return; }
+        var result = await AccountAdminEndpoints.AddGroupAsync(me, NewGroup!.Id, NewGroup.Name, NewGroup.Kind, Store);
+        if (result == "group") { Nav.NavigateTo("/admin/people?done=group"); return; }
+        groupError = Explain(result);
+    }
 
     private string? Message => (Done, Error) switch
     {
@@ -193,5 +234,7 @@
         all = await Store.ListAsync();
         groups = await Store.GroupsAsync();
         visible = isOwner ? all : all.Where(a => me is not null && a.Group == me.Group).ToList();
+        Add ??= new() { Group = groups.FirstOrDefault()?.Id }; // a real group by default, so a new member just works
+        NewGroup ??= new();
     }
 }
