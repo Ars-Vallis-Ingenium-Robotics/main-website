@@ -1883,17 +1883,36 @@
   .people-admin__more { margin: var(--s-3) 0 var(--s-5); }
   .people-admin__more > summary, .people-admin__edit > summary { cursor: pointer; font-weight: 600; }
   .people-admin__edit { margin-top: var(--s-2); }
-  .people-admin__edit[open] { display: grid; gap: var(--s-2); }
+  /* <details> doesn't lay out its content as a grid in every browser, so the gap lives on a wrapper. */
+  .people-admin__editbody { display: grid; gap: var(--s-2); justify-items: start; margin-top: var(--s-2); }
   .people-admin__edit > summary { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); }
   .people-admin__teams { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--s-1); }
   .team-chip { display: inline-flex; align-items: center; gap: 0.15rem; padding: 0.15rem 0.2rem 0.15rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 0.82rem; background: var(--white); }
   .team-chip--lead { border-color: var(--accent); color: var(--accent); font-weight: 600; }
   .team-chip form { display: contents; }
-  .team-chip__x { border: 0; background: none; cursor: pointer; font: inherit; line-height: 1; width: 1.5rem; height: 1.5rem; border-radius: 50%; color: var(--text-muted); }
+  /* The × is two drawn bars, not a text glyph, so it's centered in every font. */
+  .team-chip__x { position: relative; flex: none; border: 0; padding: 0; background: none; cursor: pointer; width: 1.5rem; height: 1.5rem; border-radius: 50%; color: var(--text-muted); }
+  .team-chip__x::before, .team-chip__x::after { content: ""; position: absolute; left: 50%; top: 50%; width: 0.6rem; height: 1.5px; border-radius: 1px; background: currentColor; translate: -50% -50%; rotate: 45deg; }
+  .team-chip__x::after { rotate: -45deg; }
   .team-chip__x:hover, .team-chip__x:focus-visible { background: var(--danger); color: var(--white); outline: none; }
   .people-admin__officer { align-self: end; padding-bottom: var(--s-2); }
   .people-admin textarea, #add-list { width: 100%; font-family: var(--font-mono); font-size: 0.9rem; }
 }
 @layer components {
   .team-tree__remove { margin-left: auto; }
+}
+@layer components {
+  .people-admin__others-h { margin-top: var(--s-5); }
+  .org-summary { list-style: none; padding: 0; display: grid; gap: var(--s-2); margin: var(--s-2) 0 var(--s-4); }
+  .org-summary__item { display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-3); align-items: baseline; padding: var(--s-3) var(--s-4); border: 1px dashed var(--line-strong); border-radius: 12px; background: var(--white); }
+}
+@layer components {
+  /* Close buttons draw their × with two bars (a text glyph sits on the font's baseline, so it's never quite centered).
+     The "×" text stays in the markup for no-CSS reading; aria-label="Close" is what screen readers say. */
+  /* Both are already positioned (sticky / fixed), which the bars below need; don't override that. */
+  .sheet__close, .lightbox__close { font-size: 0 !important; }
+  .lightbox__close { color: var(--white); }
+  .sheet__close::before, .sheet__close::after, .lightbox__close::before, .lightbox__close::after {
+    content: ""; position: absolute; left: 50%; top: 50%; width: 40%; height: 2px; border-radius: 1px; background: currentColor; translate: -50% -50%; rotate: 45deg; }
+  .sheet__close::after, .lightbox__close::after { rotate: -45deg; }
 }

@@ -14,7 +14,7 @@
         <AdminNav Current="qr" />
         <div class="section__head">
             <div>
-                <p class="eyebrow">@(access.SiteWide ? "Admin" : "Your teams")</p>
+                <p class="eyebrow">@(access.CanSeeClubWide ? "Admin" : "Your teams")</p>
                 <h1 class="h1">Dynamic QR codes</h1>
                 <p class="muted">The printed code never changes. Change where it goes here, any time. Scans are counted here and sent to the Google Sheet.</p>
             </div>
@@ -31,13 +31,13 @@
                     <label class="label" for="f-q">Search</label>
                     <input id="f-q" name="q" type="search" value="@Q" placeholder="Name, link, note or sheet name" />
                 </div>
-                @if (filterTeams.Count > 1 || access.SiteWide)
+                @if (filterTeams.Count > 1 || access.CanSeeClubWide)
                 {
                     <div class="field">
                         <label class="label" for="f-group">Team</label>
                         <select id="f-group" name="group">
                             <option value="" selected="@(string.IsNullOrEmpty(Group))">All teams</option>
-                            @if (access.SiteWide) { <option value="club" selected="@(Group == "club")">Club-wide only</option> }
+                            @if (access.CanSeeClubWide) { <option value="club" selected="@(Group == "club")">Club-wide only</option> }
                             @foreach (var g in filterTeams) { <option value="@g.Id" selected="@(Group == g.Id)">@Indent(g)@g.Name</option> }
                         </select>
                     </div>
@@ -117,7 +117,7 @@
             <div class="qr-admin__grid">
                 <div class="field">
                     <label class="label" for="slug">Name in the link</label>
-                    <InputText id="slug" @bind-Value="New!.Slug" placeholder="@(access.SiteWide ? "e.g. vintage-days" : $"e.g. {creatable.FirstOrDefault()}-flyer")" autocomplete="off" aria-describedby="slug-hint" />
+                    <InputText id="slug" @bind-Value="New!.Slug" placeholder="@(Example(New!.Owner, "flyer"))" autocomplete="off" aria-describedby="slug-hint" />
                     <span id="slug-hint" class="field__hint mono">@PrintUrl(string.IsNullOrWhiteSpace(New!.Slug) ? "…" : New.Slug.Trim().ToLowerInvariant())</span>
                 </div>
                 <div class="field">
@@ -153,7 +153,7 @@
             <div class="qr-admin__grid">
                 <div class="field">
                     <label class="label" for="b-prefix">Name in the link</label>
-                    <InputText id="b-prefix" @bind-Value="Batch!.Prefix" placeholder="@(access.SiteWide ? "e.g. sign-in" : $"e.g. {creatable.FirstOrDefault()}-sign-in")" autocomplete="off" />
+                    <InputText id="b-prefix" @bind-Value="Batch!.Prefix" placeholder="@(Example(Batch!.Owner, "sign-in"))" autocomplete="off" />
                     <span class="field__hint mono">…/dynamicqr/@(string.IsNullOrWhiteSpace(Batch!.Prefix) ? "sign-in" : Batch.Prefix.Trim().ToLowerInvariant())-@Batch.From</span>
                 </div>
                 @if (creatable.Count > 1)
@@ -199,7 +199,8 @@
     /// <summary>SMS teams (and their sub-teams) start the maker in SMS colors.</summary>
     private string StyleFor(string? team) => team is not null && access.Tree.WithDescendants(["sms"]).Contains(team) ? "sms" : "avi";
     private string Indent(AccountGroup g) => new string('\u00a0', access.Tree.Depth(g.Id) * 3);
-    private string TeamOption(string? id) => id is null ? "Club-wide (officers)" : $"{Indent(access.Tree.Find(id)!)}{access.Tree.Name(id)} (names start with {id}-)";
+    private string TeamOption(string? id) => id is null ? "Club-wide (officers)" : $"{Indent(access.Tree.Find(id)!)}{access.Tree.Name(id)} ({DynamicQrRules.PrefixFor(id, access.Tree)}…)";
+    private string Example(string? owner, string name) => "e.g. " + (string.IsNullOrEmpty(owner) ? name : DynamicQrRules.PrefixFor(owner, access.Tree) + name);
     [SupplyParameterFromForm(FormName = "qr-new")] public NewCode? New { get; set; }
     [SupplyParameterFromQuery] public string? Saved { get; set; }
     [SupplyParameterFromQuery] public string? Deleted { get; set; }
@@ -234,7 +235,7 @@
         myEmail = access.Account?.Email;
         codes = (await Codes.ListAsync()).Where(q => DynamicQrRules.CanAccess(access, q)).ToList();
         creatable = DynamicQrRules.CreatableTeams(access).ToList();
-        filterTeams = access.Tree.Ordered(g => access.SiteWide || access.BelongsTo.Contains(g.Id)).ToList();
+        filterTeams = access.Tree.Ordered(g => access.CanSee(g.Id)).ToList();
         New.Owner ??= creatable.FirstOrDefault() ?? "";
         Batch.Owner ??= creatable.FirstOrDefault() ?? "";
 
@@ -270,7 +271,7 @@
     {
         var slug = New!.Slug!.Trim().ToLowerInvariant();
         var owner = string.IsNullOrWhiteSpace(New.Owner) ? null : New.Owner;
-        error = !creatable.Contains(owner) ? "Pick one of your teams." : DynamicQrRules.CheckSlug(slug) ?? DynamicQrRules.CheckTeamSlug(slug, owner) ?? DynamicQrRules.CheckTarget(New.Target);
+        error = !creatable.Contains(owner) ? "Pick one of your teams." : DynamicQrRules.CheckSlug(slug) ?? DynamicQrRules.CheckTeamSlug(slug, owner, access.Tree) ?? DynamicQrRules.CheckTarget(New.Target);
         if (error is not null) return;
         var ok = await Codes.CreateAsync(new DynamicQr
         {
@@ -290,7 +291,7 @@
         var b = Batch!;
         var prefix = (b.Prefix ?? "").Trim().ToLowerInvariant();
         var batchOwner = string.IsNullOrWhiteSpace(b.Owner) ? null : b.Owner;
-        batchError = !creatable.Contains(batchOwner) ? "Pick one of your teams." : DynamicQrRules.CheckSlug(prefix + "-1") ?? DynamicQrRules.CheckTeamSlug(prefix + "-1", batchOwner) ?? DynamicQrRules.CheckTarget(b.Target);
+        batchError = !creatable.Contains(batchOwner) ? "Pick one of your teams." : DynamicQrRules.CheckSlug(prefix + "-1") ?? DynamicQrRules.CheckTeamSlug(prefix + "-1", batchOwner, access.Tree) ?? DynamicQrRules.CheckTarget(b.Target);
         if (batchError is null && (b.To < b.From || b.To - b.From >= 100)) batchError = "Pick a range of up to 100 numbers.";
         if (batchError is not null) return;
         var made = new List<string>();

@@ -20,7 +20,7 @@ public static class AccountAdminEndpoints
             var me = await http.AccessAsync(store);
             var target = await store.FindAsync(email);
             if (target is null || !me.CanManageGroup(group) || role is not (AccountRole.Lead or AccountRole.Member) || me.Outranks(target)) return Back(error: "denied");
-            if (target.Email == me.Account?.Email) return Back(error: "self");
+            if (target.Email == me.Account?.Email && !me.IsOwner) return Back(error: "self");
             target.Teams.RemoveAll(t => t.Group == group);
             target.Teams.Add(new Membership { Group = group, Role = role });
             return await store.SaveAsync(target) ? Back(done: "saved") : Back(error: "denied");
@@ -31,7 +31,7 @@ public static class AccountAdminEndpoints
             var me = await http.AccessAsync(store);
             var target = await store.FindAsync(email);
             if (target is null || !me.CanManageGroup(group) || me.Outranks(target)) return Back(error: "denied");
-            if (target.Email == me.Account?.Email) return Back(error: "self");
+            if (target.Email == me.Account?.Email && !me.IsOwner) return Back(error: "self");
             target.Teams.RemoveAll(t => t.Group == group);
             // Nobody keeps an account that can't open anything.
             if (!target.SiteWide && target.Teams.Count == 0)
@@ -71,7 +71,7 @@ public static class AccountAdminEndpoints
     /// <summary>Remove the whole person: owners anyone (but config owners), officers anyone without site-wide access,
     /// leads only people who are entirely inside the teams they manage.</summary>
     public static bool CanRemove(Access me, Account target) =>
-        me.CanEditPerson(target) && (me.SiteWide || target.Teams.All(t => me.Manages.Contains(t.Group)));
+        me.CanEditPerson(target) && (me.IsOwner || target.Teams.All(t => me.Manages.Contains(t.Group)));
 
     public sealed record AddResult(int Added, int Updated, List<string> Skipped, string? Error);
 
@@ -107,14 +107,15 @@ public static class AccountAdminEndpoints
             }
             if (AccountRules.CheckEmail(email) is not null) { skipped.Add($"{line} (not an email)"); continue; }
             email = AccountRules.Normalize(email);
-            if (email == me.Account?.Email) { skipped.Add($"{email} (that's you)"); continue; }
+            var isMe = email == me.Account?.Email;
+            if (isMe && !me.IsOwner) { skipped.Add($"{email} (that's you)"); continue; }
 
             var target = await store.FindAsync(email);
-            if (target is { FromConfig: true }) { skipped.Add($"{email} (owner)"); continue; }
+            if (target is { FromConfig: true } && !isMe) { skipped.Add($"{email} (owner)"); continue; }
             if (target is not null && me.Outranks(target)) { skipped.Add($"{email} (leads above you)"); continue; }
             var account = target ?? new Account { Email = email, Name = string.IsNullOrWhiteSpace(name) ? email : name, AddedBy = me.Account?.Email };
             if (target is not null && !string.IsNullOrWhiteSpace(name) && target.Name == target.Email) account.Name = name;
-            if (officer) account.Role = AccountRole.Officer;
+            if (officer && !account.FromConfig) account.Role = AccountRole.Officer;
             if (group is not null)
             {
                 var existing = account.Teams.FirstOrDefault(t => t.Group == group);

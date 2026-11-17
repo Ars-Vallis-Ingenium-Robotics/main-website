@@ -100,6 +100,15 @@ links on /sms and absolute ones on the SMS host.
 - No invented facts: stats, awards, sponsors, years. Mark unknowns `TODO(confirm)`.
 - No stock photos of "diverse team smiling at laptop". Real club photos or nothing.
 
+## Icons and spacing (tested)
+
+- Draw small icons (×, +, arrows) with CSS bars or SVG, never a text glyph: glyphs sit on the font's baseline and land
+  a pixel or two off center, differently on every OS. `smoke.mjs` › "layout: icons sit in the middle" measures the real
+  pixels of chip ×, Customize +, pop-up and lightbox close buttons and fails past half a pixel.
+- Buttons never touch: put a gap on the wrapper (a `<details>` doesn't lay out its content as a grid, so wrap it).
+  "layout: buttons never touch or overlap" checks admin, the QR maker, sign-in and home at 1440/1024/768/390px with
+  every `<details>` open. Run just these with `ONLY=layout node tests/e2e/smoke.mjs`.
+
 ## Content-Security-Policy: no inline JavaScript
 
 The site sends `script-src 'self'` (no `'unsafe-inline'`, no `'unsafe-eval'`). The browser silently refuses:

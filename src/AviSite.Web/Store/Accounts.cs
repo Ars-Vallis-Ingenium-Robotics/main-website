@@ -116,28 +116,39 @@ public sealed class GroupTree
 public sealed class Access
 {
     public Account? Account { get; init; }
-    public bool SiteWide { get; init; }
+    /// <summary>The owner: everything, every organization.</summary>
     public bool IsOwner { get; init; }
-    /// <summary>Groups they lead, plus everything below those: they manage these teams' people, sub-teams and content.</summary>
+    /// <summary>AVI officers: the shop, countdowns, club-wide QR codes, and everything inside AVI Robotics.
+    /// Other organizations are theirs only to count: they see who leads each one and the totals.</summary>
+    public bool IsOfficer { get; init; }
+    /// <summary>Kept for readability where "sees everything" is meant: only the owner does.</summary>
+    public bool SiteWide => IsOwner;
+    /// <summary>Teams they lead (and everything below): these they may reshape (add/remove sub-teams).</summary>
+    public HashSet<string> Leads { get; init; } = [];
+    /// <summary>Teams whose people and QR codes they manage: what they lead, plus all of AVI for officers.</summary>
     public HashSet<string> Manages { get; init; } = [];
-    /// <summary>Every group they're on (any role) plus everything they manage.</summary>
+    /// <summary>Every team they can see in full: what they're on plus what they manage.</summary>
     public HashSet<string> BelongsTo { get; init; } = [];
     public GroupTree Tree { get; init; } = new([]);
 
-    public bool CanManageGroup(string? id) => SiteWide || (id is not null && Manages.Contains(id));
+    public bool CanManageGroup(string? id) => IsOwner || (id is not null && Manages.Contains(id));
+    public bool CanSee(string id) => IsOwner || BelongsTo.Contains(id);
+    public bool CanSeeClubWide => IsOwner || IsOfficer;
     /// <summary>Adding or removing teams under <paramref name="parent"/> (null = new organizations): the owner anywhere,
-    /// and leads below the teams they lead. Officers don't get this from being officers: an AVI officer can't
-    /// reshape a partner's Crush Depth.</summary>
-    public bool CanEditTeamsUnder(string? parent) => IsOwner || (parent is not null && Manages.Contains(parent));
-    public bool LeadsAnything => SiteWide || Manages.Count > 0;
+    /// and leads below the teams they lead. Being an officer doesn't give this.</summary>
+    public bool CanEditTeamsUnder(string? parent) => IsOwner || (parent is not null && Leads.Contains(parent));
+    public bool LeadsAnything => IsOwner || Manages.Count > 0;
 
     public static Access For(Account? a, GroupTree tree)
     {
         if (a is null) return new Access { Tree = tree };
         var leads = tree.WithDescendants(a.Teams.Where(t => t.Role == AccountRole.Lead).Select(t => t.Group));
+        var officer = a.Role == AccountRole.Officer;
+        var manages = new HashSet<string>(leads);
+        if (officer) manages.UnionWith(tree.WithDescendants([JsonAccountStore.AviRoot]));
         var on = a.Teams.Select(t => t.Group).Where(id => tree.Find(id) is not null).ToHashSet();
-        on.UnionWith(leads);
-        return new Access { Account = a, SiteWide = a.SiteWide, IsOwner = a.Role == AccountRole.Owner, Manages = leads, BelongsTo = on, Tree = tree };
+        on.UnionWith(manages);
+        return new Access { Account = a, IsOwner = a.Role == AccountRole.Owner, IsOfficer = officer, Leads = leads, Manages = manages, BelongsTo = on, Tree = tree };
     }
 
     /// <summary>Old shared team passwords: act like a lead of that team.</summary>
@@ -145,24 +156,27 @@ public sealed class Access
     {
         var set = tree.WithDescendants([team]);
         if (set.Count == 0) set.Add(team);
-        return new() { Manages = set, BelongsTo = [.. set], Tree = tree };
+        return new() { Leads = set, Manages = [.. set], BelongsTo = [.. set], Tree = tree };
     }
 
-    /// <summary>The shared officer password (no account).</summary>
-    public static Access ForOfficerPassword(GroupTree tree) => new() { SiteWide = true, Tree = tree };
+    /// <summary>The shared officer password (no account): an officer.</summary>
+    public static Access ForOfficerPassword(GroupTree tree)
+    {
+        var avi = tree.WithDescendants([JsonAccountStore.AviRoot]);
+        return new() { IsOfficer = true, Manages = avi, BelongsTo = [.. avi], Tree = tree };
+    }
 
-    /// <summary>Owners: anyone except config owners. Officers: anyone without site-wide access.
-    /// Leads: people on the teams they manage (only those memberships).</summary>
+    /// <summary>Owner: anyone except config owners. Everyone else: people on teams they manage, never officers,
+    /// and never someone who leads something they don't.</summary>
     public bool CanEditPerson(Account target) =>
-        IsOwner ? !target.FromConfig
-        : SiteWide ? !target.SiteWide
+        IsOwner ? !target.FromConfig || target.Email == Account?.Email // the owner can put themselves on teams
         : !target.SiteWide && target.Teams.Any(t => Manages.Contains(t.Group)) && !Outranks(target);
 
     /// <summary>
-    /// True if the target leads something this person doesn't: e.g. the lead of an organization outranks a sub-team lead,
-    /// so the top lead of each organization acts as its owner and can't be changed from below. Co-leads of the same team are peers.
+    /// True if the target leads something this person doesn't manage: the lead of an organization outranks a sub-team lead,
+    /// so each organization's top lead acts as its owner and can't be changed from below. Co-leads of the same team are peers.
     /// </summary>
-    public bool Outranks(Account target) => !SiteWide && !Access.For(target, Tree).Manages.IsSubsetOf(Manages);
+    public bool Outranks(Account target) => !IsOwner && !Access.For(target, Tree).Leads.IsSubsetOf(Manages);
 }
 
 public static partial class AccountRules
@@ -196,7 +210,7 @@ public interface IAccountStore
     /// <summary>Everyone, config owners first.</summary>
     Task<IReadOnlyList<Account>> ListAsync(CancellationToken ct = default);
     Task<Account?> FindAsync(string email, CancellationToken ct = default);
-    /// <summary>Adds or replaces (by email). Returns false for config owners and for "Owner" (only config makes owners).</summary>
+    /// <summary>Adds or replaces (by email). Only config makes owners; for them only the name and teams are stored.</summary>
     Task<bool> SaveAsync(Account account, CancellationToken ct = default);
     Task<bool> RemoveAsync(string email, CancellationToken ct = default);
     Task MarkSignInAsync(string email, CancellationToken ct = default);
@@ -279,7 +293,16 @@ public sealed class JsonAccountStore : IAccountStore
         try
         {
             var owners = ConfigOwners().ToList();
-            foreach (var o in owners) o.LastSignInUtc = _data.OwnerSignIns.TryGetValue(o.Email, out var t) ? t : null;
+            foreach (var o in owners)
+            {
+                o.LastSignInUtc = _data.OwnerSignIns.TryGetValue(o.Email, out var t) ? t : null;
+                // Owners can be on teams too (e.g. lead of SMS): that part is stored like anyone's; "Owner" itself only comes from config.
+                if (_data.Accounts.FirstOrDefault(a => a.Email == o.Email) is { } stored)
+                {
+                    o.Name = stored.Name; o.Teams = stored.Teams.Select(m => new Membership { Group = m.Group, Role = m.Role }).ToList();
+                    o.Stamp = "config-" + stored.Stamp;
+                }
+            }
             // Only config makes owners: a stored "Owner", or a stored copy of a config owner, is ignored.
             return [.. owners, .. _data.Accounts.Where(a => a.Role != AccountRole.Owner && owners.All(o => o.Email != a.Email))
                 .OrderBy(a => a.Role == AccountRole.Officer ? 0 : 1).ThenBy(a => a.Name, StringComparer.OrdinalIgnoreCase).Select(Clone)];
@@ -296,7 +319,9 @@ public sealed class JsonAccountStore : IAccountStore
     public async Task<bool> SaveAsync(Account account, CancellationToken ct = default)
     {
         account.Email = AccountRules.Normalize(account.Email);
-        if (ConfigOwners().Any(o => o.Email == account.Email) || account.Role is AccountRole.Owner or AccountRole.Lead) return false;
+        var isConfigOwner = ConfigOwners().Any(o => o.Email == account.Email);
+        if (account.Role == AccountRole.Lead || (account.Role == AccountRole.Owner && !isConfigOwner)) return false;
+        if (isConfigOwner) account.Role = AccountRole.Member; // stored part of an owner: name and teams only
         await _lock.WaitAsync(ct);
         try
         {

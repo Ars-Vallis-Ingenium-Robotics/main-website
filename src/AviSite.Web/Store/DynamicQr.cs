@@ -55,27 +55,43 @@ public sealed class DynamicQrOptions
 
 public static partial class DynamicQrRules
 {
-    [GeneratedRegex("^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$")]
+    [GeneratedRegex("^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?$")]
     public static partial Regex SlugPattern();
 
     public static string? CheckSlug(string? slug) =>
         string.IsNullOrWhiteSpace(slug) ? "Give it a short name." :
-        !SlugPattern().IsMatch(slug) ? "Use lowercase letters, numbers and dashes (up to 40)." : null;
+        !SlugPattern().IsMatch(slug) ? "Use lowercase letters, numbers and dashes (up to 60)." : null;
 
-    /// <summary>Team codes live under "&lt;team&gt;-" so teams can't take each other's (or the club's) names.</summary>
-    public static string? CheckTeamSlug(string slug, string? team) =>
-        team is null || slug.StartsWith(team + "-", StringComparison.Ordinal) ? null : $"Your team's codes start with \"{team}-\".";
-
-    /// <summary>Who may see and change a code: site-wide people any; team leads their teams' (and sub-teams');
-    /// members the ones they made on their teams.</summary>
+    /// <summary>Who may see and change a code: the owner any; officers club-wide codes and AVI's; team leads their teams'
+    /// (and sub-teams'); members the ones they made on their teams.</summary>
     public static bool CanAccess(Access a, DynamicQr code) =>
-        a.SiteWide
+        a.IsOwner
+        || (code.Team is null && a.IsOfficer)
         || (code.Team is not null && a.Manages.Contains(code.Team))
         || (code.Team is not null && a.BelongsTo.Contains(code.Team) && code.CreatedBy is not null && code.CreatedBy == a.Account?.Email);
 
-    /// <summary>Teams someone can make codes for (null = club-wide, site-wide people only).</summary>
+    /// <summary>Teams someone can make codes for (null = club-wide: owner and officers).</summary>
     public static IEnumerable<string?> CreatableTeams(Access a) =>
-        a.SiteWide ? [null, .. a.Tree.Ordered().Select(g => g.Id)] : a.Tree.Ordered(g => a.BelongsTo.Contains(g.Id)).Select(g => (string?)g.Id);
+        (a.CanSeeClubWide ? new string?[] { null } : []).Concat(a.Tree.Ordered(g => a.CanSee(g.Id)).Select(g => (string?)g.Id));
+
+    /// <summary>
+    /// Every code under a team is named after its organization, then the team: "er-electrical-flyer" for Electrical in
+    /// Engineering Renaissance, "er-flyer" for the organization itself. So a name says whose it is, and teams can't collide.
+    /// </summary>
+    public static string PrefixFor(string team, GroupTree tree)
+    {
+        var root = team;
+        for (var g = tree.Find(team); g?.Parent is not null; g = tree.Find(g.Parent)) root = g.Parent;
+        return root == team ? $"{root}-" : $"{root}-{team}-";
+    }
+
+    public static string? CheckTeamSlug(string slug, string? team, GroupTree tree)
+    {
+        if (team is null) return null;
+        var prefix = PrefixFor(team, tree);
+        return slug.StartsWith(prefix, StringComparison.Ordinal) && slug.Length > prefix.Length ? null
+            : $"{tree.Name(team)} codes start with \"{prefix}\", then a name: {prefix}flyer.";
+    }
 
     /// <summary>Absolute http(s) links, or a path on this site like /join.</summary>
     public static string? CheckTarget(string? target)

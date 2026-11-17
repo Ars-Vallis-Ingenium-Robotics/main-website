@@ -653,7 +653,7 @@
   // Only works for someone signed in to the admin pages who can edit that code; everyone else just sees the normal maker.
   const code = new URLSearchParams(location.search).get("code");
   const bar = page.querySelector("[data-qr-codebar]");
-  if (code && bar && /^[a-z0-9-]{1,40}$/.test(code)) {
+  if (code && bar && /^[a-z0-9-]{1,60}$/.test(code)) {
     const api = `/admin/qr/${code}/look`;
     const hint = bar.querySelector("[data-qr-codehint]");
     const save = bar.querySelector("[data-qr-codesave]");

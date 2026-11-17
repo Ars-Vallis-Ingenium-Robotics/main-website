@@ -3,6 +3,7 @@
 @using AviSite.Web.Endpoints
 @inject IAccountStore Store
 @inject NavigationManager Nav
+@inject IDynamicQrStore Codes
 
 <PageTitle>People · AVI Robotics admin</PageTitle>
 <HeadContent><meta name="robots" content="noindex" /></HeadContent>
@@ -12,7 +13,7 @@
         <AdminNav Current="people" />
         <div class="section__head">
             <div>
-                <p class="eyebrow">@(access.IsOwner ? "Owner" : access.SiteWide ? "Officer" : "Team lead")</p>
+                <p class="eyebrow">@(access.IsOwner ? "Owner" : access.IsOfficer ? "Officer" : "Team lead")</p>
                 <h1 class="h1">People</h1>
                 <p class="muted">Everyone who can sign in, and the teams they're on. People sign in with Google, so add them by the email they'll use. Remove someone and they're out on their next click.</p>
             </div>
@@ -30,7 +31,7 @@
                 var leads = all.Where(a => a.Teams.Any(t => t.Group == g.Id && t.Role == AccountRole.Lead)).Select(JsonAccountStore.DisplayName).ToList();
                 <li class="team-tree__item" style="--depth: @access.Tree.Depth(g.Id)" data-team="@g.Id">
                     <a href="/admin/people?team=@g.Id" class="team-tree__name">@g.Name</a>
-                    <span class="mono small muted">@g.Id-…</span>
+                    <span class="mono small muted">@DynamicQrRules.PrefixFor(g.Id, access.Tree)…</span>
                     <span class="small muted">@count @(count == 1 ? "person" : "people")@(leads.Count > 0 ? $" · led by {string.Join(", ", leads)}" : "")</span>
                     @if (access.CanEditTeamsUnder(g.Parent) && count == 0 && !access.Tree.Children(g.Id).Any() && g.Id != JsonAccountStore.AviRoot)
                     {
@@ -43,6 +44,22 @@
                 </li>
             }
         </ul>
+
+        @if (others.Count > 0)
+        {
+            <h3 class="h4 people-admin__others-h">Other organizations</h3>
+            <p class="muted small">Run by their own leads. You can see who's in charge and how big they are, not their people or codes.</p>
+            <ul class="org-summary" role="list">
+                @foreach (var o in others)
+                {
+                    <li class="org-summary__item" data-org="@o.Group.Id">
+                        <strong>@o.Group.Name</strong>
+                        <span class="small">@(o.Leads.Count > 0 ? "Led by " + string.Join(", ", o.Leads) : "No lead yet")</span>
+                        <span class="small muted">@o.Teams @(o.Teams == 1 ? "team" : "teams") · @o.People @(o.People == 1 ? "person" : "people") · @o.Codes QR @(o.Codes == 1 ? "code" : "codes")</span>
+                    </li>
+                }
+            </ul>
+        }
 
         @if (parentChoices.Count > 0 || access.IsOwner)
         {
@@ -122,8 +139,8 @@
             <div class="field">
                 <label class="label" for="p-team">Team</label>
                 <select id="p-team" name="team">
-                    <option value="" selected="@(Team is null)">@(access.SiteWide ? "Everyone" : "All my teams")</option>
-                    @if (access.SiteWide) { <option value="officers" selected="@(Team == "officers")">Officers and owners</option> }
+                    <option value="" selected="@(Team is null)">@(access.IsOwner ? "Everyone" : access.IsOfficer ? "Everyone in AVI" : "All my teams")</option>
+                    @if (access.CanSeeClubWide) { <option value="officers" selected="@(Team == "officers")">Officers and owners</option> }
                     @foreach (var g in visibleTeams) { <option value="@g.Id" selected="@(Team == g.Id)">@Indent(g)@g.Name</option> }
                 </select>
             </div>
@@ -150,25 +167,30 @@
                             </th>
                             <td>
                                 <ul class="people-admin__teams" role="list">
-                                    @foreach (var t in a.Teams.OrderBy(t => access.Tree.Path(t.Group)))
+                                    @foreach (var t in a.Teams.Where(t => access.CanSee(t.Group)).OrderBy(t => access.Tree.Path(t.Group)))
                                     {
                                         <li class="team-chip @(t.Role == AccountRole.Lead ? "team-chip--lead" : "")">
                                             <span title="@access.Tree.Path(t.Group)">@access.Tree.Name(t.Group)@(t.Role == AccountRole.Lead ? " · Lead" : "")</span>
-                                            @if (!self && access.CanManageGroup(t.Group) && !access.Outranks(a))
+                                            @if ((!self || access.IsOwner) && access.CanManageGroup(t.Group) && !access.Outranks(a))
                                             {
                                                 <form method="post" action="/admin/people/team/remove">
                                                     <AntiforgeryToken />
                                                     <input type="hidden" name="email" value="@a.Email" /><input type="hidden" name="group" value="@t.Group" />
-                                                    <button type="submit" class="team-chip__x" aria-label="Take @a.Email off @access.Tree.Name(t.Group)">×</button>
+                                                    <button type="submit" class="team-chip__x" aria-label="Take @a.Email off @access.Tree.Name(t.Group)"></button>
                                                 </form>
                                             }
                                         </li>
                                     }
+                                    @if (a.Teams.Count(t => !access.CanSee(t.Group)) is > 0 and var hidden)
+                                    {
+                                        <li class="small muted">+@hidden in other organizations</li>
+                                    }
                                 </ul>
-                                @if (!self && !a.FromConfig && manageable.Count > 0 && !access.Outranks(a))
+                                @if ((!self || access.IsOwner) && manageable.Count > 0 && access.CanEditPerson(a))
                                 {
                                     <details class="people-admin__edit">
                                         <summary>Change</summary>
+                                        <div class="people-admin__editbody">
                                         <form method="post" action="/admin/people/team/add" class="people-admin__access">
                                             <AntiforgeryToken />
                                             <input type="hidden" name="email" value="@a.Email" />
@@ -178,7 +200,7 @@
                                             <select id="r-@a.Email" name="role"><option value="@AccountRole.Member">Member</option><option value="@AccountRole.Lead">Lead</option></select>
                                             <button class="btn btn--ghost btn--sm" type="submit">Add to team / set role</button>
                                         </form>
-                                        @if (access.IsOwner)
+                                        @if (access.IsOwner && !a.FromConfig)
                                         {
                                             <form method="post" action="/admin/people/access" class="people-admin__access">
                                                 <AntiforgeryToken />
@@ -187,6 +209,7 @@
                                                 <button class="btn btn--ghost btn--sm" type="submit">@(a.Role == AccountRole.Officer ? "Remove officer access" : "Make officer")</button>
                                             </form>
                                         }
+                                        </div>
                                     </details>
                                 }
                             </td>
@@ -225,6 +248,9 @@
     /// <summary>Teams this person can add people to (and put sub-teams under).</summary>
     private List<AccountGroup> manageable = [], parentChoices = [], visibleTeams = [];
     private string? addError, groupError;
+    private sealed record OrgSummary(AccountGroup Group, List<string> Leads, int Teams, int People, int Codes);
+    /// <summary>Organizations this person can't see into: only who leads them and how big they are.</summary>
+    private List<OrgSummary> others = [];
     private MarkupString? addReport;
 
     public sealed class AddModel
@@ -280,6 +306,8 @@
             Add.List = string.Join("\n", r.Skipped.Select(x => x[..x.LastIndexOf(" (", StringComparison.Ordinal)]));
         }
         else Add.List = "";
+        // Never carry "make them officers" over to the next batch: it's too easy to promote someone by accident.
+        Add.Officer = false;
         addReport = new MarkupString(html);
         await LoadAsync();
     }
@@ -304,9 +332,21 @@
         all = await Store.ListAsync();
         manageable = access.Tree.Ordered(g => access.CanManageGroup(g.Id)).ToList();
         parentChoices = access.Tree.Ordered(g => access.CanEditTeamsUnder(g.Id)).ToList();
-        visibleTeams = access.Tree.Ordered(g => access.SiteWide || access.BelongsTo.Contains(g.Id)).ToList();
+        visibleTeams = access.Tree.Ordered(g => access.CanSee(g.Id)).ToList();
+        if (access.IsOfficer && !access.IsOwner)
+        {
+            var codes = await Codes.ListAsync();
+            others = access.Tree.Children(null).Where(r => !access.CanSee(r.Id)).Select(r =>
+            {
+                var under = access.Tree.WithDescendants([r.Id]);
+                return new OrgSummary(r,
+                    all.Where(a => a.Teams.Any(t => t.Group == r.Id && t.Role == AccountRole.Lead)).Select(JsonAccountStore.DisplayName).ToList(),
+                    under.Count - 1, all.Count(a => a.Teams.Any(t => under.Contains(t.Group))), codes.Count(c => c.Team is not null && under.Contains(c.Team)));
+            }).ToList();
+        }
 
-        IEnumerable<Account> f = access.SiteWide ? all : all.Where(a => a.Teams.Any(t => access.Manages.Contains(t.Group)) || a.Email == access.Account?.Email);
+        IEnumerable<Account> f = access.IsOwner ? all
+            : all.Where(a => a.Teams.Any(t => access.Manages.Contains(t.Group)) || a.Email == access.Account?.Email || (access.IsOfficer && a.SiteWide));
         if (Team == "officers") f = f.Where(a => a.SiteWide);
         else if (Team is not null) { var under = access.Tree.WithDescendants([Team]); f = f.Where(a => a.Teams.Any(t => under.Contains(t.Group))); }
         if (!string.IsNullOrWhiteSpace(Q)) f = f.Where(a => a.Email.Contains(Q.Trim(), StringComparison.OrdinalIgnoreCase) || a.Name.Contains(Q.Trim(), StringComparison.OrdinalIgnoreCase));

@@ -8,7 +8,10 @@ import assert from "node:assert/strict";
 const BASE = process.env.BASE_URL ?? "http://127.0.0.1:5080";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "avi-dev-password";
 const results = [];
+// ONLY=layout node smoke.mjs runs just the tests whose name contains "layout".
+const ONLY = process.env.ONLY;
 async function test(name, fn) {
+  if (ONLY && !name.includes(ONLY)) return;
   try { await fn(); results.push(["PASS", name]); }
   catch (e) { results.push(["FAIL", name, e.message.split("\n")[0]]); }
 }
@@ -638,8 +641,8 @@ await test("team login sees only its own QR codes, under its own prefix", async 
   await tp.goto(BASE + "/admin/qr");
   await tp.fill("#slug", "flyer-" + Date.now().toString(36)); await tp.fill("#target", "/join"); await tp.fill("#campaign", "e2e");
   await tp.getByRole("button", { name: "Add code" }).click();
-  assert.match(await tp.locator("main").innerText(), /start with "sms-"/);
-  const slug = "sms-e2e-" + Date.now().toString(36);
+  assert.match(await tp.locator("main").innerText(), /start with "avi-sms-"/, "codes are named organization-team-name");
+  const slug = "avi-sms-e2e-" + Date.now().toString(36);
   await tp.fill("#slug", slug); await tp.getByRole("button", { name: "Add code" }).click();
   await tp.waitForURL(/saved=/);
   assert.equal(await tp.locator(`[data-qr-row="${slug}"]`).count(), 1);
@@ -777,18 +780,27 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
   await op.goto(BASE + "/admin/people");
   await op.fill("#add-list", officer); await op.selectOption("#add-team", ""); await op.check(".people-admin__officer input");
   await op.getByRole("button", { name: "Add", exact: true }).click(); await op.locator(".alert").first().waitFor();
+  assert.equal(await op.locator(".people-admin__officer input").isChecked(), false, "the officer box never carries over to the next add");
   const [ofc, ofp] = await as(officer);
   await ofp.goto(BASE + "/admin/people");
-  assert.equal(await ofp.locator(`[data-team="${el}"]`).count(), 1, "officers see the whole tree");
+  assert.equal(await ofp.locator(`[data-team="${el}"]`).count(), 0, "officers don't see inside other organizations");
+  const summary = ofp.locator(`[data-org="${er}"]`);
+  assert.match(await summary.innerText(), /Led by ER Lead[\s\S]*2 teams · \d+ people · \d+ QR codes?/, "only who leads it and the totals");
+  assert.equal(await ofp.locator(`[data-person="${m1}"]`).count(), 0, "partner people stay private");
+  assert.equal(await ofp.locator('[data-team="sms"]').count(), 1, "AVI's own teams are visible");
   assert.equal(await ofp.locator("text=Add a team").count(), 0, "officers don't add teams");
   assert.equal(await ofp.locator(".team-tree__remove").count(), 0, "officers don't remove teams");
-  const csrfForm = await ofp.locator('form[action="/admin/people/remove"] input[name="__RequestVerificationToken"]').first().inputValue();
+  await ofp.goto(BASE + "/admin/qr?group=" + cd);
+  assert.equal(await ofp.locator(`[data-qr-row^="${er}-"]`).count(), 0, "partner QR codes stay private");
+  await ofp.goto(BASE + "/admin/people");
+  const csrfForm = await ofp.locator('input[name="__RequestVerificationToken"]').first().inputValue();
   const forced = await ofp.request.post(BASE + "/admin/people/team/delete", { form: { id: el, __RequestVerificationToken: csrfForm }, maxRedirects: 0 });
   assert.match(forced.headers().location, /error=denied/, "not even by posting directly");
   await ofc.close();
 
   // The organization's top lead acts as its owner: a Crush Depth lead can't change them, even on Crush Depth.
   await addPeople(op, erLead, cd); // ER lead is also a member of Crush Depth
+  assert.doesNotMatch(await op.locator(`[data-person="${erLead}"] th`).innerText(), /officer/i, "adding someone after promoting an officer doesn't promote them too");
   const [cc, cp] = await as(cdLead);
   await cp.goto(BASE + "/admin/people?team=" + cd);
   assert.equal(await cp.locator(`[data-person="${erLead}"] .team-chip__x`).count(), 0, "can't take the org lead off a sub-team");
@@ -801,12 +813,15 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
   const [mc, mp] = await as(m2);
   await mp.fill("#slug", `${cd}-flyer`); await mp.fill("#target", "/join"); await mp.fill("#campaign", "e2e");
   await mp.getByRole("button", { name: "Add code" }).click();
+  assert.match(await mp.locator("main").innerText(), new RegExp(`start with "${er}-${cd}-"`), "sub-team codes carry the organization's id first");
+  await mp.fill("#slug", `${er}-${cd}-flyer`); await mp.fill("#target", "/join"); await mp.fill("#campaign", "e2e");
+  await mp.getByRole("button", { name: "Add code" }).click();
   await mp.waitForURL(/saved=/);
   const [m1c, m1p] = await as(m1);
-  assert.equal(await m1p.locator(`[data-qr-row="${cd}-flyer"]`).count(), 0, "members don't see each other's codes");
+  assert.equal(await m1p.locator(`[data-qr-row="${er}-${cd}-flyer"]`).count(), 0, "members don't see each other's codes");
   await m1p.goto(BASE + "/admin/people"); assert.equal(new URL(m1p.url()).pathname, "/admin/people", "m1 leads Electrical, so they get People");
   await mp.goto(BASE + "/admin/people"); assert.match(mp.url(), /\/admin\/login/, "plain members can't manage people");
-  for (const pg of [lp, cp]) { await pg.goto(BASE + "/admin/qr"); assert.equal(await pg.locator(`[data-qr-row="${cd}-flyer"]`).count(), 1, "leads above see team codes"); }
+  for (const pg of [lp, cp]) { await pg.goto(BASE + "/admin/qr"); assert.equal(await pg.locator(`[data-qr-row="${er}-${cd}-flyer"]`).count(), 1, "leads above see team codes"); }
 
   // Taking someone off their only team removes them, and they're out on their next click.
   await lp.goto(BASE + "/admin/people?team=" + cd);
@@ -822,6 +837,19 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
   await op.goto(BASE + "/admin/people");
   assert.equal(await op.locator(`[data-team="sc${id}"]`).count(), 0);
   for (const c of [oc, lc, cc, mc, m1c]) await c.close();
+});
+
+await test("accounts: the owner can also be on teams (e.g. lead of SMS); co-leads are allowed", async () => {
+  const c = await browser.newContext(); const pg = await c.newPage();
+  await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
+  await pg.goto(BASE + "/admin/people");
+  const co = `co-${Date.now().toString(36)}@example.com`;
+  await pg.fill("#add-list", `owner@example.com\n${co}`); await pg.selectOption("#add-team", "sms"); await pg.selectOption("#add-role", "Lead");
+  await pg.getByRole("button", { name: "Add", exact: true }).click(); await pg.locator(".alert").first().waitFor();
+  assert.match(await pg.locator('[data-person="owner@example.com"]').innerText(), /Sequoia Marine Solutions · Lead/i, "owner leads SMS");
+  assert.match(await pg.locator('[data-person="owner@example.com"]').innerText(), /owner/i, "and is still the owner");
+  assert.match(await pg.locator('[data-team="sms"]').innerText(), /led by .*owner@example\.com.*,|led by .*,.*owner@example\.com/, "two co-leads");
+  await c.close();
 });
 
 await test("Google sign-in refuses bad callbacks; unknown emails can't use the dev picker", async () => {
@@ -891,6 +919,104 @@ await test("dynamic QR looks: save from the maker, reopen with it; strangers can
   await anon.close();
   const forged = await page.request.post(BASE + "/admin/qr/three/look", { data: { look: { fg: "#000000" } }, headers: { Origin: "https://evil.example" } });
   assert.equal(forged.status(), 400, "other sites can't save looks");
+});
+
+// ---------- Layout checks: catch "looks a little off" bugs (off-center icons, buttons jammed together) ----------
+// Looks at the real pixels: finds the icon's ink inside a button and checks its middle is the button's middle.
+const lens = await (await browser.newContext({ deviceScaleFactor: 1 })).newPage(); // about:blank, no CSP, for pixel math
+async function iconOffset(pg, clip, inset = 0.22) {
+  const png = await pg.screenshot({ clip, scale: "device" });
+  return lens.evaluate(async ([b64, inset]) => {
+    const img = new Image(); img.src = "data:image/png;base64," + b64; await img.decode();
+    const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+    const x = c.getContext("2d"); x.drawImage(img, 0, 0);
+    const { data, width: w, height: h } = x.getImageData(0, 0, img.width, img.height);
+    const i0 = Math.round(w * inset), j0 = Math.round(h * inset), i1 = w - i0, j1 = h - j0;
+    const at = (i, j) => { const k = (j * w + i) * 4; return [data[k], data[k + 1], data[k + 2]]; };
+    const ref = at(i0, Math.round(h / 2)); // the button's own fill, just inside its edge
+    let minX = 1e9, minY = 1e9, maxX = -1, maxY = -1;
+    for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
+      const [r, g, b] = at(i, j);
+      if (Math.abs(r - ref[0]) + Math.abs(g - ref[1]) + Math.abs(b - ref[2]) > 90) { minX = Math.min(minX, i); maxX = Math.max(maxX, i); minY = Math.min(minY, j); maxY = Math.max(maxY, j); }
+    }
+    if (maxX < 0) return null;
+    return { dx: (minX + maxX + 1) / 2 - w / 2, dy: (minY + maxY + 1) / 2 - h / 2, w };
+  }, [png.toString("base64"), inset]);
+}
+async function assertIconCentered(pg, target, label, tol = 1) { // tol in device pixels: the check runs at 2×, so half a CSS pixel. Text glyphs (×, +) never pass this; draw icons with CSS.
+  // target: a locator, or a function returning a viewport box (after scrolling it into view)
+  const clip = typeof target === "function" ? await target() : (await target.scrollIntoViewIfNeeded(), await target.boundingBox());
+  const o = await iconOffset(pg, clip);
+  assert.ok(o, `${label}: no icon found`);
+  assert.ok(Math.abs(o.dx) <= tol && Math.abs(o.dy) <= tol, `${label}: icon is off center by ${o.dx.toFixed(1)}px, ${o.dy.toFixed(1)}px`);
+}
+// No two buttons may overlap or sit closer than 4px (side by side or stacked). Segmented controls (tabs) are allowed to join.
+async function assertButtonsBreathe(pg, label) {
+  const bad = await pg.evaluate(() => {
+    const els = [...document.querySelectorAll("button, .btn, summary.btn")].filter((e) => {
+      const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+      return r.width > 2 && r.height > 2 && cs.visibility !== "hidden" && !e.closest("[hidden], .visually-hidden, [role=tablist], .site-header, .nav-sheet, dialog:not([open])") && !e.classList.contains("visually-hidden");
+    });
+    const out = [];
+    for (let a = 0; a < els.length; a++) for (let b = a + 1; b < els.length; b++) {
+      const A = els[a], B = els[b];
+      if (A.contains(B) || B.contains(A)) continue;
+      const r = A.getBoundingClientRect(), q = B.getBoundingClientRect();
+      const ox = Math.min(r.right, q.right) - Math.max(r.left, q.left), oy = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+      const name = (e) => (e.getAttribute("aria-label") || e.textContent || e.className).trim().replace(/\s+/g, " ").slice(0, 30);
+      if ((ox > 0 && oy > 0) || (ox > 0 && -oy < 4) || (oy > 0 && -ox < 4)) out.push(`${name(A)} ↔ ${name(B)} (gap ${Math.max(-ox, -oy).toFixed(1)}px)`);
+    }
+    return out;
+  });
+  assert.deepEqual(bad, [], `${label}: buttons touching or overlapping: ${[...new Set(bad)].slice(0, 5).join("; ")}`);
+}
+
+await test("layout: icons sit in the middle of their buttons", async () => {
+  const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 }); const pg = await c.newPage();
+  // Customize toggle (+ drawn in a circle)
+  await pg.goto(BASE + "/tools/qr");
+  const summary = pg.locator(".qr-custom > summary");
+  await assertIconCentered(pg, async () => { await summary.scrollIntoViewIfNeeded(); return summary.evaluate((s) => {
+    const r = s.getBoundingClientRect(), st = getComputedStyle(s), size = parseFloat(getComputedStyle(s, "::before").width);
+    return { x: r.left + parseFloat(st.paddingLeft), y: r.top + (r.height - size) / 2, width: size, height: size };
+  }); }, "Customize icon");
+  // Team chip × on People
+  await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
+  await pg.goto(BASE + "/admin/people");
+  const x = pg.locator(".team-chip__x").first();
+  if (await x.count()) await assertIconCentered(pg, x, "Team chip ×");
+  // Pop-up close button
+  await pg.goto(BASE + "/history");
+  const open = pg.locator(".timeline__open").last();
+  const sub = pg.locator("#" + (await open.getAttribute("data-sub")));
+  await open.click();
+  await sub.locator(".subtl__card").first().click();
+  const close = pg.locator("dialog[open] .sheet__close");
+  await close.waitFor();
+  await assertIconCentered(pg, close, "Pop-up close ×");
+  // Photo lightbox close
+  await pg.goto(BASE + "/about");
+  const img = pg.locator(".collage .photo__img").first();
+  await img.scrollIntoViewIfNeeded(); await img.click();
+  const lbClose = pg.locator("dialog.lightbox[open] .lightbox__close");
+  await lbClose.waitFor();
+  await assertIconCentered(pg, lbClose, "Lightbox close ×");
+  await c.close();
+});
+
+await test("layout: buttons never touch or overlap (admin, QR maker, sign-in, home)", async () => {
+  const c = await browser.newContext({ viewport: { width: 1280, height: 900 } }); const pg = await c.newPage();
+  const openAll = () => pg.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
+  await pg.goto(BASE + "/admin/login"); await openAll(); await assertButtonsBreathe(pg, "/admin/login");
+  await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
+  for (const path of ["/admin/people", "/admin/qr", "/admin/qr/three", "/admin/usage", "/tools/qr", "/"]) {
+    for (const w of [1440, 1024, 768, 390]) {
+      await pg.setViewportSize({ width: w, height: 900 });
+      await pg.goto(BASE + path); await openAll();
+      await assertButtonsBreathe(pg, `${path} at ${w}px`);
+    }
+  }
+  await c.close();
 });
 
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });
