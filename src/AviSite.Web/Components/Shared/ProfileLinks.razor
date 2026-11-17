@@ -3,7 +3,7 @@
 @if (profile is not null && (profile.Links.Count > 0 || profile.Bio.Length > 0))
 {
     <div class="profile">
-        @if (profile.Bio.Length > 0) { <div class="profile__bio">@Copy.Blocks(profile.Bio)</div> }
+        @if (profile.Bio.Length > 0) { <div class="profile__bio">@(profile.PlainBio ? new MarkupString(People.PlainHtml(profile.Bio)) : Copy.Blocks(profile.Bio))</div> }
         @if (profile.Links.Count > 0)
         {
             <ul class="profile__links" role="list">

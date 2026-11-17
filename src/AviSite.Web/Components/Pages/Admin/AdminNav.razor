@@ -2,6 +2,7 @@
 @using AviSite.Web.Endpoints
 @inject IAccountStore Accounts
 @inject HoursStore Hours
+@inject ProfileStore Profiles
 <nav class="admin-nav" aria-label="Admin">
     @if (hasAccount)
     {
@@ -10,6 +11,10 @@
     @if (isAdmin)
     {
         <a href="/admin" class="@(Current == "orders" ? "is-current" : "")" aria-current="@(Current == "orders" ? "page" : null)">Shop orders</a>
+    }
+    @if (hasAccount)
+    {
+        <a href="/admin/profile" class="@(Current == "profile" ? "is-current" : "")" aria-current="@(Current == "profile" ? "page" : null)">Profile</a>
     }
     <a href="/admin/qr" class="@(Current == "qr" ? "is-current" : "")" aria-current="@(Current == "qr" ? "page" : null)">@(isAdmin ? "Dynamic QR codes" : lead || team is not null ? "Team QR codes" : "My QR codes")</a>
     @if (isAdmin)
@@ -24,6 +29,10 @@
     <form method="post" action="/admin/logout"><AntiforgeryToken /><button class="link-button" type="submit">Sign out (@who)</button></form>
 </nav>
 
+@if (toReview > 0 && Current != "profile")
+{
+    <p class="review-banner" role="status" data-review-banner><strong>@toReview profile @(toReview == 1 ? "change is" : "changes are")</strong> waiting for your approval. <a href="/admin/profile/review">Review</a></p>
+}
 @if (forgotten.Count > 0)
 {
     <div class="long-sessions" role="alert">
@@ -52,6 +61,7 @@
     private string who = "";
     private GroupTree Tree = new([]);
     private List<(HoursEntry Entry, string Name)> forgotten = [];
+    private int toReview;
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,6 +73,17 @@
         canPeople = hasAccount && (isAdmin || lead);
         // Accounts show their name; the old shared passwords show what they unlock.
         who = hasAccount ? u!.Identity?.Name ?? "" : team is not null ? team.ToUpperInvariant() + " password" : "officer password";
+
+        if (Http is not null && hasAccount && (isAdmin || lead))
+        {
+            var me = await Http.AccessAsync(Accounts);
+            var waiting = Profiles.Pending();
+            if (waiting.Count > 0)
+            {
+                var all = (await Accounts.ListAsync()).ToDictionary(a => a.Email);
+                toReview = waiting.Count(p => all.TryGetValue(p.Email, out var a) && ProfileRules.CanReview(me, a));
+            }
+        }
 
         // Leads, officers and the owner: anyone on their teams clocked in for more than a day, at the top of every admin page.
         if (Http is not null && (isAdmin || lead))

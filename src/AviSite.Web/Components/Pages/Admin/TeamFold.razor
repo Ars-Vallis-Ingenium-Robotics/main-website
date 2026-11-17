@@ -1,0 +1,38 @@
+@* A team tree whose branches fold. Open by default; what you fold stays folded in this browser (nav.js, key per Scope).
+   Head: the row for a team (inside the fold's summary when it has sub-teams or a Body). Body: extra content above its sub-teams. *@
+<ul class="tfold" role="list">
+    @foreach (var g in Items ?? Roots())
+    {
+        var kids = Kids(g);
+        var body = HasBody?.Invoke(g) ?? false;
+        <li class="tfold__li">
+            @if (kids.Count > 0 || body)
+            {
+                <details class="tfold__d" open data-fold="@Scope:@g.Id">
+                    <summary class="tfold__sum">@Head(g)</summary>
+                    <div class="tfold__body">
+                        @if (body) { @Body!(g) }
+                        @if (kids.Count > 0) { <TeamFold Tree="Tree" Visible="Visible" Items="kids" Head="Head" Body="Body" HasBody="HasBody" Scope="@Scope" /> }
+                    </div>
+                </details>
+            }
+            else
+            {
+                <div class="tfold__leaf">@Head(g)</div>
+            }
+        </li>
+    }
+</ul>
+
+@code {
+    [Parameter, EditorRequired] public GroupTree Tree { get; set; } = default!;
+    [Parameter, EditorRequired] public HashSet<string> Visible { get; set; } = [];
+    [Parameter, EditorRequired] public RenderFragment<AccountGroup> Head { get; set; } = default!;
+    [Parameter] public RenderFragment<AccountGroup>? Body { get; set; }
+    [Parameter] public Func<AccountGroup, bool>? HasBody { get; set; }
+    [Parameter] public string Scope { get; set; } = "teams";
+    [Parameter] public List<AccountGroup>? Items { get; set; }
+
+    private List<AccountGroup> Kids(AccountGroup g) => Tree.Children(g.Id).Where(c => Visible.Contains(c.Id)).ToList();
+    private List<AccountGroup> Roots() => Tree.All.Where(g => Visible.Contains(g.Id) && (g.Parent is null || !Visible.Contains(g.Parent))).OrderBy(g => g.Name).ToList();
+}

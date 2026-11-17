@@ -1,0 +1,119 @@
+@page "/admin/profile/review"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
+@using AviSite.Web.Endpoints
+@inject IAccountStore Accounts
+@inject ProfileStore Store
+
+<PageTitle>Profile approvals · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin profile-review">
+    <div class="wrap">
+        <AdminNav Current="profile" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow"><a href="/admin/profile">Profile</a> / Approvals</p>
+                <h1 class="h1">Profile approvals</h1>
+                <p class="muted">Members' profile changes for people you lead. Approving puts them on the public site; sending back keeps the last approved version and tells them why.</p>
+            </div>
+        </div>
+        @if (Message is { } m) { <p class="alert @(Done is not null ? "alert--ok" : "")" role="status">@m</p> }
+
+        @if (pending.Count == 0)
+        {
+            <p class="muted" data-review-empty>Nothing waiting.</p>
+        }
+        else
+        {
+            <ul class="review-list" role="list">
+                @foreach (var p in pending)
+                {
+                    <li class="review" data-review="@p.Email">
+                        <div class="review__head">
+                            @if (p.DraftPhoto is { } id) { <img class="avatar" src="/people/photo/@id/160" alt="" width="64" height="64" style="--size: 64px" /> }
+                            else { <span class="avatar avatar--initials" style="--size: 64px" aria-hidden="true">@string.Concat(p.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => w[0]).Take(2))</span> }
+                            <div>
+                                <h2 class="h4">@p.Name</h2>
+                                <p class="small muted">@p.Email · sent @p.UpdatedUtc.ToPacific().ToString("ddd MMM d, h:mm tt", System.Globalization.CultureInfo.InvariantCulture) · @(p.Public ? "wants to be public" : "not public")</p>
+                            </div>
+                        </div>
+                        @if (p.DraftPhoto != p.LivePhoto)
+                        {
+                            <p class="review__change"><span class="tag">Photo</span> @(p.DraftPhoto is null ? "removed" : p.LivePhoto is null ? "new" : "changed")
+                                @if (p.LivePhoto is { } old) { <span class="review__was">was <img class="avatar" src="/people/photo/@old/160" alt="Previous photo" width="40" height="40" style="--size: 40px" /></span> }</p>
+                        }
+                        <dl class="review__fields">
+                            @foreach (var (label, now, was) in Changes(p))
+                            {
+                                <div class="@(now != was ? "is-changed" : "")"><dt>@label</dt><dd>@(now ?? "—")@if (now != was && p.Live is not null) { <span class="review__was"> (was @(was ?? "blank"))</span> }</dd></div>
+                            }
+                        </dl>
+                        <div class="review__actions">
+                            <form method="post" action="/admin/profile/review"><AntiforgeryToken /><input type="hidden" name="email" value="@p.Email" />
+                                <button class="btn btn--accent btn--sm" type="submit" name="action" value="approve">Approve</button></form>
+                            <form method="post" action="/admin/profile/review" class="review__back"><AntiforgeryToken /><input type="hidden" name="email" value="@p.Email" />
+                                <label class="visually-hidden" for="note-@p.Slug">Why</label>
+                                <input id="note-@p.Slug" name="note" maxlength="300" placeholder="Why (they'll see this)" />
+                                <button class="btn btn--ghost btn--sm" type="submit" name="action" value="back">Send back</button></form>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+
+        @if (live.Count > 0)
+        {
+            <h2 class="h3 qr-admin__h">Public profiles</h2>
+            <ul class="review-live" role="list">
+                @foreach (var p in live)
+                {
+                    <li><a href="/people/@p.Slug">@p.Name</a>
+                        <form method="post" action="/admin/profile/review"><AntiforgeryToken /><input type="hidden" name="email" value="@p.Email" />
+                            <button class="link-button" type="submit" name="action" value="hide">Take off the site</button></form></li>
+                }
+            </ul>
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery] public string? Done { get; set; }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    private List<ProfileRow> pending = [], live = [];
+
+    private string? Message => (Done, Error) switch
+    {
+        ("approve", _) => "Approved: it's on the site.",
+        ("back", _) => "Sent back.",
+        ("hide", _) => "Taken off the site. They can turn it back on from their profile.",
+        (_, "denied") => "You can't approve that person.",
+        (_, { }) => "Already handled.",
+        _ => null,
+    };
+
+    private static IEnumerable<(string Label, string? Now, string? Was)> Changes(ProfileRow p)
+    {
+        var d = p.Draft; var l = p.Live ?? new();
+        yield return ("Pronouns", d.Pronouns, l.Pronouns);
+        yield return ("Major", d.Major, l.Major);
+        yield return ("Headline", d.Headline, l.Headline);
+        yield return ("About", d.Bio, l.Bio);
+        yield return ("Email", d.Email, l.Email);
+        yield return ("LinkedIn", d.Linkedin, l.Linkedin);
+        yield return ("GitHub", d.Github, l.Github);
+        yield return ("Portfolio", d.Portfolio, l.Portfolio);
+        yield return ("Website", d.Website, l.Website);
+        yield return ("Résumé", d.Resume, l.Resume);
+        yield return ("Instagram", d.Instagram, l.Instagram);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var me = await Http!.AccessAsync(Accounts);
+        var people = (await Accounts.ListAsync()).ToDictionary(a => a.Email);
+        bool Mine(ProfileRow p) => people.TryGetValue(p.Email, out var a) && ProfileRules.CanReview(me, a);
+        pending = Store.Pending().Where(Mine).ToList();
+        live = Store.Live().Values.Where(Mine).OrderBy(p => p.Name).ToList();
+    }
+}

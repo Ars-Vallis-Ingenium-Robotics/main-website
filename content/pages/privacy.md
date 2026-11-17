@@ -29,6 +29,9 @@ So we know which tools are worth building more of, the tools pages count how oft
 ### Admin accounts
 People an officer adds to the admin pages sign in with Google. We keep their email, name, access level, group and when they last signed in, and nothing from their Google account beyond that. Removing someone deletes their account here.
 
+### Member profiles and hours
+Members can fill in a profile (photo, pronouns, links, a short bio). Nothing in it appears on the public site unless they turn on "Show my profile" and an officer or their lead approves it; turning it off takes it down right away. Photos are cropped in the member's browser and only the cropped square is uploaded. Hours members log are visible to them and the leads of their teams, and to everyone in their organization only as a leaderboard total if that organization turns leaderboards on.
+
 ### Hours
 Members who log hours have their sessions stored: team, category, start and end times, and any note they add.
 Their own leads (and the club's officers, for AVI teams) can see and fix them, and download them for sponsor reports

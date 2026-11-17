@@ -1202,6 +1202,72 @@ await test("hours: quick clock-in from the header (two taps, same spot, stay on 
   await c.close(); await oc.close();
 });
 
+await test("profiles: photo crop + details go public only after approval; text is escaped; hiding is instant", async () => {
+  const id = Date.now().toString(36).slice(-5), who = `pf-${id}@example.com`, name = `Pat Tester${id}`, slug = `pat-tester${id}`;
+  const [oc, op] = await signIn("owner@example.com");
+  await addPerson(op, `${name} <${who}>`, "sms");
+  const [c, pg] = await signIn(who);
+  await pg.goto(BASE + "/admin/profile");
+  // A 600×400 test image drawn in the page, handed to the file picker.
+  const png = await pg.evaluate(async () => { const cv = document.createElement("canvas"); cv.width = 600; cv.height = 400; const g = cv.getContext("2d");
+    g.fillStyle = "#1e5ac8"; g.fillRect(0, 0, 600, 400); g.fillStyle = "#f0c828"; g.beginPath(); g.arc(300, 200, 150, 0, 7); g.fill();
+    return [...new Uint8Array(await (await new Promise((r) => cv.toBlob(r, "image/png"))).arrayBuffer())]; });
+  await pg.setInputFiles("[data-photo-pick]", { name: "me.png", mimeType: "image/png", buffer: Buffer.from(png) });
+  await pg.locator("[data-photo-canvas]").waitFor();
+  await pg.fill('input[name="headline"]', "Building <b>robots</b>");
+  await pg.fill('textarea[name="bio"]', "Hi <script>alert(1)</script>\n\nSecond paragraph");
+  await pg.fill('input[name="linkedin"]', "linkedin.com/in/pat");
+  await pg.check("[data-profile-public]");
+  await Promise.all([pg.waitForURL(/done=sent/), pg.click("form[data-profile-form] button[type=submit]")]);
+  assert.equal(await pg.locator("[data-profile-status]").getAttribute("data-profile-status"), "pending");
+  const draft = await pg.locator("[data-photo-current]").getAttribute("src");
+  assert.match(draft, /^\/people\/photo\/[0-9a-f]{24}\/320$/);
+  const anon = await browser.newContext(); const ap = await anon.newPage();
+  assert.equal((await ap.request.get(BASE + "/people/" + slug)).status(), 404, "not public before approval");
+  assert.equal((await ap.request.get(BASE + draft)).status(), 404, "draft photo is private");
+  // A plain member can't approve; the owner can.
+  const tok = await pg.locator('input[name="__RequestVerificationToken"]').first().inputValue();
+  const self = await pg.request.post(BASE + "/admin/profile/review", { form: { email: who, action: "approve", __RequestVerificationToken: tok }, maxRedirects: 0 });
+  assert.match(self.headers().location, /error=denied/, "no approving yourself");
+  await op.goto(BASE + "/admin/hours");
+  assert.equal(await op.locator("[data-review-banner]").isVisible(), true, "reviewers get a banner");
+  await op.goto(BASE + "/admin/profile/review");
+  await op.locator(`[data-review="${who}"] button`, { hasText: "Approve" }).click(); await op.waitForLoadState();
+  await ap.goto(BASE + "/people/" + slug);
+  assert.equal(await ap.locator(".person-page img.avatar").getAttribute("src"), draft, "approved photo on the public page");
+  const photo = await ap.request.get(BASE + draft);
+  assert.equal(photo.status(), 200); assert.equal(photo.headers()["content-type"], "image/webp", "cropped to WebP in the browser");
+  assert.match(await ap.locator(".lede").innerText(), /<b>robots<\/b>/, "headline shown as typed, not as HTML");
+  assert.equal(await ap.locator(".profile__bio script").count(), 0);
+  assert.match(await ap.locator(".profile__bio").innerText(), /<script>/);
+  const people = await (await ap.request.get(BASE + "/people.json")).json();
+  assert.match(people[slug].links[0].href, /^https:\/\/linkedin\.com\/in\/pat/);
+  // Bad link refused; untick public → gone at once.
+  await pg.goto(BASE + "/admin/profile");
+  await pg.fill('input[name="github"]', "javascript:alert(1)");
+  await Promise.all([pg.waitForURL(/error=link/), pg.click("form[data-profile-form] button[type=submit]")]);
+  await pg.goto(BASE + "/admin/profile");
+  await pg.uncheck("[data-profile-public]");
+  await Promise.all([pg.waitForURL(/done=saved/), pg.click("form[data-profile-form] button[type=submit]")]);
+  assert.equal((await ap.request.get(BASE + "/people/" + slug)).status(), 404, "hidden right away");
+  await anon.close(); await c.close(); await oc.close();
+});
+
+await test("team trees fold, and stay folded after a reload (People, Team hours)", async () => {
+  const [c, pg] = await signIn("owner@example.com");
+  await pg.goto(BASE + "/admin/people");
+  const sms = pg.locator('details[data-fold="people-teams:sms"]');
+  assert.equal(await sms.evaluate((d) => d.open), true, "open by default");
+  await sms.locator("> summary").click({ position: { x: 8, y: 8 } });
+  await pg.reload();
+  assert.equal(await sms.evaluate((d) => d.open), false, "remembered");
+  await pg.click("text=Expand all");
+  assert.equal(await sms.evaluate((d) => d.open), true);
+  await pg.goto(BASE + "/admin/hours/team?range=all");
+  assert.ok(await pg.locator('details[data-fold^="hours-teams:"]').count() > 0, "team hours fold by team");
+  await c.close();
+});
+
 await test("header: Sign in when signed out; Clock in + account menu when signed in (sign-in works on public pages)", async () => {
   const anon = await browser.newContext({ viewport: { width: 1280, height: 900 } }); const ap = await anon.newPage();
   await ap.goto(BASE + "/");
@@ -1325,7 +1391,7 @@ await test("layout: buttons never touch or overlap (admin, QR maker, sign-in, ho
   const openAll = () => pg.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
   await pg.goto(BASE + "/admin/login"); await openAll(); await assertButtonsBreathe(pg, "/admin/login");
   await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
-  for (const path of ["/admin/people", "/admin/qr", "/admin/qr/three", "/admin/usage", "/admin/hours", "/admin/hours/team", "/admin/hours/report", "/admin/hours/settings", "/admin/hours/week", "/tools/qr", "/", "/about"]) {
+  for (const path of ["/admin/people", "/admin/qr", "/admin/qr/three", "/admin/usage", "/admin/hours", "/admin/hours/team", "/admin/hours/report", "/admin/hours/settings", "/admin/hours/week", "/admin/profile", "/admin/profile/review", "/tools/qr", "/", "/about"]) {
     for (const w of [1440, 1024, 768, 390]) {
       await pg.setViewportSize({ width: w, height: 900 });
       await pg.goto(BASE + path); await openAll();

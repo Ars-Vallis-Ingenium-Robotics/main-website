@@ -36,6 +36,21 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAll(null); });
 })();
 
+// Folding team trees (admin): remember what was folded, per browser; "Expand all" / "Collapse all".
+(() => {
+  const folds = document.querySelectorAll("details[data-fold]");
+  if (!folds.length) return;
+  const key = (d) => "avi-fold:" + d.dataset.fold;
+  folds.forEach((d) => {
+    try { if (localStorage.getItem(key(d)) === "0") d.open = false; } catch { /* storage off: everything open */ }
+    d.addEventListener("toggle", () => { try { d.open ? localStorage.removeItem(key(d)) : localStorage.setItem(key(d), "0"); } catch { /* fine */ } });
+  });
+  document.querySelectorAll("[data-fold-all]").forEach((b) => b.addEventListener("click", () => {
+    const open = b.dataset.open === "true";
+    document.querySelectorAll(`details[data-fold^="${b.dataset.foldAll}:"]`).forEach((d) => { d.open = open; });
+  }));
+})();
+
 // Theme toggle (header): flips between dark and light and remembers it in this browser.
 (() => {
   const root = document.documentElement;

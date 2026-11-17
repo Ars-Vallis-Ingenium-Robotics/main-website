@@ -114,6 +114,26 @@ public sealed class SiteDb
         CREATE TABLE hours_categories (org TEXT NOT NULL, name TEXT NOT NULL, sort INTEGER NOT NULL, PRIMARY KEY (org, name));
         CREATE TABLE hours_settings (org TEXT PRIMARY KEY, leaderboard INTEGER NOT NULL DEFAULT 0, season_month INTEGER NOT NULL DEFAULT 8, season_day INTEGER NOT NULL DEFAULT 1);
         """,
+        // 3: member profiles (draft → approved live copy) and their photos.
+        """
+        CREATE TABLE profiles (
+            email TEXT PRIMARY KEY,
+            slug TEXT NOT NULL,
+            name TEXT NOT NULL,
+            draft TEXT NOT NULL,
+            draft_photo TEXT,
+            live TEXT,
+            live_photo TEXT,
+            public INTEGER NOT NULL DEFAULT 0,
+            pending INTEGER NOT NULL DEFAULT 0,
+            note TEXT,
+            updated_utc TEXT NOT NULL,
+            reviewed_by TEXT,
+            reviewed_utc TEXT
+        );
+        CREATE INDEX profiles_by_slug ON profiles(slug);
+        CREATE TABLE profile_photos (id TEXT PRIMARY KEY, email TEXT NOT NULL, small BLOB NOT NULL, large BLOB NOT NULL, type TEXT NOT NULL, created_utc TEXT NOT NULL);
+        """,
     ];
 
     private static void Migrate(SqliteConnection c)

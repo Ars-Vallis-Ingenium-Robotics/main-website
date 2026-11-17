@@ -1,6 +1,7 @@
 @* The signed-in corner of the main menu. Signed out: "Sign in" + the Join button.
    Signed in: the clock (Clock in / Clocked in · 1:02) as the main button, and an account menu with everything else. *@
 @using AviSite.Web.Endpoints
+@inject ProfileStore Profiles
 
 @if (!signedIn)
 {
@@ -23,7 +24,7 @@ else
     <li><QuickClock Class="btn btn--accent btn--sm nav__join" /></li>
     <li class="nav__account">
         <details class="account-menu">
-            <summary class="account-menu__toggle" aria-label="Account: @name"><span class="account-menu__initial" aria-hidden="true">@initial</span></summary>
+            <summary class="account-menu__toggle" aria-label="Account: @name">@if (photo is not null) { <img class="account-menu__photo" src="@photo" alt="" width="36" height="36" /> } else { <span class="account-menu__initial" aria-hidden="true">@initial</span> }</summary>
             <div class="account-menu__panel">
                 <p class="account-menu__name">@name</p>
                 <ul role="list">
@@ -43,6 +44,7 @@ else
     private string name = "", initial = "?";
 
     private List<(string Href, string Label)> links = [];
+    private string? photo;
 
     protected override void OnInitialized()
     {
@@ -55,6 +57,9 @@ else
 
         var admin = u.IsInRole("Admin");
         if (email is not null) links.Add(("/admin/hours", "My hours"));
+        if (email is not null) links.Add(("/admin/profile", "My profile"));
+        if (email is not null && (admin || u.IsInRole("Lead"))) links.Add(("/admin/profile/review", "Profile approvals"));
+        if (email is not null && Profiles.Get(email)?.DraftPhoto is { } pic) photo = $"/people/photo/{pic}/160";
         if (admin || u.IsInRole("Lead")) links.Add(("/admin/hours/team", "Team hours"));
         links.Add(("/admin/qr", admin ? "QR codes" : "My QR codes"));
         if (email is not null && (admin || u.IsInRole("Lead"))) links.Add(("/admin/people", "People"));

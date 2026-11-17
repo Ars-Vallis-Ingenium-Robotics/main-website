@@ -24,12 +24,14 @@
         @* ---------- Teams ---------- *@
         <h2 class="h3">Teams</h2>
         <p class="muted small">Organizations at the top, teams and sub-teams under them, as deep as you like. A lead manages the people and QR codes of their team and everything under it. Each team's id starts its QR code names.@(access.IsOwner ? "" : parentChoices.Count > 0 ? " You can add and remove sub-teams under the teams you lead." : " The owner and team leads add or remove sub-teams.")</p>
-        <ul class="team-tree" role="list">
-            @foreach (var g in visibleTeams)
-            {
-                var count = all.Count(a => a.Teams.Any(t => t.Group == g.Id));
-                var leads = all.Where(a => a.Teams.Any(t => t.Group == g.Id && t.Role == AccountRole.Lead)).Select(JsonAccountStore.DisplayName).ToList();
-                <li class="team-tree__item" style="--depth: @access.Tree.Depth(g.Id)" data-team="@g.Id">
+        <div class="fold-tools"><button type="button" class="link-button" data-fold-all="people-teams" data-open="true">Expand all</button><button type="button" class="link-button" data-fold-all="people-teams" data-open="false">Collapse all</button></div>
+        <TeamFold Tree="access.Tree" Visible="visibleTeams.Select(g => g.Id).ToHashSet()" Scope="people-teams">
+            <Head Context="g">
+                @{
+                    var count = all.Count(a => a.Teams.Any(t => t.Group == g.Id));
+                    var leads = all.Where(a => a.Teams.Any(t => t.Group == g.Id && t.Role == AccountRole.Lead)).Select(JsonAccountStore.DisplayName).ToList();
+                }
+                <span class="team-tree__item" data-team="@g.Id">
                     <a href="/admin/people?team=@g.Id" class="team-tree__name">@g.Name</a>
                     <span class="mono small muted">@DynamicQrRules.PrefixFor(g.Id, access.Tree)…</span>
                     <span class="small muted">@count @(count == 1 ? "person" : "people")@(leads.Count > 0 ? $" · led by {string.Join(", ", leads)}" : "")</span>
@@ -41,9 +43,9 @@
                             <button class="btn btn--ghost btn--sm btn--danger" type="submit" aria-label="Remove the team @g.Name">Remove</button>
                         </form>
                     }
-                </li>
-            }
-        </ul>
+                </span>
+            </Head>
+        </TeamFold>
 
         @if (others.Count > 0)
         {

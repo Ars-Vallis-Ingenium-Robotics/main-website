@@ -84,6 +84,34 @@
             </div>
         }
 
+        @* ---------- By team (folds; remembers what you folded) ---------- *@
+        @if (people.Count > 0 && teamHours.Count > 0)
+        {
+            <div class="hours-byteam">
+                <div class="hours-byteam__top">
+                    <h2 class="h4">By team</h2>
+                    <div class="fold-tools"><button type="button" class="link-button" data-fold-all="hours-teams" data-open="true">Expand all</button><button type="button" class="link-button" data-fold-all="hours-teams" data-open="false">Collapse all</button></div>
+                </div>
+                <TeamFold Tree="access.Tree" Visible="teamHours.Keys.ToHashSet()" Scope="hours-teams" HasBody="g => direct.ContainsKey(g.Id)">
+                    <Head Context="g">
+                        <span class="hours-byteam__head" data-hours-team="@g.Id"><strong>@g.Name</strong>
+                            <span class="mono">@HoursText.Hours(teamHours[g.Id].Hours) h</span>
+                            <span class="small muted">@teamHours[g.Id].People @(teamHours[g.Id].People == 1 ? "person" : "people")</span></span>
+                    </Head>
+                    <Body Context="g">
+                        <table class="table hours-byteam__table">
+                            <tbody>
+                                @foreach (var r in direct[g.Id])
+                                {
+                                    <tr><th scope="row">@r.Name</th><td class="num mono">@HoursText.Hours(r.Hours)</td><td class="num small muted">@r.Sessions @(r.Sessions == 1 ? "session" : "sessions")</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </Body>
+                </TeamFold>
+            </div>
+        }
+
         <details class="people-admin__more">
             <summary>Add time for someone</summary>
             <HoursEntryForm Teams="teams" Categories="categories" Tree="access.Tree" People="roster" Back="/admin/hours/team" />
@@ -133,6 +161,10 @@
     private sealed record PersonRow(string Email, string Name, double Hours, int Sessions, string TopCategory);
     private List<PersonRow> people = [];
     private string RangeLabel = "";
+    /// <summary>Per team: hours on it and everything under it, and how many people.</summary>
+    private Dictionary<string, (double Hours, int People)> teamHours = [];
+    /// <summary>Per team: people's hours logged on exactly that team.</summary>
+    private Dictionary<string, List<PersonRow>> direct = [];
 
     private string Query => $"team={Uri.EscapeDataString(Team ?? "")}&range={Uri.EscapeDataString(Range ?? "")}";
     private string Name(string email) => byEmail.TryGetValue(email, out var a) ? JsonAccountStore.DisplayName(a) : email;
@@ -180,5 +212,18 @@
             .Select(g => new PersonRow(g.Key, Name(g.Key), g.Sum(e => HoursRanges.Clip(e, from, to, Store.Now)), g.Count(),
                 g.GroupBy(e => e.Category).OrderByDescending(c => c.Sum(e => HoursRanges.Clip(e, from, to, Store.Now))).First().Key))
             .Where(p => p.Hours > 0).OrderByDescending(p => p.Hours).ToList();
+
+        double H(HoursEntry e) => HoursRanges.Clip(e, from, to, Store.Now);
+        direct = entries.GroupBy(e => e.Team).ToDictionary(t => t.Key, t => t.GroupBy(e => e.Email)
+            .Select(p => new PersonRow(p.Key, Name(p.Key), p.Sum(H), p.Count(), ""))
+            .Where(p => p.Hours > 0).OrderByDescending(p => p.Hours).ToList());
+        foreach (var k in direct.Where(kv => kv.Value.Count == 0).Select(kv => kv.Key).ToList()) direct.Remove(k);
+        foreach (var g in teams)
+        {
+            var under = access.Tree.WithDescendants([g.Id]);
+            var mine = entries.Where(e => under.Contains(e.Team)).ToList();
+            var hours = mine.Sum(H);
+            if (hours > 0) teamHours[g.Id] = (hours, mine.Select(e => e.Email).Distinct().Count());
+        }
     }
 }

@@ -47,6 +47,7 @@ services.Configure<DynamicQrOptions>(builder.Configuration.GetSection(DynamicQrO
 services.AddSingleton<SiteDb>();
 services.AddSingleton<IDynamicQrStore, SqliteDynamicQrStore>();
 services.AddSingleton<HoursStore>();
+services.AddSingleton<ProfileStore>();
 services.AddHttpClient("google-sheet");
 services.AddHttpClient("google-signin", c => c.Timeout = TimeSpan.FromSeconds(15));
 // Countdowns (/countdown, edited in /admin/countdowns)
@@ -176,6 +177,7 @@ app.MapPeopleAdminEndpoints();
 app.MapQrLookEndpoints();
 app.MapHoursEndpoints();
 app.MapPeopleEndpoints();
+app.MapProfileEndpoints();
 app.MapDynamicQrEndpoints();
 app.MapToolUsageEndpoints();
 // Browsers ask for /favicon.ico on their own (and for PDFs, feeds, etc.): answer with the right mark per host.

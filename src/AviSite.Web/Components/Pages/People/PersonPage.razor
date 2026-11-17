@@ -13,7 +13,7 @@
             <div>
                 <p class="eyebrow">@(profile?.Pronouns ?? "Member")</p>
                 <h1 class="h1">@e.Name</h1>
-                @if (profile?.Headline is { } h) { <p class="lede">@Copy.Inline(h)</p> }
+                @if (profile?.Headline is { } h) { <p class="lede">@(profile.PlainBio ? h : Copy.Inline(h))</p> }
                 @if (profile?.Major is { } m) { <p class="muted">@m</p> }
                 @if (e.Roles.Count > 0)
                 {

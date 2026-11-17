@@ -15,17 +15,17 @@ public static class PeopleEndpoints
             var all = people.Directory().ToDictionary(kv => kv.Key, kv =>
             {
                 var p = people.Profile(kv.Key);
-                var photo = people.PhotoSlug(kv.Key);
+                var photo = people.Photo(kv.Key);
                 return new
                 {
                     name = p?.Name ?? kv.Value.Name,
                     roles = kv.Value.Roles,
-                    photo = photo is null ? null : $"/img/people/{photo}-320.webp",
+                    photo = photo?.Large,
                     pronouns = p?.Pronouns,
                     major = p?.Major,
-                    headline = p?.Headline is { } h ? copy.Plain(h) : null,
+                    headline = p?.Headline is { } h ? (p.PlainBio ? h : copy.Plain(h)) : null,
                     links = p?.Links.Select(l => new { kind = l.Kind, label = l.Label, href = l.Href }),
-                    bio = p is { Bio.Length: > 0 } ? copy.Blocks(p.Bio).Value : null,
+                    bio = p is { Bio.Length: > 0 } ? (p.PlainBio ? People.PlainHtml(p.Bio) : copy.Blocks(p.Bio).Value) : null,
                 };
             });
             return Results.Json(all);

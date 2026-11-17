@@ -10,10 +10,11 @@ public sealed record ProfileLink(string Kind, string Label, string Href);
 /// blank or missing is simply not shown. The body under the front matter is a short bio (Markdown).
 /// </summary>
 public sealed record Profile(string Slug, string Name, string? Pronouns, string? Major, string? Headline, string? Photo,
-    IReadOnlyList<ProfileLink> Links, string Bio);
+    IReadOnlyList<ProfileLink> Links, string Bio, bool PlainBio = false);
 
 /// <summary>Everyone the site mentions, their profile (if they made one) and every role they hold.</summary>
-public sealed partial class People(SiteContent content, ClubData data, IWebHostEnvironment env)
+/// An approved, public account profile (<see cref="AviSite.Web.Store.ProfileStore"/>) wins over the hand-written file.
+public sealed partial class People(SiteContent content, ClubData data, IWebHostEnvironment env, AviSite.Web.Store.ProfileStore accounts)
 {
     // Order matters: shown top to bottom in the pop-up.
     private static readonly (string Field, string Label)[] LinkFields =
@@ -42,6 +43,7 @@ public sealed partial class People(SiteContent content, ClubData data, IWebHostE
 
     public Profile? Profile(string slug)
     {
+        if (accounts.Live().TryGetValue(slug, out var row) && row.Live is { } f) return FromAccount(row, f);
         if (!content.Files("people").Contains($"people/{slug}", StringComparer.OrdinalIgnoreCase)) return null;
         var d = content.Doc($"people/{slug}");
         string? M(string k) => d.Meta.TryGetValue(k, out var v) && !string.IsNullOrWhiteSpace(v) ? v.Trim() : null;
@@ -56,10 +58,35 @@ public sealed partial class People(SiteContent content, ClubData data, IWebHostE
         return new Profile(slug, M("name") ?? slug, M("pronouns"), M("major"), M("headline"), M("photo"), links, d.Intro);
     }
 
-    public string? PhotoSlug(string slug)
+    /// <summary>Headshot URLs (160 and 320 px square), or null for initials. Account photo first, then wwwroot/img/people.</summary>
+    public (string Small, string Large)? Photo(string slug)
     {
+        if (accounts.Live().TryGetValue(slug, out var row) && row.LivePhoto is { } id) return PhotoUrls(id);
         var s = Profile(slug)?.Photo ?? slug;
-        return env.WebRootFileProvider.GetFileInfo($"img/people/{s}-160.webp").Exists ? s : null;
+        return env.WebRootFileProvider.GetFileInfo($"img/people/{s}-160.webp").Exists ? ($"/img/people/{s}-160.webp", $"/img/people/{s}-320.webp") : null;
+    }
+
+    /// <summary>A member's plain-text bio as paragraphs, every character escaped.</summary>
+    public static string PlainHtml(string text) => string.Concat(
+        text.Replace("\r", "").Split("\n\n", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(p => "<p>" + System.Net.WebUtility.HtmlEncode(p).Replace("\n", "<br>") + "</p>"));
+
+    public static (string Small, string Large) PhotoUrls(string photoId) => ($"/people/photo/{photoId}/160", $"/people/photo/{photoId}/320");
+
+    private static Profile FromAccount(AviSite.Web.Store.ProfileRow row, AviSite.Web.Store.ProfileFields f)
+    {
+        var values = new Dictionary<string, string?>
+        {
+            ["email"] = f.Email, ["linkedin"] = f.Linkedin, ["github"] = f.Github, ["portfolio"] = f.Portfolio,
+            ["website"] = f.Website, ["resume"] = f.Resume, ["instagram"] = f.Instagram,
+        };
+        var links = new List<ProfileLink>();
+        foreach (var (field, label) in LinkFields)
+        {
+            if (values[field] is not { Length: > 0 } v) continue;
+            links.Add(field == "email" ? new ProfileLink(field, v, "mailto:" + v) : new ProfileLink(field, label, v));
+        }
+        return new Profile(row.Slug, row.Name, f.Pronouns, f.Major, f.Headline, null, links, f.Bio ?? "", PlainBio: true);
     }
 
     /// <summary>Every person named anywhere on the site → display name and their roles, in site order.</summary>
@@ -88,6 +115,7 @@ public sealed partial class People(SiteContent content, ClubData data, IWebHostE
             }
         }
         foreach (var t in data.SmsSupport) foreach (var m in t.Members) Add(m, $"{t.Team} · {sms}");
+        foreach (var (slug, row) in accounts.Live()) map.TryAdd(slug, (row.Name, []));
         foreach (var f in content.Files("people"))
         {
             var slug = f["people/".Length..];

@@ -1,0 +1,134 @@
+@page "/admin/profile"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
+@using AviSite.Web.Endpoints
+@inject IAccountStore Accounts
+@inject ProfileStore Store
+
+<PageTitle>Your profile · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+<script src="/js/profile.js" defer></script>
+
+<section class="section admin profile-edit">
+    <div class="wrap">
+        <AdminNav Current="profile" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Profile</p>
+                <h1 class="h1">Your profile</h1>
+                <p class="muted">What shows when someone taps your name on the site. Everything is optional. Changes go public after an officer or your lead approves them.</p>
+            </div>
+        </div>
+
+        @if (account is null)
+        {
+            <p class="alert">Profiles are for personal accounts. Sign in with your own account to make one.</p>
+        }
+        else
+        {
+            @if (Message is { } m) { <p class="alert @(Done is not null ? "alert--ok" : "")" role="status">@m</p> }
+            <p class="profile-status profile-status--@status.Kind" data-profile-status="@status.Kind"><strong>@status.Title</strong> @status.Detail</p>
+            @if (row?.Note is { } note && !row.Pending) { <p class="alert" role="status"><strong>Sent back:</strong> @note</p> }
+
+            <form method="post" action="/admin/profile/save" enctype="multipart/form-data" class="profile-form" data-profile-form>
+                <AntiforgeryToken />
+                <fieldset class="profile-photo">
+                    <legend class="label">Photo</legend>
+                    <div class="profile-photo__row">
+                        <div class="profile-photo__frame">
+                            @if (row?.DraftPhoto is { } id) { <img src="/people/photo/@id/320" alt="Your current photo" width="160" height="160" data-photo-current /> }
+                            else { <span class="avatar avatar--initials" style="--size: 160px" aria-hidden="true" data-photo-current>@Initials</span> }
+                            <canvas class="profile-photo__canvas" width="320" height="320" hidden data-photo-canvas aria-label="Drag to move your photo in the circle"></canvas>
+                        </div>
+                        <div class="profile-photo__controls">
+                            <label class="btn btn--ghost btn--sm profile-photo__pick">
+                                Choose a photo
+                                <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" data-photo-pick />
+                            </label>
+                            <label class="field profile-photo__zoom" hidden data-photo-zoom-wrap>
+                                <span class="label">Zoom</span>
+                                <input type="range" min="1" max="3" step="0.01" value="1" data-photo-zoom />
+                            </label>
+                            <p class="small muted" data-photo-hint>A square crop of your face works best. JPEG, PNG or WebP, up to 2 MB.</p>
+                            @if (row?.DraftPhoto is not null)
+                            {
+                                <label class="check"><input type="checkbox" name="remove_photo" value="true" /> Remove my photo</label>
+                            }
+                            <input type="file" name="photo_small" hidden data-photo-small />
+                            <input type="file" name="photo_large" hidden data-photo-large />
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="profile-form__grid">
+                    <p class="field"><span class="label">Name</span><span>@name <span class="muted small">(from your account; ask your lead to change it)</span></span></p>
+                    <label class="field"><span class="label">Pronouns</span><input name="pronouns" maxlength="30" value="@d.Pronouns" placeholder="e.g. she/her" /></label>
+                    <label class="field"><span class="label">Major / year</span><input name="major" maxlength="100" value="@d.Major" placeholder="e.g. Mechanical Engineering, class of 2027" /></label>
+                    <label class="field profile-form__wide"><span class="label">Headline</span><input name="headline" maxlength="140" value="@d.Headline" placeholder="e.g. Looking for embedded-systems internships, summer 2027" /></label>
+                    <label class="field profile-form__wide"><span class="label">About you</span><textarea name="bio" maxlength="800" rows="4" placeholder="A few sentences. Plain text.">@d.Bio</textarea></label>
+                </div>
+
+                <fieldset class="profile-form__grid">
+                    <legend class="label">Links (only the ones you want public)</legend>
+                    <label class="field"><span class="label">Public email</span><input name="email" type="email" maxlength="120" value="@d.Email" placeholder="an address you're happy to share" /></label>
+                    <label class="field"><span class="label">LinkedIn</span><input name="linkedin" maxlength="300" value="@d.Linkedin" placeholder="linkedin.com/in/…" /></label>
+                    <label class="field"><span class="label">GitHub</span><input name="github" maxlength="300" value="@d.Github" placeholder="github.com/…" /></label>
+                    <label class="field"><span class="label">Portfolio</span><input name="portfolio" maxlength="300" value="@d.Portfolio" /></label>
+                    <label class="field"><span class="label">Website</span><input name="website" maxlength="300" value="@d.Website" /></label>
+                    <label class="field"><span class="label">Résumé link</span><input name="resume" maxlength="300" value="@d.Resume" /></label>
+                    <label class="field"><span class="label">Instagram</span><input name="instagram" maxlength="300" value="@d.Instagram" placeholder="instagram.com/…" /></label>
+                </fieldset>
+
+                <label class="check profile-form__public"><input type="checkbox" name="public" value="true" checked="@(row?.Public ?? false)" data-profile-public />
+                    <span><strong>Show my profile on the public site.</strong> Off: only your name and role (if you're on the roster) show, like now.</span></label>
+
+                <div class="hours-form__actions">
+                    <button class="btn btn--accent" type="submit">Save</button>
+                    @if (row?.ShowsPublicly == true) { <a class="btn btn--ghost btn--sm" href="/people/@row.Slug">See your public page</a> }
+                </div>
+            </form>
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery] public string? Done { get; set; }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+
+    private Account? account;
+    private ProfileRow? row;
+    private ProfileFields d = new();
+    private string name = "";
+    private (string Kind, string Title, string Detail) status;
+    private string Initials => string.Concat(name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(w => w[0]).Take(2));
+
+    private string? Message => (Done, Error) switch
+    {
+        ("sent", _) => "Saved. An officer or your lead will look it over before it goes public.",
+        ("saved", _) => "Saved.",
+        (_, "email") => "That public email doesn't look right.",
+        (_, "link") => "One of the links isn't a web address (it should look like linkedin.com/in/you).",
+        (_, "photo-size") => "That photo is over 2 MB. Try a smaller one.",
+        (_, "photo-type") => "Photos need to be JPEG, PNG or WebP.",
+        (_, { }) => "That didn't work. Try again.",
+        _ => null,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var access = await Http!.AccessAsync(Accounts);
+        account = access.Account;
+        if (account is null) return;
+        name = JsonAccountStore.DisplayName(account);
+        row = Store.Get(account.Email);
+        d = row?.Draft ?? new();
+        status = row switch
+        {
+            null => ("none", "Not public.", "Fill this in and tick “Show my profile” to appear on the site."),
+            { Pending: true } => ("pending", "Waiting for approval.", row.ShowsPublicly ? "The site shows your last approved version until then." : "It goes public once approved."),
+            { ShowsPublicly: true } => ("live", "Public.", "This is what the site shows."),
+            { Public: true } => ("pending", "Not approved yet.", "Save again to send it for approval."),
+            _ => ("none", "Not public.", "Tick “Show my profile on the public site” when you're ready."),
+        };
+    }
+}
