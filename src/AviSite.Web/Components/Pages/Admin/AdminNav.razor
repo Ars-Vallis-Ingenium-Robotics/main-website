@@ -4,13 +4,17 @@
     {
         <a href="/admin" class="@(Current == "orders" ? "is-current" : "")" aria-current="@(Current == "orders" ? "page" : null)">Shop orders</a>
     }
-    <a href="/admin/qr" class="@(Current == "qr" ? "is-current" : "")" aria-current="@(Current == "qr" ? "page" : null)">@(team is null ? "Dynamic QR codes" : $"{team.ToUpperInvariant()} QR codes")</a>
+    <a href="/admin/qr" class="@(Current == "qr" ? "is-current" : "")" aria-current="@(Current == "qr" ? "page" : null)">@(team is null ? "Dynamic QR codes" : member ? "My QR codes" : $"{team.ToUpperInvariant()} QR codes")</a>
     @if (isAdmin)
     {
         <a href="/admin/countdowns" class="@(Current == "countdowns" ? "is-current" : "")" aria-current="@(Current == "countdowns" ? "page" : null)">Countdowns</a>
         <a href="/admin/usage" class="@(Current == "usage" ? "is-current" : "")" aria-current="@(Current == "usage" ? "page" : null)">Tool usage</a>
     }
-    <form method="post" action="/admin/logout"><AntiforgeryToken /><button class="link-button" type="submit">Sign out@(team is null ? "" : $" ({team.ToUpperInvariant()})")</button></form>
+    @if (canPeople)
+    {
+        <a href="/admin/people" class="@(Current == "people" ? "is-current" : "")" aria-current="@(Current == "people" ? "page" : null)">People</a>
+    }
+    <form method="post" action="/admin/logout"><AntiforgeryToken /><button class="link-button" type="submit">Sign out (@who)</button></form>
 </nav>
 
 @code {
@@ -18,9 +22,17 @@
     [CascadingParameter] public HttpContext? Http { get; set; }
     private bool isAdmin;
     private string? team;
+    private bool member, canPeople;
+    private string who = "";
     protected override void OnInitialized()
     {
-        isAdmin = Http?.User.IsInRole("Admin") == true;
-        team = Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value;
+        var u = Http?.User;
+        isAdmin = u?.IsInRole("Admin") == true;
+        team = u?.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value;
+        member = u?.IsInRole("Member") == true;
+        canPeople = u?.IsInRole("Owner") == true || u?.IsInRole("Lead") == true;
+        // Accounts show their name; the old shared passwords show what they unlock.
+        who = u?.FindFirst(AviSite.Web.Endpoints.AccountAuth.EmailClaim) is not null ? u.Identity?.Name ?? ""
+            : team is not null ? team.ToUpperInvariant() + " password" : "officer password";
     }
 }

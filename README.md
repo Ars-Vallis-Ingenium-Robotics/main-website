@@ -65,8 +65,10 @@ admin pickup + CSV, phone layout, and the mobile menu.
 |---|---|---|
 | `PayPal:Mode` | env | `Fake` (dev only), `Sandbox`, `Live`, `Off` (no online payments; donate page shows offline giving). Outside Development, Sandbox needs `PayPal:AllowSandboxOutsideDevelopment` |
 | `PayPal:ClientId` / `ClientSecret` / `WebhookId` | env / user-secrets | From developer.paypal.com → Apps & Credentials |
-| `Admin:PasswordHash` | env | Officers. `dotnet run --project src/AviSite.Web -- hash-password` |
-| `Admin:Teams:<team>` | env, e.g. `Admin__Teams__sms=pbkdf2-sha256$…` | Team-lead password (same hash tool). Opens only that team's QR codes, named `<team>-…`. Dev: `sms-dev-password` |
+| `Admin:Owners:<n>` | env, e.g. `Admin__Owners__0=you@avirobotics.org` | Google accounts that are always owners (manage people at `/admin/people`). Only config makes owners. Dev: `owner@example.com` (dev picker on `/admin/login`) |
+| `Admin:Google:ClientId` / `ClientSecret` | env | "Sign in with Google". Google Cloud → APIs & Services → Credentials → OAuth client ID (Web). Redirect URIs: `https://<host>/admin/google/callback` for each host (and `http://localhost:5002/...` for local) |
+| `Admin:PasswordHash` | env | Legacy shared officer password (kept as a backup while people move to accounts). `dotnet run --project src/AviSite.Web -- hash-password` |
+| `Admin:Teams:<team>` | env, e.g. `Admin__Teams__sms=pbkdf2-sha256$…` | Legacy shared team password (same hash tool). Opens only that team's QR codes, named `<team>-…`. Prefer accounts. Dev: `sms-dev-password` |
 | `Site:*` | appsettings / env | Discord, Instagram, email, portal URL |
 | `Store:OrdersOpen` | appsettings / env | Products visible, checkout closed |
 | `Store:ComingSoon` | appsettings / env | Between drops: /shop shows "next drop" (content/pages/shop.md › coming-soon); product/cart/checkout redirect to /shop |
@@ -88,6 +90,10 @@ PayPal webhook URL to register: `https://avirobotics.org/api/paypal/webhook`
   Only the counter name and Pacific day are stored (`App_Data/tool-usage.json`); officers see `/admin/usage`.
   New counters must be added to `ToolUsageEvents.All` (anything else is refused) and mentioned on `/privacy`.
 - Link previews: `Components/Shared/SocialMeta.razor` picks `wwwroot/img/og/og-{avi,sms,tools}.jpg` (1200×630) by section.
+
+## Admin accounts
+
+`/admin/people` (Store/Accounts.cs, `App_Data/accounts.json`). Owners come only from `Admin:Owners`; they add Officers, Group leads and Members by Google email and create groups (AVI teams or partner clubs like CCC). Group ids prefix their QR code names. Leads add/remove their own group's members; members see only the codes they made. Every admin request re-checks the account (`AccountAuth.ValidateAsync`), so removals and role changes apply on the person's next click.
 
 ## Privacy
 

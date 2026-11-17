@@ -30,6 +30,8 @@ public sealed class DynamicQr
     public Dictionary<string, int> Devices { get; set; } = [];
     /// <summary>Team that owns the code (null = club-wide, officers only). Team codes are named "&lt;team&gt;-…".</summary>
     public string? Team { get; set; }
+    /// <summary>Email of the account that made it. Members only see codes they made.</summary>
+    public string? CreatedBy { get; set; }
 }
 
 public sealed class DynamicQrOptions

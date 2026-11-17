@@ -1835,3 +1835,20 @@
   .usage-spark { display: flex; align-items: flex-end; gap: 2px; height: 1.6rem; min-width: 9rem; }
   .usage-spark > span { flex: 1; height: max(var(--h), 2px); background: var(--accent); border-radius: 1px; }
 }
+@layer components {
+  .admin-login { display: grid; gap: var(--s-4); }
+  .admin-login__google { justify-self: start; display: inline-flex; align-items: center; gap: var(--s-3); }
+  .admin-login__google svg { background: var(--white); border-radius: 50%; padding: 2px; box-sizing: content-box; }
+  .admin-login__dev { padding: var(--s-4); border: 1px dashed var(--line-strong); border-radius: 12px; }
+  .admin-login__password { margin-top: var(--s-5); border-top: 1px solid var(--line); padding-top: var(--s-4); }
+  .admin-login__password > summary { cursor: pointer; font-weight: 600; }
+  .admin-login__password[open] > summary { margin-bottom: var(--s-3); }
+}
+@layer components {
+  .people-admin__access { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
+  .people-admin__access select { min-height: 36px; padding: 0.3rem 0.5rem; border: 1px solid var(--line-input); border-radius: 8px; background: var(--white); font: inherit; font-size: 0.9rem; }
+  .people-admin__remove:hover { --btn-fg: var(--danger); --btn-border: var(--danger); }
+  .people-admin__roles { display: grid; gap: var(--s-1); padding-left: 1.2rem; margin: var(--s-3) 0; }
+  .people-admin__groups { list-style: none; padding: 0; display: grid; gap: var(--s-2); margin-bottom: var(--s-4); }
+  .people-admin__groups li { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: baseline; padding: var(--s-3) var(--s-4); border: 1px solid var(--line); border-radius: 12px; background: var(--white); }
+}

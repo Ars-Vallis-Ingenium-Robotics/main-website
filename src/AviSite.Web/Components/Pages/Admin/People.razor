@@ -1,0 +1,197 @@
+@page "/admin/people"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.PeoplePolicy)]
+@using AviSite.Web.Endpoints
+@inject IAccountStore Store
+
+<PageTitle>People · AVI Robotics admin</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin">
+    <div class="wrap">
+        <AdminNav Current="people" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">@(isOwner ? "Owner" : $"Lead · {GroupName(me?.Group)}")</p>
+                <h1 class="h1">People</h1>
+                <p class="muted">
+                    @if (isOwner)
+                    {
+                        <text>Everyone who can sign in. Add someone by the Google email they'll use; remove them and they're out on their next click.</text>
+                    }
+                    else
+                    {
+                        <text>Members of @GroupName(me?.Group) can make and edit their own QR codes. Add them by the Google email they'll use.</text>
+                    }
+                </p>
+            </div>
+        </div>
+
+        @if (Message is { } m) { <p class="alert @(Done is not null ? "alert--ok" : "")" role="status">@m</p> }
+
+        <div class="table-scroll">
+            <table class="table people-admin">
+                <thead><tr><th scope="col">Person</th><th scope="col">Access</th><th scope="col">Last sign-in</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+                <tbody>
+                    @foreach (var a in visible)
+                    {
+                        var editable = me is not null && a.Email != me.Email && AccountRules.CanManage(me, a, a.Role, a.Group);
+                        <tr data-person="@a.Email">
+                            <th scope="row"><strong>@JsonAccountStore.DisplayName(a)</strong><div class="small muted mono">@a.Email</div></th>
+                            <td>
+                                @if (editable && isOwner)
+                                {
+                                    <form method="post" action="/admin/people/save" class="people-admin__access">
+                                        <AntiforgeryToken />
+                                        <input type="hidden" name="email" value="@a.Email" />
+                                        <input type="hidden" name="name" value="@a.Name" />
+                                        <label class="visually-hidden" for="role-@a.Email">Access for @a.Email</label>
+                                        <select id="role-@a.Email" name="role">
+                                            @foreach (var r in AssignableRoles) { <option value="@r" selected="@(a.Role == r)">@AccountRules.Label(r)</option> }
+                                        </select>
+                                        <label class="visually-hidden" for="group-@a.Email">Group for @a.Email</label>
+                                        <select id="group-@a.Email" name="group">
+                                            <option value="">No group (officers)</option>
+                                            @foreach (var g in groups) { <option value="@g.Id" selected="@(a.Group == g.Id)">@g.Name</option> }
+                                        </select>
+                                        <button class="btn btn--ghost btn--sm" type="submit">Save</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="tag">@AccountRules.Label(a.Role)</span>
+                                    @if (a.Group is not null) { <span class="small"> · @GroupName(a.Group)</span> }
+                                    @if (a.FromConfig) { <div class="small muted">Set in server config</div> }
+                                }
+                            </td>
+                            <td class="small">@(a.LastSignInUtc is { } t ? t.ToLocalTime().ToString("MMM d, yyyy") : "Not yet")</td>
+                            <td class="qr-admin__actions">
+                                @if (editable)
+                                {
+                                    <form method="post" action="/admin/people/remove">
+                                        <AntiforgeryToken />
+                                        <input type="hidden" name="email" value="@a.Email" />
+                                        <button class="btn btn--ghost btn--sm people-admin__remove" type="submit" aria-label="Remove @a.Email">Remove</button>
+                                    </form>
+                                }
+                                else if (a.Email == me?.Email) { <span class="small muted">You</span> }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="h3 qr-admin__h">Add someone</h2>
+        <form method="post" action="/admin/people/save" class="form qr-admin__form">
+            <AntiforgeryToken />
+            <div class="qr-admin__grid">
+                <div class="field">
+                    <label class="label" for="new-email">Google email</label>
+                    <input id="new-email" name="email" type="email" required autocomplete="off" placeholder="name@avirobotics.org" />
+                </div>
+                <div class="field">
+                    <label class="label" for="new-name">Name <span class="muted">(optional)</span></label>
+                    <input id="new-name" name="name" autocomplete="off" placeholder="Filled in from Google if blank" />
+                </div>
+                @if (isOwner)
+                {
+                    <div class="field">
+                        <label class="label" for="new-role">Access</label>
+                        <select id="new-role" name="role">
+                            @foreach (var r in AssignableRoles) { <option value="@r" selected="@(r == AccountRole.Member)">@AccountRules.Label(r)</option> }
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="new-group">Group</label>
+                        <select id="new-group" name="group">
+                            <option value="">No group (officers)</option>
+                            @foreach (var g in groups) { <option value="@g.Id">@g.Name</option> }
+                        </select>
+                    </div>
+                }
+                else
+                {
+                    <input type="hidden" name="role" value="@AccountRole.Member" />
+                    <input type="hidden" name="group" value="@me?.Group" />
+                }
+            </div>
+            <ul class="small muted people-admin__roles">
+                <li><strong>Officer</strong>: shop orders, countdowns, tool usage and every QR code.</li>
+                <li><strong>Group lead</strong>: all of their group's QR codes, and adds or removes the group's members.</li>
+                <li><strong>Member</strong>: makes and edits their own QR codes, named after their group.</li>
+            </ul>
+            <div><button class="btn btn--accent" type="submit">Add</button></div>
+        </form>
+
+        @if (isOwner)
+        {
+            <h2 class="h3 qr-admin__h">Groups</h2>
+            <p class="muted small">A group's id starts its QR code names (<span class="mono">sms-…</span>). Teams inside AVI and outside clubs or schools both work.</p>
+            <ul class="people-admin__groups" role="list">
+                @foreach (var g in groups)
+                {
+                    <li><strong>@g.Name</strong> <span class="mono small">@g.Id-…</span> <span class="tag">@(g.Kind == "partner" ? "Partner" : "AVI team")</span>
+                        <span class="small muted">@all.Count(a => a.Group == g.Id) people</span></li>
+                }
+            </ul>
+            <form method="post" action="/admin/groups/add" class="form qr-admin__form">
+                <AntiforgeryToken />
+                <div class="qr-admin__grid">
+                    <div class="field">
+                        <label class="label" for="g-name">Group name</label>
+                        <input id="g-name" name="name" required placeholder="CCC Engineering Renaissance" />
+                    </div>
+                    <div class="field">
+                        <label class="label" for="g-id">Short id</label>
+                        <input id="g-id" name="id" required pattern="[a-z0-9-]{1,20}" placeholder="ccc-er" aria-describedby="g-id-hint" />
+                        <p class="field__hint" id="g-id-hint">Lowercase, numbers, dashes. Can't be changed later.</p>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="g-kind">Kind</label>
+                        <select id="g-kind" name="kind"><option value="avi">AVI team</option><option value="partner">Partner club or school</option></select>
+                    </div>
+                </div>
+                <div><button class="btn btn--ghost" type="submit">Add group</button></div>
+            </form>
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery] public string? Done { get; set; }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+
+    private static readonly AccountRole[] AssignableRoles = [AccountRole.Officer, AccountRole.Lead, AccountRole.Member];
+    private Account? me;
+    private bool isOwner;
+    private IReadOnlyList<Account> all = [], visible = [];
+    private IReadOnlyList<AccountGroup> groups = [];
+
+    private string GroupName(string? id) => groups.FirstOrDefault(g => g.Id == id)?.Name ?? id ?? "";
+
+    private string? Message => (Done, Error) switch
+    {
+        ("added", _) => "Added. They can sign in with Google now.",
+        ("saved", _) => "Saved. It applies on their next click.",
+        ("removed", _) => "Removed. They're signed out on their next click.",
+        ("group", _) => "Group added.",
+        (_, "email") => "That doesn't look like an email address.",
+        (_, "group") => "Leads and members need a group.",
+        (_, "group-id") => "Give the group a name and a short id (lowercase letters, numbers, dashes).",
+        (_, "group-taken") => "There's already a group with that id.",
+        (_, "self") => "You can't change your own access here.",
+        (_, "denied") => "You can't change that person.",
+        _ => null,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Http is null) return;
+        me = await Http.CurrentAsync(Store);
+        isOwner = me?.Role == AccountRole.Owner;
+        all = await Store.ListAsync();
+        groups = await Store.GroupsAsync();
+        visible = isOwner ? all : all.Where(a => me is not null && a.Group == me.Group).ToList();
+    }
+}

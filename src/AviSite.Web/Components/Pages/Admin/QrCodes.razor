@@ -5,6 +5,7 @@
 @inject IOptions<SmsSiteOptions> SiteUrls
 @inject NavigationManager Nav
 @inject IOptions<AdminOptions> AdminOpts
+@inject IAccountStore Accounts
 
 <PageTitle>Dynamic QR codes · AVI Robotics admin</PageTitle>
 <HeadContent><meta name="robots" content="noindex" /></HeadContent>
@@ -70,13 +71,13 @@
                     <label class="label" for="campaign">Name in the Google Sheet</label>
                     <InputText id="campaign" @bind-Value="New!.Campaign" placeholder="e.g. Vintage Days 2027 flyer" />
                 </div>
-                @if (Team is null && AdminOpts.Value.Teams.Count > 0)
+                @if (Team is null && groupIds.Count > 0)
                 {
                     <div class="field">
-                        <label class="label" for="owner">Team</label>
+                        <label class="label" for="owner">Group</label>
                         <InputSelect id="owner" @bind-Value="New!.Owner">
                             <option value="">Club-wide (officers)</option>
-                            @foreach (var t in AdminOpts.Value.Teams.Keys) { <option value="@t.ToLowerInvariant()">@t.ToUpperInvariant() (name must start with @(t.ToLowerInvariant())-)</option> }
+                            @foreach (var (id, name) in groupIds) { <option value="@id">@name (name must start with @(id)-)</option> }
                         </InputSelect>
                     </div>
                 }
@@ -137,6 +138,11 @@
     [CascadingParameter] public HttpContext? Http { get; set; }
     /// <summary>Set for team logins: they only see and make codes named "&lt;team&gt;-…".</summary>
     private string? Team;
+    /// <summary>Members only see the codes they made themselves.</summary>
+    private string? memberEmail;
+    private string? myEmail;
+    /// <summary>Groups that can own codes: account groups plus the old shared team passwords.</summary>
+    private List<(string Id, string Name)> groupIds = [];
     [SupplyParameterFromForm(FormName = "qr-batch")] public BatchCodes? Batch { get; set; }
     private string? batchError;
     private IReadOnlyList<DynamicQr> codes = [];
@@ -148,7 +154,12 @@
         New ??= new();
         Batch ??= new();
         Team = Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value;
-        codes = (await Codes.ListAsync()).Where(q => Team is null || q.Team == Team).ToList();
+        myEmail = Http?.User.FindFirst(AviSite.Web.Endpoints.AccountAuth.EmailClaim)?.Value;
+        memberEmail = Http?.User.IsInRole("Member") == true ? myEmail ?? "" : null;
+        codes = (await Codes.ListAsync()).Where(q => (Team is null || q.Team == Team) && (memberEmail is null || q.CreatedBy == memberEmail)).ToList();
+        groupIds = (await Accounts.GroupsAsync()).Select(g => (g.Id, g.Name))
+            .Concat(AdminOpts.Value.Teams.Keys.Select(t => (t.ToLowerInvariant(), t.ToUpperInvariant())))
+            .DistinctBy(g => g.Item1).ToList();
     }
 
     private string PrintUrl(string slug) => $"{SiteUrls.Value.AviBaseUrl.TrimEnd('/')}/dynamicqr/{slug}";
@@ -172,6 +183,7 @@
             Campaign = string.IsNullOrWhiteSpace(New.Campaign) ? slug : New.Campaign.Trim(),
             Note = string.IsNullOrWhiteSpace(New.Note) ? null : New.Note.Trim(),
             Team = owner,
+            CreatedBy = myEmail,
         });
         if (!ok) { error = $"There's already a code called {slug}."; return; }
         Nav.NavigateTo($"/admin/qr?saved={Uri.EscapeDataString(slug)}");
@@ -182,7 +194,7 @@
         var b = Batch!;
         var prefix = (b.Prefix ?? "").Trim().ToLowerInvariant();
         batchError = DynamicQrRules.CheckSlug(prefix + "-1") ?? DynamicQrRules.CheckTeamSlug(prefix + "-1", Team) ?? DynamicQrRules.CheckTarget(b.Target);
-        var batchOwner = Team ?? (prefix.Split('-')[0] is var p0 && AdminOpts.Value.Teams.ContainsKey(p0) ? p0 : null);
+        var batchOwner = Team ?? (prefix.Split('-')[0] is var p0 && groupIds.Any(g => g.Id == p0) ? p0 : null);
         if (batchError is null && (b.To < b.From || b.To - b.From >= 100)) batchError = "Pick a range of up to 100 numbers.";
         if (batchError is not null) return;
         var made = new List<string>();
@@ -196,6 +208,7 @@
                 Target = b.Target!.Trim(),
                 Campaign = string.IsNullOrWhiteSpace(b.Campaign) ? slug : b.Campaign.Trim().Replace("{n}", n.ToString()),
                 Team = batchOwner,
+                CreatedBy = myEmail,
             });
             if (ok) made.Add(slug); else skipped++;
         }

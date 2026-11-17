@@ -152,8 +152,9 @@ await test("tampered cart cookie is discarded", async () => {
 
 await test("admin: login, see order in printer table, mark picked up, CSV", async () => {
   await page.goto(BASE + "/admin/login");
+  await page.click("text=Use a shared password instead");
   await page.getByLabel("Password").fill(ADMIN_PASSWORD);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("button", { name: "Sign in with password" }).click();
   await page.waitForURL(BASE + "/admin");
   const text = await page.locator("main").innerText();
   assert.match(text, /Test Buyer/);
@@ -627,8 +628,9 @@ await test("dynamic QR stats: weekday, hour and device breakdown", async () => {
 await test("team login sees only its own QR codes, under its own prefix", async () => {
   const tc = await browser.newContext(); const tp = await tc.newPage();
   await tp.goto(BASE + "/admin/login");
+  await tp.click("text=Use a shared password instead");
   await tp.getByLabel("Password").fill(process.env.TEAM_PASSWORD ?? "sms-dev-password");
-  await tp.getByRole("button", { name: "Sign in" }).click();
+  await tp.getByRole("button", { name: "Sign in with password" }).click();
   await tp.waitForURL(BASE + "/admin/qr");
   assert.equal(await tp.locator('nav a[href="/admin"]').count(), 0, "no orders link for teams");
   assert.equal(await tp.locator('[data-qr-row="one"]').count(), 0, "club codes hidden");
@@ -712,6 +714,69 @@ await test("QR maker works by keyboard: tab rows use arrow keys, preview says wh
   await page.focus('[data-qr-tab][aria-selected="true"]'); await page.keyboard.press("End");
   assert.equal(await page.evaluate(() => document.activeElement.dataset.qrTab), "size");
   assert.equal(await page.locator('[data-qr-panel="size"]').isVisible(), true);
+});
+
+await test("accounts: owner adds a partner group, lead and member; each sees only what they should; removal is immediate", async () => {
+  const as = async (email) => {
+    const c = await browser.newContext(); const pg = await c.newPage();
+    await pg.goto(BASE + "/admin/login");
+    await pg.selectOption('select[name="email"]', email);
+    await pg.getByRole("button", { name: "Sign in (dev only)" }).click();
+    await pg.waitForLoadState();
+    return [c, pg];
+  };
+  const id = Date.now().toString(36).slice(-5);
+  const grp = "ccc" + id, lead = `lead-${id}@example.com`, mem = `mem-${id}@example.com`, mem2 = `mem2-${id}@example.com`;
+
+  const [oc, op] = await as("owner@example.com");
+  assert.equal(new URL(op.url()).pathname, "/admin", "owners land on the officer dashboard");
+  await op.goto(BASE + "/admin/people");
+  await op.fill("#g-name", "CCC Engineering Renaissance " + id); await op.fill("#g-id", grp); await op.selectOption("#g-kind", "partner");
+  await op.getByRole("button", { name: "Add group" }).click();
+  assert.match(await op.locator("main").innerText(), /Group added/);
+  for (const [email, role] of [[lead, "Lead"], [mem, "Member"]]) {
+    await op.fill("#new-email", email); await op.selectOption("#new-role", role); await op.selectOption("#new-group", grp);
+    await op.getByRole("button", { name: "Add", exact: true }).click();
+    assert.match(await op.locator("main").innerText(), /Added/);
+  }
+  assert.equal(await op.locator('[data-person="owner@example.com"] button').count(), 0, "config owners can't be removed here");
+
+  // Lead: their group's people and codes only; can add a member, can't make an officer.
+  const [lc, lp] = await as(lead);
+  assert.equal(new URL(lp.url()).pathname, "/admin/qr");
+  assert.equal(await lp.locator('nav a[href="/admin"]').count(), 0, "no shop for leads");
+  await lp.goto(BASE + "/admin/people");
+  assert.equal(await lp.locator('[data-person="owner@example.com"]').count(), 0, "leads see only their group");
+  await lp.fill("#new-email", mem2); await lp.getByRole("button", { name: "Add", exact: true }).click();
+  assert.match(await lp.locator("main").innerText(), /Added/);
+  await lp.evaluate(() => { const f = document.querySelector('form[action="/admin/people/save"]:has(#new-email)'); f.querySelector('[name="role"]').value = "Officer"; });
+  await lp.fill("#new-email", `sneaky-${id}@example.com`); await lp.getByRole("button", { name: "Add", exact: true }).click();
+  assert.equal(await lp.locator(`[data-person="sneaky-${id}@example.com"]`).count(), 0, "a lead can't make officers");
+
+  // Member: own codes only, named after the group; no people page.
+  const [mc, mp] = await as(mem);
+  await mp.fill("#slug", `${grp}-flyer`); await mp.fill("#target", "/join"); await mp.fill("#campaign", "e2e");
+  await mp.getByRole("button", { name: "Add code" }).click();
+  await mp.waitForURL(/saved=/);
+  assert.equal(await mp.locator(`[data-qr-row="${grp}-flyer"]`).count(), 1);
+  const [m2c, m2p] = await as(mem2);
+  assert.equal(await m2p.locator(`[data-qr-row="${grp}-flyer"]`).count(), 0, "members don't see each other's codes");
+  assert.equal((await m2p.goto(BASE + `/admin/qr/${grp}-flyer`)).status(), 404);
+  await m2p.goto(BASE + "/admin/people"); assert.match(m2p.url(), /\/admin\/login/, "members can't manage people");
+  await lp.goto(BASE + "/admin/qr"); assert.equal(await lp.locator(`[data-qr-row="${grp}-flyer"]`).count(), 1, "the lead sees the group's codes");
+
+  // Owner removes the member: their very next click is signed out.
+  await op.goto(BASE + "/admin/people");
+  await op.locator(`[data-person="${mem}"]`).getByRole("button", { name: "Remove" }).click();
+  assert.match(await op.locator("main").innerText(), /Removed/);
+  await mp.goto(BASE + "/admin/qr"); assert.match(mp.url(), /\/admin\/login/, "removed member is out");
+  for (const c of [oc, lc, mc, m2c]) await c.close();
+});
+
+await test("Google sign-in refuses bad callbacks; unknown emails can't use the dev picker", async () => {
+  assert.match((await page.request.get(BASE + "/admin/google/callback?code=x&state=y", { maxRedirects: 0 })).headers().location, /error=/);
+  const r = await page.request.get(BASE + "/admin/google", { maxRedirects: 0 });
+  assert.match(r.headers().location, /error=google-off/, "button is off until Admin:Google is set");
 });
 
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });

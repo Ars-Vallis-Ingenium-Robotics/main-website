@@ -17,6 +17,8 @@ public static class AdminEndpoints
     /// <summary>Officers and team logins: dynamic QR codes only.</summary>
     public const string QrPolicy = "QrEditor";
     public const string TeamClaim = "avi:team";
+    /// <summary>/admin/people: owners (everyone) and group leads (their own members).</summary>
+    public const string PeoplePolicy = "People";
     public const string LoginRateLimit = "admin-login";
 
     public static void MapAdminEndpoints(this IEndpointRouteBuilder app)
@@ -99,10 +101,12 @@ public static class AdminAuthSetup
                 o.AccessDeniedPath = "/admin/login";
                 o.ExpireTimeSpan = TimeSpan.FromHours(8);
                 o.SlidingExpiration = true;
+                o.Events.OnValidatePrincipal = AccountAuth.ValidateAsync; // removed people are out on their next click
             });
         services.AddAuthorizationBuilder()
             .AddPolicy(AdminEndpoints.Policy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Admin"))
-            .AddPolicy(AdminEndpoints.QrPolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Admin", "Team"));
+            .AddPolicy(AdminEndpoints.QrPolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Admin", "Team"))
+            .AddPolicy(AdminEndpoints.PeoplePolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Owner", "Lead"));
         return services;
     }
 }

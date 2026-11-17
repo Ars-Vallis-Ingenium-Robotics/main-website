@@ -86,4 +86,21 @@ public sealed class AdminOptions
     /// whose names all start with "&lt;team&gt;-". Set in the env file, e.g. Admin__Teams__sms=pbkdf2-sha256$…
     /// </summary>
     public Dictionary<string, string> Teams { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Google accounts that are always owners (manage everyone at /admin/people). Only config makes owners,
+    /// so nobody can lock you out from the website. Env: Admin__Owners__0=you@avirobotics.org
+    /// </summary>
+    public List<string> Owners { get; set; } = [];
+
+    /// <summary>"Sign in with Google" (console.cloud.google.com → APIs &amp; Services → Credentials → OAuth client, Web).
+    /// Redirect URI: https://&lt;host&gt;/admin/google/callback. Empty = Google button hidden.</summary>
+    public GoogleSignInOptions Google { get; set; } = new();
+}
+
+public sealed class GoogleSignInOptions
+{
+    public string? ClientId { get; set; }
+    public string? ClientSecret { get; set; }
+    public bool Enabled => !string.IsNullOrWhiteSpace(ClientId) && !string.IsNullOrWhiteSpace(ClientSecret);
 }
