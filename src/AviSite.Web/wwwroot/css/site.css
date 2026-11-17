@@ -1866,3 +1866,12 @@
   .qr-filter__go { display: flex; gap: var(--s-2); }
   .qr-filter__count { margin-bottom: var(--s-3); }
 }
+@layer components {
+  .qr-codebar { display: grid; gap: var(--s-2); padding: var(--s-4); margin-bottom: var(--s-4); border-radius: 14px; background: var(--white); border: 2px solid var(--accent); }
+  .qr-codebar[hidden] { display: none; }
+  .qr-codebar__title { margin: 0; font-weight: 600; }
+  .qr-codebar__actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+}
+@layer components {
+  .qr-lookline { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; margin-bottom: var(--s-5); }
+}

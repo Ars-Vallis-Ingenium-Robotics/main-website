@@ -161,6 +161,7 @@ app.MapPayPalEndpoints();
 app.MapAdminEndpoints();
 app.MapAccountAuth();
 app.MapPeopleAdminEndpoints();
+app.MapQrLookEndpoints();
 app.MapPeopleEndpoints();
 app.MapDynamicQrEndpoints();
 app.MapToolUsageEndpoints();

@@ -13,6 +13,15 @@
 <section class="section qr-section">
     <div class="wrap qr-tool" data-qr-tool>
         <form class="qr-tool__form" novalidate>
+            @* Shown by qr-tool.js when opened from an admin code (/tools/qr?code=…): saves the look to that code. *@
+            <div class="qr-codebar" data-qr-codebar hidden>
+                <p class="qr-codebar__title">Look for dynamic code <strong class="mono" data-qr-codename></strong></p>
+                <p class="small" data-qr-codehint aria-live="polite"></p>
+                <div class="qr-codebar__actions">
+                    <button class="btn btn--accent btn--sm" type="button" data-qr-codesave>Save this look to the code</button>
+                    <a class="btn btn--ghost btn--sm" data-qr-codeback href="/admin/qr">Back to the code</a>
+                </div>
+            </div>
 
             <div class="qr-modes" role="tablist" aria-label="How many codes">
                 <button type="button" role="tab" class="qr-mode" id="qr-mode-one" data-qr-mode="one" aria-selected="true" aria-controls="qr-one">One code</button>

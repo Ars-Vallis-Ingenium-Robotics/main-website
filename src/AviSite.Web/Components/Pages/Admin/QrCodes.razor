@@ -92,6 +92,7 @@
                             <th scope="row">
                                 <a href="/admin/qr/@q.Slug"><strong>@q.Slug</strong></a>
                                 @if (!q.Active) { <span class="tag">Off</span> }
+                                @if (q.Look is not null) { <span class="tag" title="Has a saved look">Look saved</span> }
                                 @if (Team is null && q.Team is not null) { <span class="tag">@q.Team.ToUpperInvariant()</span> }
                                 <div class="mono small muted">@url</div>
                                 @if (q.Note is not null) { <div class="small">@q.Note</div> }
@@ -103,7 +104,7 @@
                             <td class="small">@(q.LastScanUtc is { } t ? Local(t) : "Never")</td>
                             <td class="qr-admin__actions">
                                 <a class="btn btn--ghost btn--sm" href="/admin/qr/@q.Slug">Edit</a>
-                                <a class="btn btn--ghost btn--sm" href="/tools/qr?url=@Uri.EscapeDataString(url)&style=@(QrStyle)" target="_blank" rel="noopener">QR image</a>
+                                <a class="btn btn--ghost btn--sm" href="/tools/qr?url=@Uri.EscapeDataString(url)&style=@(QrStyle)&code=@q.Slug" target="_blank" rel="noopener">QR image</a>
                             </td>
                         </tr>
                     }

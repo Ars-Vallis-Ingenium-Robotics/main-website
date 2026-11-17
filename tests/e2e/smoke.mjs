@@ -825,6 +825,32 @@ await test("dynamic QR list: search, group, status and sort filters live in the 
   assert.match(await page.locator("main").innerText(), /No codes match/);
 });
 
+await test("dynamic QR looks: save from the maker, reopen with it; strangers can't save", async () => {
+  await page.goto(BASE + "/admin/qr/three");
+  const href = await page.locator(".qr-lookline a").getAttribute("href");
+  assert.match(href, /code=three/);
+  await page.goto(BASE + href);
+  const bar = page.locator("[data-qr-codebar]");
+  await bar.waitFor({ state: "visible" });
+  await page.click('[data-qr-theme="sunset"]');
+  await page.click("[data-qr-codesave]");
+  await page.waitForFunction(() => document.querySelector("[data-qr-codehint]").textContent.startsWith("Saved"));
+  await page.goto(BASE + "/tools/qr?url=x&style=avi&code=three");
+  await page.waitForFunction(() => document.querySelector("[data-qr-codehint]").textContent.includes("saved look"));
+  assert.equal(await page.inputValue('[data-qr="fg"]'), "#b0124f", "saved look beats ?style=");
+  await page.goto(BASE + "/admin/qr");
+  assert.match(await page.locator('[data-qr-row="three"]').innerText(), /look saved/i);
+
+  const anon = await browser.newContext(); const ap = await anon.newPage();
+  await ap.goto(BASE + "/tools/qr?code=three");
+  await ap.locator("[data-qr-codebar]").waitFor({ state: "visible" });
+  assert.equal(await ap.locator("[data-qr-codesave]").isVisible(), false, "no save button when signed out");
+  assert.match(await ap.locator("[data-qr-codehint]").innerText(), /Sign in/);
+  await anon.close();
+  const forged = await page.request.post(BASE + "/admin/qr/three/look", { data: { look: { fg: "#000000" } }, headers: { Origin: "https://evil.example" } });
+  assert.equal(forged.status(), 400, "other sites can't save looks");
+});
+
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });
 
 await browser.close();

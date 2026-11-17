@@ -648,4 +648,50 @@
   if (hash.get("bulk")) { setVal("bulktext", hash.get("bulk")); setRadio("bulkmode", "list"); mode = "bulk"; }
   setMode(mode);
   drawThumbs();
+
+  // ---------- Saved look for a dynamic code (opened from /admin/qr with ?code=…) ----------
+  // Only works for someone signed in to the admin pages who can edit that code; everyone else just sees the normal maker.
+  const code = new URLSearchParams(location.search).get("code");
+  const bar = page.querySelector("[data-qr-codebar]");
+  if (code && bar && /^[a-z0-9-]{1,40}$/.test(code)) {
+    const api = `/admin/qr/${code}/look`;
+    const hint = bar.querySelector("[data-qr-codehint]");
+    const save = bar.querySelector("[data-qr-codesave]");
+    bar.querySelector("[data-qr-codename]").textContent = code;
+    bar.querySelector("[data-qr-codeback]").href = `/admin/qr/${code}`;
+    const isJson = (r) => r.ok && (r.headers.get("content-type") || "").includes("application/json");
+    fetch(api, { credentials: "same-origin", headers: { Accept: "application/json" } })
+      .then(async (r) => {
+        bar.hidden = false;
+        if (!isJson(r)) {
+          save.hidden = true;
+          hint.innerHTML = `<a href="/admin/login?returnUrl=${encodeURIComponent("/admin/qr/" + code)}">Sign in</a> to save a look to this code.`;
+          return;
+        }
+        const data = await r.json();
+        if (data.look) {
+          currentTheme = null; applyLook("avi"); setLook(data.look); pressTheme(null);
+          if (data.look.logo === "upload" && data.logo) { uploaded = data.logo; setRadio("logo", "upload"); }
+          hint.textContent = "This is the code's saved look. Change anything, then save it again.";
+          render();
+        } else {
+          hint.textContent = "This code has no saved look yet. Style it, then save it so every reprint matches.";
+        }
+      })
+      .catch(() => { bar.hidden = true; });
+    save.addEventListener("click", async () => {
+      const look = readLook();
+      save.disabled = true;
+      try {
+        const r = await fetch(api, {
+          method: "POST", credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ look, logo: look.logo === "upload" ? uploaded : null }),
+        });
+        hint.textContent = r.status === 204 ? `Saved. “QR image” for ${code} now opens with this look.`
+          : r.status === 400 ? "That logo is too big to save. Try a smaller image." : "Couldn't save (are you still signed in?).";
+      } catch { hint.textContent = "Couldn't save. Check your connection and try again."; }
+      save.disabled = false;
+    });
+  }
 })();

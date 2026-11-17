@@ -16,7 +16,13 @@
             <AdminNav Current="qr" />
             <p class="eyebrow"><a href="/admin/qr">Dynamic QR codes</a> / @qr.Slug</p>
             <h1 class="h1">@qr.Slug</h1>
-            <p class="mono small">@url · <a href="/tools/qr?url=@Uri.EscapeDataString(url)&style=@(QrStyle)" target="_blank" rel="noopener">QR image</a></p>
+            <p class="mono small">@url</p>
+            <div class="qr-lookline">
+                <a class="btn btn--ghost btn--sm" href="/tools/qr?url=@Uri.EscapeDataString(url)&style=@(QrStyle)&code=@qr.Slug" target="_blank" rel="noopener">@(qr.Look is null ? "Make the QR image" : "QR image (saved look)")</a>
+                <span class="small muted">@(qr.Look is null
+                    ? "No saved look yet: style it in the maker and press \"Save this look to the code\" so every reprint matches."
+                    : $"Look saved {TimeZoneInfo.ConvertTime(qr.LookUpdatedUtc ?? qr.UpdatedUtc, Pacific):MMM d}{(qr.LookBy is null ? "" : " by " + qr.LookBy)}. Change it from the maker.")</span>
+            </div>
 
             <EditForm Model="Edit!" FormName="qr-edit" OnValidSubmit="SaveAsync" method="post" class="form" novalidate>
                 <DataAnnotationsValidator />
@@ -137,10 +143,7 @@
     protected override async Task OnInitializedAsync()
     {
         qr = await Codes.GetAsync(Slug);
-        var team = Http?.User.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value;
-        var member = Http?.User.IsInRole("Member") == true;
-        var email = Http?.User.FindFirst(AviSite.Web.Endpoints.AccountAuth.EmailClaim)?.Value;
-        if (qr is null || (team is not null && qr.Team != team) || (member && qr.CreatedBy != email)) { qr = null; Nav.NotFound(); return; }
+        if (qr is null || Http is null || !DynamicQrRules.CanAccess(Http.User, qr)) { qr = null; Nav.NotFound(); return; }
         Edit ??= new() { Target = qr.Target, Campaign = qr.Campaign, Note = qr.Note, Active = qr.Active };
         Delete ??= new();
         var today = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, Pacific).Date;

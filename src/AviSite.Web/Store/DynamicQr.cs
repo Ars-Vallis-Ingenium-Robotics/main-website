@@ -34,6 +34,12 @@ public sealed class DynamicQr
     public string? CreatedBy { get; set; }
     /// <summary>Set when deleted. The name stays reserved forever so nobody can re-point old printed copies,
     /// and scans of it go to the home page.</summary>
+    /// <summary>Saved look from the QR maker (its settings as JSON), so every reprint matches. Null = the maker's default.</summary>
+    public string? Look { get; set; }
+    /// <summary>Uploaded logo for the saved look (PNG data URL, already shrunk by the maker).</summary>
+    public string? LookLogo { get; set; }
+    public DateTimeOffset? LookUpdatedUtc { get; set; }
+    public string? LookBy { get; set; }
     public DateTimeOffset? DeletedUtc { get; set; }
     public string? DeletedBy { get; set; }
 }
@@ -59,6 +65,15 @@ public static partial class DynamicQrRules
     /// <summary>Team codes live under "&lt;team&gt;-" so teams can't take each other's (or the club's) names.</summary>
     public static string? CheckTeamSlug(string slug, string? team) =>
         team is null || slug.StartsWith(team + "-", StringComparison.Ordinal) ? null : $"Your team's codes start with \"{team}-\".";
+
+    /// <summary>Who may see and change a code: officers any; leads their group's; members the ones they made.</summary>
+    public static bool CanAccess(System.Security.Claims.ClaimsPrincipal user, DynamicQr code)
+    {
+        if (user.IsInRole("Admin")) return true;
+        var team = user.FindFirst(AviSite.Web.Endpoints.AdminEndpoints.TeamClaim)?.Value;
+        if (team is null || code.Team != team) return false;
+        return !user.IsInRole("Member") || code.CreatedBy == user.FindFirst(AviSite.Web.Endpoints.AccountAuth.EmailClaim)?.Value;
+    }
 
     /// <summary>Absolute http(s) links, or a path on this site like /join.</summary>
     public static string? CheckTarget(string? target)
