@@ -84,6 +84,10 @@ PayPal webhook URL to register: `https://avirobotics.org/api/paypal/webhook`
   Officers change targets and add codes at `/admin/qr` (same admin password as orders); team leads see only their team's codes.
   Each code's page shows scans by day, weekday, hour (Pacific) and device type. `one`–`four` are seeded from the old site.
 - `/countdown`: events managed by officers at `/admin/countdowns` (`App_Data/countdowns.json`).
+- Usage: tools pages count opens (server side) and the QR buttons send `navigator.sendBeacon('/api/use/qr.<button>')`.
+  Only the counter name and Pacific day are stored (`App_Data/tool-usage.json`); officers see `/admin/usage`.
+  New counters must be added to `ToolUsageEvents.All` (anything else is refused) and mentioned on `/privacy`.
+- Link previews: `Components/Shared/SocialMeta.razor` picks `wwwroot/img/og/og-{avi,sms,tools}.jpg` (1200×630) by section.
 
 ## Privacy
 

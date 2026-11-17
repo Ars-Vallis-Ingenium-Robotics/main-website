@@ -2,8 +2,9 @@
 @* Copy: content/pages/tools.md (## qr). Logic: wwwroot/js/qr-tool.js (runs entirely in the browser).
    Layout: quick path first (what + look + download); every other option sits in "Customize". "Many codes" makes a batch. *@
 
+<CountOpen Key="qr.open" />
 <PageTitle>QR code maker · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="Free QR code maker from AVI Robotics: links, Wi-Fi, contacts and more, one at a time or a whole batch. Custom dots, corners, colors, logos and frames." /></HeadContent>
+<HeadContent><meta name="description" content="Free QR code maker from AVI Robotics: links, Wi-Fi, contacts and more, one at a time or a whole batch. Custom dots, corners, colors, logos and frames." /><meta property="og:description" content="Free QR code maker from AVI Robotics: links, Wi-Fi, contacts and more, one at a time or a whole batch. Custom dots, corners, colors, logos and frames." /></HeadContent>
 
 <PageHero Kicker="@c["qr"].Text("kicker")" Title="@c["qr"].Text("title")">
     <p>@c["qr"].Inline()</p>
@@ -14,12 +15,12 @@
         <form class="qr-tool__form" novalidate>
 
             <div class="qr-modes" role="tablist" aria-label="How many codes">
-                <button type="button" role="tab" class="qr-mode" data-qr-mode="one" aria-selected="true" aria-controls="qr-one">One code</button>
-                <button type="button" role="tab" class="qr-mode" data-qr-mode="bulk" aria-selected="false" aria-controls="qr-bulk">Many codes</button>
+                <button type="button" role="tab" class="qr-mode" id="qr-mode-one" data-qr-mode="one" aria-selected="true" aria-controls="qr-one">One code</button>
+                <button type="button" role="tab" class="qr-mode" id="qr-mode-bulk" data-qr-mode="bulk" aria-selected="false" aria-controls="qr-bulk">Many codes</button>
             </div>
 
             @* ---------- One code: what it opens ---------- *@
-            <div id="qr-one" class="qr-step" data-qr-pane="one">
+            <div id="qr-one" class="qr-step" data-qr-pane="one" role="tabpanel" aria-labelledby="qr-mode-one">
                 <div class="qr-what">
                     <div class="field qr-what__kind">
                         <label class="label" for="qr-kind">Type</label>
@@ -82,7 +83,7 @@
             </div>
 
             @* ---------- Many codes ---------- *@
-            <div id="qr-bulk" class="qr-step" data-qr-pane="bulk" hidden>
+            <div id="qr-bulk" class="qr-step" data-qr-pane="bulk" role="tabpanel" aria-labelledby="qr-mode-bulk" hidden>
                 <div class="qr-chips" role="radiogroup" aria-label="How to list them">
                     <label class="chip chip--sm"><input type="radio" name="qr-bulkmode" value="list" data-qr="bulkmode" checked /><span>Paste a list</span></label>
                     <label class="chip chip--sm"><input type="radio" name="qr-bulkmode" value="number" data-qr="bulkmode" /><span>Numbered</span></label>
@@ -118,7 +119,7 @@
             </div>
 
             <div class="qr-saved" data-qr-saved-wrap>
-                <div class="qr-saved__list" data-qr-saved aria-label="Your saved looks"></div>
+                <div class="qr-saved__list" data-qr-saved role="group" aria-label="Your saved looks"></div>
                 <div class="qr-saved__actions">
                     <label class="visually-hidden" for="qr-savename">Name for this look</label>
                     <input id="qr-savename" data-qr-savename placeholder="Name this look, e.g. Outreach flyer" maxlength="30" />
@@ -126,7 +127,7 @@
                     <button class="btn btn--ghost btn--sm" type="button" data-qr-share>Copy link to this look</button>
                 </div>
                 <label class="check"><input type="checkbox" data-qr-remember /> Remember my look in this browser next time</label>
-                <p class="field__hint" data-qr-savehint>Nothing is kept unless you tick that box or save a look, and then only in this browser (<a href="/privacy">privacy</a>). Share the link so your team gets the same look.</p>
+                <p class="field__hint" data-qr-savehint aria-live="polite">Nothing is kept unless you tick that box or save a look, and then only in this browser (<a href="/privacy">privacy</a>). Share the link so your team gets the same look.</p>
             </div>
 
             @* ---------- Customize (closed until wanted) ---------- *@
@@ -184,8 +185,8 @@
                         <div class="field field--color" data-when="bggradient"><label class="label" for="qr-bg2">To</label><input id="qr-bg2" type="color" data-qr="bg2" value="#e8f0fe" /></div>
                         <div class="field"><label class="label" for="qr-radius">Round corners: <output data-out="radius">0</output></label><input id="qr-radius" type="range" min="0" max="8" step="1" value="0" data-qr="radius" /></div>
                     </div>
-                    <div class="qr-swatches" aria-label="Quick background colors">
-                        @foreach (var hex in BgSwatches) { <button type="button" class="qr-swatch" style="--c: @hex" data-qr-bg="@hex" aria-label="Background @hex"></button> }
+                    <div class="qr-swatches" role="group" aria-label="Quick background colors">
+                        @foreach (var (hex, name) in BgSwatches) { <button type="button" class="qr-swatch" style="--c: @hex" data-qr-bg="@hex" aria-label="@name background" title="@name"></button> }
                     </div>
                 </div>
 
@@ -289,7 +290,7 @@
     private static readonly (string, string)[] Tabs =
         [("dots", "Dots"), ("corners", "Corners"), ("colors", "Colors"), ("logo", "Logo"), ("label", "Label"), ("size", "Size")];
     private string ThemeOrDefault => Themes.Any(t => t.Item1 == Style) ? Style! : Style == "plain" ? "classic" : "avi";
-    private static readonly string[] BgSwatches = ["#ffffff", "#f4f1ea", "#f7f1e6", "#e8f0fe", "#e4f6f4", "#fff4d6", "#fde8ec", "#eef0f2"];
+    private static readonly (string Hex, string Name)[] BgSwatches = [("#ffffff", "White"), ("#f4f1ea", "Paper"), ("#f7f1e6", "Cream"), ("#e8f0fe", "Pale blue"), ("#e4f6f4", "Pale teal"), ("#fff4d6", "Pale yellow"), ("#fde8ec", "Pale pink"), ("#eef0f2", "Pale gray")];
 
     // Icons are tiny previews of each shape on a 30x30 grid.
     private static readonly (string, string, string)[] DotShapes =

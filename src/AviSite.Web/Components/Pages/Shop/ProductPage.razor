@@ -6,7 +6,7 @@
 @if (product is not null)
 {
     <PageTitle>@product.Name · AVI Robotics shop</PageTitle>
-    <HeadContent><meta name="description" content="@product.Tagline" /></HeadContent>
+    <HeadContent><meta name="description" content="@product.Tagline" /><meta property="og:description" content="@product.Tagline" /></HeadContent>
 
     <section class="section product @(product.Team is null ? "" : "product--" + product.Team)">
         <div class="wrap product__grid">

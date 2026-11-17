@@ -48,6 +48,7 @@ services.AddSingleton<IDynamicQrStore, JsonDynamicQrStore>();
 services.AddHttpClient("google-sheet");
 // Countdowns (/countdown, edited in /admin/countdowns)
 services.AddSingleton<ICountdownStore, JsonCountdownStore>();
+services.AddSingleton<IToolUsageStore, JsonToolUsageStore>();
 services.AddSingleton<Pricing>();
 services.AddSingleton<PaymentReconciler>();
 services.AddSingleton<PhotoCatalog>();
@@ -103,6 +104,10 @@ services.AddRateLimiter(o =>
     o.AddPolicy(AdminEndpoints.LoginRateLimit, ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(5) }));
+    // Anonymous tool counters: plenty for a person clicking around, useless for padding the numbers.
+    o.AddPolicy(ToolUsageEndpoints.RateLimit, ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(10) }));
     // Checkout + PayPal API: each call can create an order and/or hit PayPal.
     o.AddPolicy(StoreRateLimit, ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -154,6 +159,7 @@ app.MapPayPalEndpoints();
 app.MapAdminEndpoints();
 app.MapPeopleEndpoints();
 app.MapDynamicQrEndpoints();
+app.MapToolUsageEndpoints();
 // Browsers ask for /favicon.ico on their own (and for PDFs, feeds, etc.): answer with the right mark per host.
 app.MapGet("/favicon.ico", (HttpContext ctx, IWebHostEnvironment env) =>
 {

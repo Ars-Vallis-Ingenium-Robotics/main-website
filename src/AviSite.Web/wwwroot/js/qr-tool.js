@@ -339,13 +339,16 @@
     const preview = page.querySelector("[data-qr-preview]"), status = page.querySelector("[data-qr-status]"), warn = page.querySelector("[data-qr-warn]");
     const text = payload();
     page.querySelectorAll('[data-qr-pane="one"] [data-qr-download], [data-qr-copy]').forEach((b) => (b.disabled = !text));
-    if (!text) { preview.innerHTML = ""; warn.innerHTML = ""; status.textContent = "Fill in what the code should open."; current = null; return; }
+    if (!text) { preview.innerHTML = ""; preview.setAttribute("aria-label", "QR code preview (empty)"); warn.innerHTML = ""; status.textContent = "Fill in what the code should open."; current = null; return; }
     try {
       const out = build({ ...l, text }, logo);
       preview.innerHTML = out.svg;
       preview.style.setProperty("--ratio", out.ratio);
       preview.classList.toggle("qr-tool__preview--clear", l.bgmode === "none");
       current = { ...out, name: text, size: l.size };
+      // Screen readers get what the code opens, not "image".
+      const said = text.split(/\r?\n/).find((t) => t && !/^BEGIN:/.test(t)) || text;
+      preview.setAttribute("aria-label", `QR code for ${said.length > 80 ? said.slice(0, 77) + "…" : said}`);
       status.textContent = `${out.n} × ${out.n} squares · error correction ${out.ecl}${logo ? " · with logo" : ""}`;
       warn.innerHTML = warnings(l, !!logo, out.ecl).map((t) => `<li>${t}</li>`).join("");
     } catch {
@@ -445,6 +448,13 @@
     return new Blob([...chunks, ...central, new Uint8Array(e.buffer)], { type: "application/zip" });
   }
 
+  // Anonymous usage count (which button, nothing else): see /privacy. Never blocks the download.
+  page.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-qr-download], [data-qr-zip], [data-qr-pdfsheet], [data-qr-print], [data-qr-copy], [data-qr-share]");
+    if (!b || b.disabled) return;
+    const what = b.dataset.qrDownload || (b.hasAttribute("data-qr-zip") ? "zip" : b.hasAttribute("data-qr-pdfsheet") ? "pdfsheet" : b.hasAttribute("data-qr-print") ? "print" : b.hasAttribute("data-qr-copy") ? "copy" : "share");
+    try { navigator.sendBeacon(`/api/use/qr.${what}`); } catch { /* counting is optional */ }
+  });
   page.querySelector('[data-qr-download="svg"]').addEventListener("click", () => current && save(new Blob([current.svg], { type: "image/svg+xml" }), `qr-${slug(current.name)}.svg`));
   page.querySelector('[data-qr-download="png"]').addEventListener("click", async () => current && save(await raster(current.svg, current.ratio, current.size, "image/png"), `qr-${slug(current.name)}.png`));
   page.querySelector('[data-qr-download="jpg"]').addEventListener("click", async () => current && save(await raster(current.svg, current.ratio, current.size, "image/jpeg"), `qr-${slug(current.name)}.jpg`));
@@ -553,15 +563,29 @@
   root.querySelector("form").addEventListener("submit", (e) => e.preventDefault());
   function setMode(m) {
     mode = m;
-    page.querySelectorAll("[data-qr-mode]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.qrMode === m)));
+    page.querySelectorAll("[data-qr-mode]").forEach((b) => { b.setAttribute("aria-selected", String(b.dataset.qrMode === m)); b.tabIndex = b.dataset.qrMode === m ? 0 : -1; });
     page.querySelectorAll("[data-qr-pane]").forEach((p) => (p.hidden = p.dataset.qrPane !== m));
     render();
   }
   page.querySelectorAll("[data-qr-mode]").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.qrMode)));
   $$("[data-qr-tab]").forEach((t) => t.addEventListener("click", () => {
-    $$("[data-qr-tab]").forEach((x) => x.setAttribute("aria-selected", String(x === t)));
+    $$("[data-qr-tab]").forEach((x) => { x.setAttribute("aria-selected", String(x === t)); x.tabIndex = x === t ? 0 : -1; });
     $$("[data-qr-panel]").forEach((p) => (p.hidden = p.dataset.qrPanel !== t.dataset.qrTab));
   }));
+  // Tabs follow the ARIA pattern: one Tab stop per tab row; arrows, Home and End move between tabs.
+  page.querySelectorAll('[role="tablist"]').forEach((list) => {
+    const tabs = [...list.querySelectorAll('[role="tab"]')];
+    tabs.forEach((t) => (t.tabIndex = t.getAttribute("aria-selected") === "true" ? 0 : -1));
+    list.addEventListener("keydown", (e) => {
+      const i = tabs.indexOf(document.activeElement);
+      if (i < 0) return;
+      const next = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (next === undefined) return;
+      e.preventDefault();
+      const t = tabs[(next + tabs.length) % tabs.length];
+      t.focus(); t.click();
+    });
+  });
   root.addEventListener("input", (e) => {
     if (!e.target.matches("[data-qr]")) return;
     if (LOOK_KEYS.includes(e.target.dataset.qr)) { currentTheme = null; pressTheme(null); }
@@ -593,7 +617,14 @@
     const use = e.target.closest("[data-qr-use]"), del = e.target.closest("[data-qr-del]");
     const list = readSaved();
     if (use) { setLook(list[+use.dataset.qrUse]); currentTheme = null; pressTheme(null); render(); }
-    if (del) { list.splice(+del.dataset.qrDel, 1); writeSaved(list); drawSaved(); }
+    if (use) page.querySelector("[data-qr-savehint]").textContent = `Using “${list[+use.dataset.qrUse].name}”.`;
+    if (del) {
+      const name = list[+del.dataset.qrDel].name;
+      list.splice(+del.dataset.qrDel, 1); writeSaved(list); drawSaved();
+      page.querySelector("[data-qr-savehint]").textContent = `Deleted “${name}”.`;
+      // The button just vanished; keep keyboard users in the same place.
+      (page.querySelector("[data-qr-del]") || page.querySelector("[data-qr-savename]")).focus();
+    }
   });
   page.querySelector("[data-qr-share]").addEventListener("click", async () => {
     const hint = page.querySelector("[data-qr-savehint]");

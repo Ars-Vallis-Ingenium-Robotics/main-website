@@ -1,0 +1,33 @@
+@* Link previews (Discord, iMessage, Instagram, Slack…), rendered straight into App.razor's <head> like SiteIcons.
+   Picks a preview image by section; og:title falls back to the page <title>, og:description comes from each page's HeadContent.
+   Images: wwwroot/img/og/*.jpg (1200×630). *@
+@inject IHttpContextAccessor Http
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="@(sms ? "Sequoia Marine Solutions" : "AVI Robotics")" />
+<meta property="og:url" content="@url" />
+<meta property="og:image" content="@image" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="@alt" />
+<meta name="twitter:card" content="summary_large_image" />
+
+@code {
+    private bool sms;
+    private string url = "", image = "", alt = "";
+
+    protected override void OnInitialized()
+    {
+        var ctx = Http.HttpContext!;
+        var req = ctx.Request;
+        var path = req.Path.Value ?? "/";
+        sms = ctx.OnSmsHost() || path.Equals("/sms", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/sms/", StringComparison.OrdinalIgnoreCase);
+        var tools = path.StartsWith("/tools", StringComparison.OrdinalIgnoreCase) || path.StartsWith("/countdown", StringComparison.OrdinalIgnoreCase);
+        var origin = $"{req.Scheme}://{req.Host}";
+        url = origin + path;
+        (image, alt) = tools ? ("og-tools.jpg", "AVI Robotics free tools: QR codes, countdowns and more")
+            : sms ? ("og-sms.jpg", "Sequoia Marine Solutions with ROSIE, their MATE ROV")
+            : ("og-avi.jpg", "AVI Robotics members in front of the Lyles College of Engineering");
+        image = $"{origin}/img/og/{image}";
+    }
+}

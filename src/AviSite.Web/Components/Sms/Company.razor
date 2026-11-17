@@ -3,7 +3,7 @@
 @inject ClubData Data
 
 <PageTitle>@c.Meta("title")</PageTitle>
-<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+<HeadContent><meta name="description" content="@c.Meta("description")" /><meta property="og:description" content="@c.Meta("description")" /></HeadContent>
 <section class="sms-page-hero">
     <div class="wrap">
         <p class="sms-kicker">@c["hero.kicker"].Inline()</p>

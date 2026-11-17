@@ -9,7 +9,7 @@
 
 @* Copy: content/pages/donate.md (form labels and errors stay here) *@
 <PageTitle>@(hasErrors ? "Error: " : "")@c.Meta("title")</PageTitle>
-<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+<HeadContent><meta name="description" content="@c.Meta("description")" /><meta property="og:description" content="@c.Meta("description")" /></HeadContent>
 
 <section class="section">
     <div class="wrap checkout">

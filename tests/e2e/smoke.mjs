@@ -681,6 +681,39 @@ await test("videos load from YouTube only after pressing play; privacy page is l
   assert.match(await page.locator("main").innerText(), /avi_cart[\s\S]*avi_admin/);
 });
 
+await test("tool usage: anonymous counts from a real browser, link previews ignored, officers see totals", async () => {
+  const uc = await browser.newContext({ userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36" });
+  const up = await uc.newPage();
+  await up.goto(BASE + "/tools/qr?url=https://avirobotics.org/join");
+  await up.locator("[data-qr-preview] svg").waitFor();
+  const beacon = up.waitForRequest((r) => r.url().endsWith("/api/use/qr.svg") && r.method() === "POST");
+  await Promise.all([up.waitForEvent("download"), up.click('[data-qr-download="svg"]')]);
+  await beacon;
+  assert.deepEqual(await uc.cookies(), [], "counting sets no cookies");
+  await uc.close();
+  await page.request.get(BASE + "/tools/qr", { headers: { "user-agent": "Discordbot/2.0" } });
+  await page.goto(BASE + "/admin/usage");
+  const row = (label) => page.locator("tr", { has: page.locator("th", { hasText: label }) }).locator("td").nth(3).innerText();
+  assert.ok(+(await row("QR maker opened")) >= 1);
+  assert.ok(+(await row("QR: SVG downloads")) >= 1);
+});
+
+await test("QR maker works by keyboard: tab rows use arrow keys, preview says what it opens", async () => {
+  await page.goto(BASE + "/tools/qr?url=https://avirobotics.org/join");
+  await page.locator("[data-qr-preview] svg").waitFor();
+  assert.equal(await page.locator("[data-qr-preview]").getAttribute("aria-label"), "QR code for https://avirobotics.org/join");
+  assert.equal(await page.locator("#qr-mode-bulk").getAttribute("tabindex"), "-1", "one Tab stop per tab row");
+  await page.focus("#qr-mode-one"); await page.keyboard.press("ArrowRight");
+  assert.equal(await page.evaluate(() => document.activeElement.id), "qr-mode-bulk");
+  assert.equal(await page.locator("#qr-bulk").isVisible(), true, "arrow selects the tab");
+  await page.keyboard.press("Home");
+  assert.equal(await page.locator("#qr-one").isVisible(), true);
+  await page.click(".qr-custom > summary");
+  await page.focus('[data-qr-tab][aria-selected="true"]'); await page.keyboard.press("End");
+  assert.equal(await page.evaluate(() => document.activeElement.dataset.qrTab), "size");
+  assert.equal(await page.locator('[data-qr-panel="size"]').isVisible(), true);
+});
+
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });
 
 await browser.close();

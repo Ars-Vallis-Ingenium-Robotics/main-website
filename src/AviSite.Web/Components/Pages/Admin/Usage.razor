@@ -1,0 +1,52 @@
+@page "/admin/usage"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.Policy)]
+@inject IToolUsageStore Store
+@inject TimeProvider Clock
+
+<PageTitle>Tool usage · AVI Robotics admin</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin">
+    <div class="wrap">
+        <AdminNav Current="usage" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Admin</p>
+                <h1 class="h1">Tool usage</h1>
+                <p class="muted">Anonymous counts from the tools pages: which button, which day. No cookies, no addresses, nothing about who. Bots and link previews aren't counted. Days are Pacific.</p>
+            </div>
+        </div>
+
+        <div class="table-scroll">
+            <table class="table">
+                <thead><tr><th scope="col">What</th><th scope="col" class="num">Today</th><th scope="col" class="num">7 days</th><th scope="col" class="num">30 days</th><th scope="col" class="num">All time</th><th scope="col">Last 30 days</th></tr></thead>
+                <tbody>
+                    @foreach (var (key, label) in ToolUsageEvents.All)
+                    {
+                        var days = counts.GetValueOrDefault(key) ?? [];
+                        var series = Enumerable.Range(0, 30).Select(i => days.GetValueOrDefault(today.AddDays(i - 29).ToString("yyyy-MM-dd"))).ToArray();
+                        var max = Math.Max(1, series.Max());
+                        <tr>
+                            <th scope="row">@label</th>
+                            <td class="num mono">@series[^1]</td>
+                            <td class="num mono">@series[^7..].Sum()</td>
+                            <td class="num mono">@series.Sum()</td>
+                            <td class="num mono">@days.Values.Sum()</td>
+                            <td><span class="usage-spark" aria-hidden="true">@foreach (var n in series) { <span style="--h: @(n * 100 / max)%"></span> }</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+@code {
+    private IReadOnlyDictionary<string, SortedDictionary<string, int>> counts = new Dictionary<string, SortedDictionary<string, int>>();
+    private DateOnly today;
+    protected override async Task OnInitializedAsync()
+    {
+        counts = await Store.ReadAsync();
+        today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(Clock.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById("America/Los_Angeles")).DateTime);
+    }
+}

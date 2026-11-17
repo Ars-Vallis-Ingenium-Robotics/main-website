@@ -1831,3 +1831,7 @@
 @layer components {
   .privacy { display: grid; gap: var(--s-7); }
 }
+@layer components {
+  .usage-spark { display: flex; align-items: flex-end; gap: 2px; height: 1.6rem; min-width: 9rem; }
+  .usage-spark > span { flex: 1; height: max(var(--h), 2px); background: var(--accent); border-radius: 1px; }
+}

@@ -4,8 +4,9 @@
 @inject ICountdownStore Store
 @inject TimeProvider Clock
 
+<CountOpen Key="countdown.open" />
 <PageTitle>Countdowns · AVI Robotics</PageTitle>
-<HeadContent><meta name="description" content="AVI Robotics and Sequoia Marine Solutions: competitions, deadlines, fundraisers and test days, counting down." /></HeadContent>
+<HeadContent><meta name="description" content="AVI Robotics and Sequoia Marine Solutions: competitions, deadlines, fundraisers and test days, counting down." /><meta property="og:description" content="AVI Robotics and Sequoia Marine Solutions: competitions, deadlines, fundraisers and test days, counting down." /></HeadContent>
 
 <PageHero Kicker="@c["countdown"].Text("kicker")" Title="@c["countdown"].Text("title")">
     <p>@c["countdown"].Inline()</p>

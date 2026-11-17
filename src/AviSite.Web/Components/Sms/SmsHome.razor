@@ -2,7 +2,7 @@
 @* Copy: content/sms/home.md *@
 
 <PageTitle>@c.Meta("title")</PageTitle>
-<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+<HeadContent><meta name="description" content="@c.Meta("description")" /><meta property="og:description" content="@c.Meta("description")" /></HeadContent>
 @{ var hero = c["hero"]; var hb = c["hero.buttons"].Links(); }
 <section class="sms-hero">
     <Photo Key="@hero.Photo" Sizes="100vw" Eager="true" Class="sms-hero__bg" Focus="35% 75%" />

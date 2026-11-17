@@ -2,7 +2,7 @@
 @* Copy: content/sms/rosie.md *@
 
 <PageTitle>@c.Meta("title")</PageTitle>
-<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+<HeadContent><meta name="description" content="@c.Meta("description")" /><meta property="og:description" content="@c.Meta("description")" /></HeadContent>
 @{ var hero = c["hero"]; var spec = c["spec"]; var model = c["model"]; var poster = c["poster"]; }
 <section class="sms-page-hero">
     <div class="wrap sms-page-hero__grid">

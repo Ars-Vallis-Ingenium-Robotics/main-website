@@ -1,0 +1,11 @@
+@* Counts one anonymous "opened" for a tool page (see Store/ToolUsage.cs). Renders nothing. Skips bots and link previews. *@
+@inject IToolUsageStore Usage
+@code {
+    [Parameter, EditorRequired] public string Key { get; set; } = "";
+    [CascadingParameter] private HttpContext? Http { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        if (Http is { } h && HttpMethods.IsGet(h.Request.Method) && !ToolUsageEvents.LooksLikeBot(h.Request.Headers.UserAgent.ToString()))
+            await Usage.CountAsync(Key);
+    }
+}

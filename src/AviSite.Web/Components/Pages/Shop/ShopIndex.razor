@@ -4,7 +4,7 @@
 
 @* Copy: content/pages/shop.md (products: Store/catalog.seed.json) *@
 <PageTitle>@c.Meta("title")</PageTitle>
-<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+<HeadContent><meta name="description" content="@c.Meta("description")" /><meta property="og:description" content="@c.Meta("description")" /></HeadContent>
 
 @if (Store.Value.ComingSoon)
 {

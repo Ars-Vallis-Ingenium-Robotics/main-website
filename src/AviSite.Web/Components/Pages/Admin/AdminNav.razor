@@ -8,6 +8,7 @@
     @if (isAdmin)
     {
         <a href="/admin/countdowns" class="@(Current == "countdowns" ? "is-current" : "")" aria-current="@(Current == "countdowns" ? "page" : null)">Countdowns</a>
+        <a href="/admin/usage" class="@(Current == "usage" ? "is-current" : "")" aria-current="@(Current == "usage" ? "page" : null)">Tool usage</a>
     }
     <form method="post" action="/admin/logout"><AntiforgeryToken /><button class="link-button" type="submit">Sign out@(team is null ? "" : $" ({team.ToUpperInvariant()})")</button></form>
 </nav>

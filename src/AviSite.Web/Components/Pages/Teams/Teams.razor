@@ -2,7 +2,7 @@
 @* Copy: content/pages/teams.md *@
 
 <PageTitle>@c.Meta("title")</PageTitle>
-<HeadContent><meta name="description" content="@c.Meta("description")" /></HeadContent>
+<HeadContent><meta name="description" content="@c.Meta("description")" /><meta property="og:description" content="@c.Meta("description")" /></HeadContent>
 
 <PageHero Kicker="@c["hero"].Text("kicker")" Title="@c["hero"].Text("title")">
     @c["hero"].Html()
