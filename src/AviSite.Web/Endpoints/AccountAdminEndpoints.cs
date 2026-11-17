@@ -19,7 +19,7 @@ public static class AccountAdminEndpoints
         {
             var me = await http.AccessAsync(store);
             var target = await store.FindAsync(email);
-            if (target is null || !me.CanManageGroup(group) || role is not (AccountRole.Lead or AccountRole.Member)) return Back(error: "denied");
+            if (target is null || !me.CanManageGroup(group) || role is not (AccountRole.Lead or AccountRole.Member) || me.Outranks(target)) return Back(error: "denied");
             if (target.Email == me.Account?.Email) return Back(error: "self");
             target.Teams.RemoveAll(t => t.Group == group);
             target.Teams.Add(new Membership { Group = group, Role = role });
@@ -30,7 +30,7 @@ public static class AccountAdminEndpoints
         {
             var me = await http.AccessAsync(store);
             var target = await store.FindAsync(email);
-            if (target is null || !me.CanManageGroup(group)) return Back(error: "denied");
+            if (target is null || !me.CanManageGroup(group) || me.Outranks(target)) return Back(error: "denied");
             if (target.Email == me.Account?.Email) return Back(error: "self");
             target.Teams.RemoveAll(t => t.Group == group);
             // Nobody keeps an account that can't open anything.
@@ -53,7 +53,7 @@ public static class AccountAdminEndpoints
         people.MapPost("/team/delete", async ([FromForm] string id, HttpContext http, IAccountStore store, IDynamicQrStore codes) =>
         {
             var me = await http.AccessAsync(store);
-            if (!me.IsOwner) return Back(error: "denied");
+            if (me.Tree.Find(id) is not { } team || !me.CanEditTeamsUnder(team.Parent)) return Back(error: "denied");
             if ((await codes.ListAsync()).Any(c => c.Team == id)) return Back(error: "team-has-codes");
             return await store.RemoveGroupAsync(id) ? Back(done: "team-removed") : Back(error: "team-busy");
         });
@@ -111,6 +111,7 @@ public static class AccountAdminEndpoints
 
             var target = await store.FindAsync(email);
             if (target is { FromConfig: true }) { skipped.Add($"{email} (owner)"); continue; }
+            if (target is not null && me.Outranks(target)) { skipped.Add($"{email} (leads above you)"); continue; }
             var account = target ?? new Account { Email = email, Name = string.IsNullOrWhiteSpace(name) ? email : name, AddedBy = me.Account?.Email };
             if (target is not null && !string.IsNullOrWhiteSpace(name) && target.Name == target.Email) account.Name = name;
             if (officer) account.Role = AccountRole.Officer;
@@ -126,11 +127,11 @@ public static class AccountAdminEndpoints
         return new(added, updated, skipped, null);
     }
 
-    /// <summary>Adds an organization or a sub-team. Owners only; everyone else sees the tree but can't change it.</summary>
+    /// <summary>Adds an organization (owner) or a sub-team (owner, or a lead of the parent or anything above it).</summary>
     public static async Task<string> AddGroupAsync(Access me, string? id, string? name, string? parent, IAccountStore store)
     {
         parent = string.IsNullOrWhiteSpace(parent) ? null : parent;
-        if (!me.IsOwner) return "denied";
+        if (!me.CanEditTeamsUnder(parent)) return "denied";
         id = (id ?? "").Trim().ToLowerInvariant();
         if (AccountRules.CheckGroupId(id) is not null || string.IsNullOrWhiteSpace(name)) return "group-id";
         var added = await store.AddGroupAsync(new AccountGroup { Id = id, Name = name.Trim(), Parent = parent });

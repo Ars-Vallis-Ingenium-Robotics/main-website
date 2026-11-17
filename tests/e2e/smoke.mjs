@@ -768,16 +768,34 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
   await lp.goto(BASE + "/admin/people");
   assert.equal(await lp.locator('[data-person="owner@example.com"]').count(), 0, "leads only see their teams' people");
   assert.ok(await lp.locator(`[data-person="${m1}"]`).count() === 1, "…including sub-teams");
-  assert.equal(await lp.locator("text=Add a team").count(), 0, "only the owner adds teams");
-  await addTeam(op, cd, "Electrical " + id, el);
-  await lp.goto(BASE + "/admin/people");
-  assert.equal(await lp.locator(`[data-team="${el}"]`).count(), 1, "leads see new sub-teams under them");
+  await addTeam(lp, cd, "Electrical " + id, el); // leads add sub-teams below the teams they lead…
+  assert.equal(await lp.locator('#g-parent option[value=""]').count(), 0, "…but only the owner makes organizations");
   await addPeople(lp, m1, el, "Lead");
 
-  // The Crush Depth lead can't touch ER-level memberships.
+  // An officer sees every team but can't add or remove teams.
+  const officer = `off-${id}@example.com`;
+  await op.goto(BASE + "/admin/people");
+  await op.fill("#add-list", officer); await op.selectOption("#add-team", ""); await op.check(".people-admin__officer input");
+  await op.getByRole("button", { name: "Add", exact: true }).click(); await op.locator(".alert").first().waitFor();
+  const [ofc, ofp] = await as(officer);
+  await ofp.goto(BASE + "/admin/people");
+  assert.equal(await ofp.locator(`[data-team="${el}"]`).count(), 1, "officers see the whole tree");
+  assert.equal(await ofp.locator("text=Add a team").count(), 0, "officers don't add teams");
+  assert.equal(await ofp.locator(".team-tree__remove").count(), 0, "officers don't remove teams");
+  const csrfForm = await ofp.locator('form[action="/admin/people/remove"] input[name="__RequestVerificationToken"]').first().inputValue();
+  const forced = await ofp.request.post(BASE + "/admin/people/team/delete", { form: { id: el, __RequestVerificationToken: csrfForm }, maxRedirects: 0 });
+  assert.match(forced.headers().location, /error=denied/, "not even by posting directly");
+  await ofc.close();
+
+  // The organization's top lead acts as its owner: a Crush Depth lead can't change them, even on Crush Depth.
+  await addPeople(op, erLead, cd); // ER lead is also a member of Crush Depth
   const [cc, cp] = await as(cdLead);
-  await cp.goto(BASE + "/admin/people?team=" + er);
-  assert.equal(await cp.locator(`[data-person="${erLead}"] .team-chip__x`).count(), 0, "no power above their own team");
+  await cp.goto(BASE + "/admin/people?team=" + cd);
+  assert.equal(await cp.locator(`[data-person="${erLead}"] .team-chip__x`).count(), 0, "can't take the org lead off a sub-team");
+  assert.equal(await cp.locator(`[data-person="${erLead}"] .people-admin__edit`).count(), 0, "can't change the org lead's role");
+  const tok = await cp.locator('input[name="__RequestVerificationToken"]').first().inputValue();
+  const forced2 = await cp.request.post(BASE + "/admin/people/team/remove", { form: { email: erLead, group: cd, __RequestVerificationToken: tok }, maxRedirects: 0 });
+  assert.match(forced2.headers().location, /error=denied/, "not even by posting directly");
 
   // Members: own codes only; leads above see them.
   const [mc, mp] = await as(m2);
@@ -798,9 +816,10 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
   // Only empty teams can be removed, and only by the owner.
   await op.goto(BASE + "/admin/people");
   assert.equal(await op.locator(`[data-team="${cd}"] .team-tree__remove`).count(), 0, "a team with people can't be removed");
-  await addTeam(op, er, "Scratch " + id, "sc" + id);
-  await op.locator(`[data-team="sc${id}"] .team-tree__remove button`).click();
-  assert.match(await op.locator("main").innerText(), /Team removed/);
+  await addTeam(lp, er, "Scratch " + id, "sc" + id);
+  await lp.locator(`[data-team="sc${id}"] .team-tree__remove button`).click(); // the ER lead removes their own sub-team
+  assert.match(await lp.locator("main").innerText(), /Team removed/);
+  await op.goto(BASE + "/admin/people");
   assert.equal(await op.locator(`[data-team="sc${id}"]`).count(), 0);
   for (const c of [oc, lc, cc, mc, m1c]) await c.close();
 });

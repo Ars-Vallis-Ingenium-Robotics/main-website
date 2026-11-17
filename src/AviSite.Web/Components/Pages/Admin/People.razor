@@ -22,7 +22,7 @@
 
         @* ---------- Teams ---------- *@
         <h2 class="h3">Teams</h2>
-        <p class="muted small">Organizations at the top, teams and sub-teams under them, as deep as you like. A lead manages the people and QR codes of their team and everything under it. Each team's id starts its QR code names.@(access.IsOwner ? "" : " Only the owner adds or removes teams.")</p>
+        <p class="muted small">Organizations at the top, teams and sub-teams under them, as deep as you like. A lead manages the people and QR codes of their team and everything under it. Each team's id starts its QR code names.@(access.IsOwner ? "" : parentChoices.Count > 0 ? " You can add and remove sub-teams under the teams you lead." : " The owner and team leads add or remove sub-teams.")</p>
         <ul class="team-tree" role="list">
             @foreach (var g in visibleTeams)
             {
@@ -32,7 +32,7 @@
                     <a href="/admin/people?team=@g.Id" class="team-tree__name">@g.Name</a>
                     <span class="mono small muted">@g.Id-…</span>
                     <span class="small muted">@count @(count == 1 ? "person" : "people")@(leads.Count > 0 ? $" · led by {string.Join(", ", leads)}" : "")</span>
-                    @if (access.IsOwner && count == 0 && !access.Tree.Children(g.Id).Any() && g.Id != JsonAccountStore.AviRoot)
+                    @if (access.CanEditTeamsUnder(g.Parent) && count == 0 && !access.Tree.Children(g.Id).Any() && g.Id != JsonAccountStore.AviRoot)
                     {
                         <form method="post" action="/admin/people/team/delete" class="team-tree__remove">
                             <AntiforgeryToken />
@@ -44,7 +44,7 @@
             }
         </ul>
 
-        @if (access.IsOwner)
+        @if (parentChoices.Count > 0 || access.IsOwner)
         {
             <details class="people-admin__more" open="@(groupError is not null)">
                 <summary>Add a team</summary>
@@ -53,7 +53,7 @@
                         <div class="field">
                             <label class="label" for="g-parent">Under</label>
                             <InputSelect id="g-parent" @bind-Value="NewGroup!.Parent">
-                                <option value="">Nothing (a new organization)</option>
+                                @if (access.IsOwner) { <option value="">Nothing (a new organization)</option> }
                                 @foreach (var g in parentChoices) { <option value="@g.Id">@Indent(g)@g.Name</option> }
                             </InputSelect>
                         </div>
@@ -154,7 +154,7 @@
                                     {
                                         <li class="team-chip @(t.Role == AccountRole.Lead ? "team-chip--lead" : "")">
                                             <span title="@access.Tree.Path(t.Group)">@access.Tree.Name(t.Group)@(t.Role == AccountRole.Lead ? " · Lead" : "")</span>
-                                            @if (!self && access.CanManageGroup(t.Group))
+                                            @if (!self && access.CanManageGroup(t.Group) && !access.Outranks(a))
                                             {
                                                 <form method="post" action="/admin/people/team/remove">
                                                     <AntiforgeryToken />
@@ -165,7 +165,7 @@
                                         </li>
                                     }
                                 </ul>
-                                @if (!self && !a.FromConfig && manageable.Count > 0)
+                                @if (!self && !a.FromConfig && manageable.Count > 0 && !access.Outranks(a))
                                 {
                                     <details class="people-admin__edit">
                                         <summary>Change</summary>
@@ -295,7 +295,7 @@
     {
         await LoadAsync();
         Add ??= new() { Team = manageable.FirstOrDefault()?.Id ?? "" };
-        NewGroup ??= new() { Parent = "" };
+        NewGroup ??= new() { Parent = access.IsOwner ? "" : parentChoices.FirstOrDefault()?.Id };
     }
 
     private async Task LoadAsync()
@@ -303,7 +303,7 @@
         access = await Http!.AccessAsync(Store);
         all = await Store.ListAsync();
         manageable = access.Tree.Ordered(g => access.CanManageGroup(g.Id)).ToList();
-        parentChoices = access.IsOwner ? access.Tree.Ordered().ToList() : [];
+        parentChoices = access.Tree.Ordered(g => access.CanEditTeamsUnder(g.Id)).ToList();
         visibleTeams = access.Tree.Ordered(g => access.SiteWide || access.BelongsTo.Contains(g.Id)).ToList();
 
         IEnumerable<Account> f = access.SiteWide ? all : all.Where(a => a.Teams.Any(t => access.Manages.Contains(t.Group)) || a.Email == access.Account?.Email);

@@ -125,6 +125,10 @@ public sealed class Access
     public GroupTree Tree { get; init; } = new([]);
 
     public bool CanManageGroup(string? id) => SiteWide || (id is not null && Manages.Contains(id));
+    /// <summary>Adding or removing teams under <paramref name="parent"/> (null = new organizations): the owner anywhere,
+    /// and leads below the teams they lead. Officers don't get this from being officers: an AVI officer can't
+    /// reshape a partner's Crush Depth.</summary>
+    public bool CanEditTeamsUnder(string? parent) => IsOwner || (parent is not null && Manages.Contains(parent));
     public bool LeadsAnything => SiteWide || Manages.Count > 0;
 
     public static Access For(Account? a, GroupTree tree)
@@ -152,7 +156,13 @@ public sealed class Access
     public bool CanEditPerson(Account target) =>
         IsOwner ? !target.FromConfig
         : SiteWide ? !target.SiteWide
-        : !target.SiteWide && target.Teams.Any(t => Manages.Contains(t.Group));
+        : !target.SiteWide && target.Teams.Any(t => Manages.Contains(t.Group)) && !Outranks(target);
+
+    /// <summary>
+    /// True if the target leads something this person doesn't: e.g. the lead of an organization outranks a sub-team lead,
+    /// so the top lead of each organization acts as its owner and can't be changed from below. Co-leads of the same team are peers.
+    /// </summary>
+    public bool Outranks(Account target) => !SiteWide && !Access.For(target, Tree).Manages.IsSubsetOf(Manages);
 }
 
 public static partial class AccountRules
