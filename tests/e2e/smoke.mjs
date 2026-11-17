@@ -6,6 +6,16 @@ import { chromium, devices } from "playwright";
 import assert from "node:assert/strict";
 
 const BASE = process.env.BASE_URL ?? "http://127.0.0.1:5080";
+// These tests contain write flows. Refuse remote targets and any local app not exposing Development-only sign-in.
+const baseUrl = new URL(BASE);
+if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(baseUrl.hostname)) {
+  throw new Error("E2E smoke tests are local-only; set BASE_URL to a local Development instance.");
+}
+const loginCheck = await fetch(new URL("/admin/login", baseUrl), { redirect: "manual" });
+const loginHtml = await loginCheck.text();
+if (loginCheck.status !== 200 || !loginHtml.includes("Sign in (dev only)")) {
+  throw new Error("Refusing E2E run: target is not a local Development instance with dev-only sign-in.");
+}
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "avi-dev-password";
 const results = [];
 // ONLY=layout node smoke.mjs runs just the tests whose name contains "layout".
@@ -1070,8 +1080,26 @@ await test("hours: report with charts and CSV; leaderboard is each organization'
   const [oc, op] = await signIn("owner@example.com");
   await op.goto(BASE + "/admin/hours/report?range=all");
   assert.ok(await op.locator(".colchart__bar").count() > 0, "hours-per-week chart");
-  assert.ok(await op.locator(".report__block .hbars li").count() > 0, "category / team / person bars");
+  const assertPieMatchesReport = async () => {
+    const pie = op.locator("[data-hours-pie]");
+    assert.equal(await pie.count(), 1, "category pie chart");
+    assert.ok(await pie.locator("[data-pie-slice]").count() > 0, "category legend is present");
+    const chartSvg = pie.locator('svg[role="img"]');
+    const titleId = await chartSvg.getAttribute("aria-labelledby");
+    const descriptionId = await chartSvg.getAttribute("aria-describedby");
+    assert.ok(titleId && descriptionId, "chart has an accessible name and description");
+    assert.ok(await op.locator(`#${titleId}`).count() === 1 && await op.locator(`#${descriptionId}`).count() === 1, "accessible title and description resolve");
+    const percentages = await pie.locator(".hours-pie__share").allTextContents();
+    assert.ok(percentages.every((value) => /^(?:<0\.1|\d{1,3}(?:\.\d)?)%$/.test(value.trim())), `share labels are concise: ${percentages.join(", ")}`);
+    const chartTotal = Number(await pie.getAttribute("data-total-hours"));
+    const reportTotal = Number(await op.locator(".hours__totals").getAttribute("data-report-total-hours"));
+    assert.ok(Number.isFinite(chartTotal) && Number.isFinite(reportTotal) && Math.abs(chartTotal - reportTotal) < 0.01, `pie total ${chartTotal} matches filtered report total ${reportTotal}`);
+  };
+  await assertPieMatchesReport();
+  assert.ok(await op.locator(".report__block .hbars li").count() > 0, "team / person bars");
   assert.match(await op.locator(".report__matrix").innerText(), /Total/i);
+  await op.goto(BASE + "/admin/hours/report?range=week");
+  await assertPieMatchesReport(); // The pie is recomputed from the range-filtered report data.
   const csv = await op.request.get(BASE + "/admin/hours/export.csv?range=all");
   assert.equal(csv.status(), 200);
   assert.match((await csv.text()).split("\n")[0], /^name,email,organization,team,category,date,start,end,hours,note,source$/);

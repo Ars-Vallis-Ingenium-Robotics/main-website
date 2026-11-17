@@ -25,7 +25,7 @@
 
         <div class="no-print"><HoursFilter Teams="teams" Tree="access.Tree" Team="@Team" Range="@Range" ShowSearch="false" Action="/admin/hours/report" /></div>
 
-        <div class="hours__totals">
+        <div class="hours__totals" data-report-total-hours="@total.ToString(System.Globalization.CultureInfo.InvariantCulture)">
             <div class="stat"><span class="stat__num">@HoursText.Hours(total)</span><span class="stat__label">hours</span></div>
             <div class="stat"><span class="stat__num">@byPerson.Count</span><span class="stat__label">@(byPerson.Count == 1 ? "person" : "people") logged time</span></div>
             <div class="stat"><span class="stat__num">@sessions</span><span class="stat__label">sessions</span></div>
@@ -47,7 +47,7 @@
             <div class="report__pair">
                 <section class="report__block">
                     <h2 class="h4">By category</h2>
-                    <HBars Rows="byCategory" />
+                    <HoursPieChart Rows="byCategory" Label="@($"Hours by category, {ScopeName}, {RangeLabel}")" />
                 </section>
                 <section class="report__block">
                     <h2 class="h4">By team</h2>
