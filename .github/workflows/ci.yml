@@ -13,6 +13,8 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
+      - name: CSP lint (no inline handlers, inline scripts or eval)
+        run: node tests/e2e/csp-lint.mjs
       - run: dotnet build src/AviSite.Web -c Release
       - name: Start app (Development, fake PayPal)
         run: |

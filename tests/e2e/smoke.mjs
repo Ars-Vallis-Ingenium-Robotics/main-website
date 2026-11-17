@@ -15,6 +15,10 @@ async function test(name, fn) {
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+// Anything the Content-Security-Policy blocks (inline handlers, inline scripts, eval) becomes a console error,
+// so the "no console errors" test at the end fails instead of the bug reaching production.
+await ctx.addInitScript(() => document.addEventListener("securitypolicyviolation", (e) =>
+  console.error(`CSP blocked ${e.violatedDirective}: ${e.blockedURI || "inline"} (${e.sourceFile || location.pathname}:${e.lineNumber})`)));
 const page = await ctx.newPage();
 const consoleErrors = [];
 // 404s are expected: the not-found tests request missing pages on purpose.
@@ -537,6 +541,12 @@ await test("tools: QR maker draws a code from ?url and offers PNG/SVG", async ()
   assert.equal(await page.locator('[data-qr-theme="sms"]').getAttribute("aria-pressed"), "true");
   const [dl] = await Promise.all([page.waitForEvent("download"), page.click('[data-qr-download="svg"]')]);
   assert.match(dl.suggestedFilename(), /^qr-avirobotics-org-join\.svg$/);
+  // Enter in a field must not submit the form (reload, lose everything) or trip the CSP.
+  const before = page.url();
+  await page.locator('[data-qr="url"]').press("Enter");
+  await page.waitForTimeout(300);
+  assert.equal(page.url(), before, "Enter doesn't navigate");
+  assert.equal(await page.locator("[data-qr-preview] svg").count(), 1, "preview survives Enter");
   await page.click(".qr-custom > summary");
   for (const d of ["fluid", "vertical", "star"]) { await page.check(`input[name="qr-dot"][value="${d}"]`); await page.locator("[data-qr-preview] svg").waitFor(); }
   await page.click('[data-qr-tab="label"]');

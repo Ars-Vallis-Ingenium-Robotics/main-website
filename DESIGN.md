@@ -100,9 +100,18 @@ links on /sms and absolute ones on the SMS host.
 - No invented facts: stats, awards, sponsors, years. Mark unknowns `TODO(confirm)`.
 - No stock photos of "diverse team smiling at laptop". Real club photos or nothing.
 
+## Content-Security-Policy: no inline JavaScript
+
+The site sends `script-src 'self'` (no `'unsafe-inline'`, no `'unsafe-eval'`). The browser silently refuses:
+`onclick=` / `onsubmit=` / any `on…=` attribute, `<script>` blocks without `src`, `javascript:` links, `eval`,
+`new Function`, and string `setTimeout`. These fail only when they run (e.g. pressing Enter in a form), so a page
+can look fine and still be broken. Put behavior in `wwwroot/js/*.js` and wire it with `addEventListener`.
+Blazor `@onclick` doesn't run either: pages are static SSR. Checked by `node tests/e2e/csp-lint.mjs` (CI) and the
+smoke tests turn any CSP violation into a failure. (Nov 2026: `onsubmit="return false"` on the QR form.)
+
 ## Checklist before shipping UI
 
-1. `node tests/e2e/smoke.mjs` passes.
+1. `node tests/e2e/csp-lint.mjs` and `node tests/e2e/smoke.mjs` pass.
 2. Screenshot at 375px and 1440px and look at them.
 3. Keyboard: tab through, focus always visible, Escape closes the menu.
 4. Run `/impeccable critique` and `npx impeccable detect` (once Impeccable is installed).
