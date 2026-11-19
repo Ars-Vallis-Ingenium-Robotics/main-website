@@ -34,6 +34,24 @@ public static class HoursRules
     public static IEnumerable<AccountGroup> SettingsOrgs(Access a) =>
         a.Tree.Children(null).Where(o => a.IsOwner || a.Leads.Contains(o.Id));
 
+    /// <summary>
+    /// The organization's leaderboard: everyone with time in it this season, most hours first.
+    /// Null unless the organization turned its leaderboard on (Hours settings).
+    /// </summary>
+    public static Leaderboard? Leaderboard(string org, HoursStore store, GroupTree tree, IReadOnlyDictionary<string, Account> people)
+    {
+        var s = store.Settings(org);
+        if (!s.Leaderboard) return null;
+        var now = store.Now;
+        var season = s.SeasonOf(DateOnly.FromDateTime(now.ToPacific().DateTime));
+        var from = HoursText.StartOfDayPacific(season.Start);
+        var rows = store.List(teams: tree.WithDescendants([org]), from: from)
+            .GroupBy(e => e.Email)
+            .Select(g => new LeaderboardRow(g.Key, people.TryGetValue(g.Key, out var p) ? JsonAccountStore.DisplayName(p) : null, g.Sum(e => HoursRanges.Clip(e, from, null, now))))
+            .Where(r => r.Hours > 0).OrderByDescending(r => r.Hours).ToList();
+        return new Leaderboard(org, tree.Name(org), season.Label, rows);
+    }
+
     /// <summary>A date and two clock times (Pacific) → UTC start and end. An end earlier than the start means past midnight.</summary>
     public static string? ParseTimes(string? date, string? start, string? end, DateTimeOffset now, out DateTimeOffset s, out DateTimeOffset e)
     {
@@ -47,6 +65,15 @@ public static class HoursRules
         if (s > now.AddMinutes(5)) return "future";
         return null;
     }
+}
+
+/// <summary>One person on a leaderboard. <see cref="Name"/> is null for someone no longer in the accounts list.</summary>
+public sealed record LeaderboardRow(string Email, string? Name, double Hours);
+
+public sealed record Leaderboard(string Org, string OrgName, string Season, List<LeaderboardRow> Rows)
+{
+    /// <summary>1-based rank, or null if they have no time this season.</summary>
+    public int? RankOf(string? email) => Rows.FindIndex(r => r.Email == email) is var i and >= 0 ? i + 1 : null;
 }
 
 /// <summary>

@@ -20,6 +20,8 @@ public sealed class DiscordGuild
     /// <summary>Where the weekly summary is posted.</summary>
     public string? UpdatesChannel { get; set; }
     public bool WeeklySummary { get; set; }
+    /// <summary>Also post the organization's leaderboard on Mondays (only if the organization turned its leaderboard on).</summary>
+    public bool WeeklyLeaderboard { get; set; }
     /// <summary>Where the clock-in panel (Clock in / Clock out buttons) is posted.</summary>
     public string? PanelChannel { get; set; }
     /// <summary>Weekly meeting (Pacific). With a panel channel, a fresh clock panel is posted 15 minutes before it.</summary>
@@ -47,7 +49,7 @@ public sealed class DiscordBotStore(SiteDb db, TimeProvider clock)
     public const string PanelKey = "last_panel";
 
     private const string Cols = "guild_id, name, team, command_channels, updates_channel, weekly_summary, panel_channel, meeting_day, meeting_time, " +
-        "panel_message_id, last_summary, last_panel, added_by, added_utc, updated_by, updated_utc";
+        "panel_message_id, last_summary, last_panel, added_by, added_utc, updated_by, updated_utc, weekly_leaderboard";
 
     public DateTimeOffset Now => clock.GetUtcNow();
 
@@ -60,6 +62,7 @@ public sealed class DiscordBotStore(SiteDb db, TimeProvider clock)
         MeetingTime = SiteDb.StrOrNull(r, 8) is { } t && TimeOnly.TryParseExact(t, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var time) ? time : null,
         PanelMessageId = SiteDb.StrOrNull(r, 9), LastSummary = SiteDb.StrOrNull(r, 10), LastPanel = SiteDb.StrOrNull(r, 11),
         AddedBy = r.GetString(12), AddedUtc = SiteDb.Time(r.GetString(13)), UpdatedBy = SiteDb.StrOrNull(r, 14), UpdatedUtc = SiteDb.TimeOrNull(r, 15),
+        WeeklyLeaderboard = r.GetInt64(16) != 0,
     };
 
     // ---------- Pause ----------
@@ -131,11 +134,11 @@ public sealed class DiscordBotStore(SiteDb db, TimeProvider clock)
     {
         using var c = db.Open();
         using var cmd = SiteDb.Cmd(c, """
-            UPDATE discord_guilds SET command_channels = $cmd, updates_channel = $upd, weekly_summary = $weekly, panel_channel = $panel,
+            UPDATE discord_guilds SET command_channels = $cmd, updates_channel = $upd, weekly_summary = $weekly, weekly_leaderboard = $board, panel_channel = $panel,
                 meeting_day = $day, meeting_time = $time, updated_by = $by, updated_utc = $now
             WHERE guild_id = $id
             """, null, ("$id", g.GuildId), ("$cmd", string.Join(',', g.CommandChannels)), ("$upd", g.UpdatesChannel),
-            ("$weekly", g.WeeklySummary ? 1 : 0), ("$panel", g.PanelChannel), ("$day", g.MeetingDay is { } d ? (int)d : null),
+            ("$weekly", g.WeeklySummary ? 1 : 0), ("$board", g.WeeklyLeaderboard ? 1 : 0), ("$panel", g.PanelChannel), ("$day", g.MeetingDay is { } d ? (int)d : null),
             ("$time", g.MeetingTime?.ToString("HH:mm", CultureInfo.InvariantCulture)), ("$by", by), ("$now", SiteDb.Iso(Now)));
         return cmd.ExecuteNonQuery() > 0;
     }

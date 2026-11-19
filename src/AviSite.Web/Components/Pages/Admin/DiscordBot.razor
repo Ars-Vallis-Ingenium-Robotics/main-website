@@ -5,6 +5,7 @@
 @using AviSite.Web.Endpoints
 @inject IAccountStore Accounts
 @inject DiscordBotStore Bot
+@inject HoursStore Hours
 @inject DiscordApi Api
 @inject IOptions<DiscordOptions> Discord
 
@@ -18,7 +19,7 @@
             <div>
                 <p class="eyebrow">Admin</p>
                 <h1 class="h1">Discord bot</h1>
-                <p class="muted">The AVI Hours bot: private <code>/myhours</code>, <code>/clockstatus</code> and <code>/teamhours</code> replies, a clock-in panel, and a weekly team summary. The site owner runs the bot and picks its servers; each server's team leads set its channels.</p>
+                <p class="muted">The AVI Hours bot: private <code>/myhours</code>, <code>/clockstatus</code>, <code>/teamhours</code> and <code>/leaderboard</code> replies, a clock-in panel, a weekly team summary and leaderboard. The site owner runs the bot and picks its servers; each server's team leads set its channels.</p>
             </div>
         </div>
 
@@ -104,6 +105,8 @@
             @foreach (var g in visible)
             {
                 var manage = DiscordBotRules.CanManage(access, g);
+                var org = HoursRules.OrgOf(g.Team, access.Tree);
+                var boardOn = Hours.Settings(org).Leaderboard;
                 <article class="discord-bot__server" id="server-@g.GuildId">
                     <h3 class="h4">@g.Name</h3>
                     <p class="small muted">Server <code>@g.GuildId</code> · @access.Tree.Path(g.Team) · managed by its leads@(manage ? "" : " (view only)")@(g.UpdatedBy is { } u && g.UpdatedUtc is { } when ? $" · changed {Stamp(when)}" : "")</p>
@@ -141,6 +144,14 @@
                                 </div>
                             </div>
                             <label class="check"><input type="checkbox" name="weeklySummary" value="true" checked="@g.WeeklySummary" /> Post last week's team total in the updates channel every Monday at 9:00</label>
+                            @if (boardOn)
+                            {
+                                <label class="check"><input type="checkbox" name="weeklyLeaderboard" value="true" checked="@g.WeeklyLeaderboard" /> Post the @access.Tree.Name(org) leaderboard there every Monday too</label>
+                            }
+                            else
+                            {
+                                <p class="small muted">@access.Tree.Name(org) doesn't show a leaderboard. Once its leads turn one on in <a href="/admin/hours/settings">Hours settings</a>, the bot can post it here and answer <code>/leaderboard</code>.</p>
+                            }
                             <p class="small muted">With a meeting set, a fresh clock panel (Clock in / Clock out / My status) goes up in the panel channel 15 minutes before it starts. Paste a channel ID (right-click the channel → Copy Channel ID) or its link.</p>
                             <div class="actions"><button class="btn btn--accent" type="submit">Save</button></div>
                         </form>
@@ -153,13 +164,20 @@
                                 <AntiforgeryToken /><input type="hidden" name="what" value="summary" />
                                 <button class="btn btn--ghost btn--sm" type="submit" disabled="@(g.UpdatesChannel is null || !Api.Configured)">Post last week's summary now</button>
                             </form>
+                            @if (boardOn)
+                            {
+                                <form method="post" action="/admin/discord/bot/servers/@g.GuildId/post">
+                                    <AntiforgeryToken /><input type="hidden" name="what" value="leaderboard" />
+                                    <button class="btn btn--ghost btn--sm" type="submit" disabled="@(g.UpdatesChannel is null || !Api.Configured)">Post leaderboard now</button>
+                                </form>
+                            }
                         </div>
                     }
                     else
                     {
                         <ul class="small" role="list">
                             <li>Commands: @(g.CommandChannels.Count == 0 ? "any channel" : string.Join(", ", g.CommandChannels))</li>
-                            <li>Updates: @(g.UpdatesChannel ?? "none")@(g.WeeklySummary ? " · weekly summary on" : "")</li>
+                            <li>Updates: @(g.UpdatesChannel ?? "none")@(g.WeeklySummary ? " · weekly summary on" : "")@(g.WeeklyLeaderboard && boardOn ? " · weekly leaderboard on" : "")</li>
                             <li>Clock panel: @(g.PanelChannel ?? "none")@(g.MeetingDay is { } md && g.MeetingTime is { } mt ? $" · before {CultureInfo.InvariantCulture.DateTimeFormat.GetDayName(md)} {mt.ToString("h:mm tt", CultureInfo.InvariantCulture)} meetings" : "")</li>
                         </ul>
                     }

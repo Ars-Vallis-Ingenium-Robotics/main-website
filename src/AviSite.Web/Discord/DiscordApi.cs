@@ -105,7 +105,7 @@ public sealed class DiscordApi(IHttpClientFactory clients, IOptions<DiscordOptio
         e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var n) ? n : null;
 }
 
-/// <summary>The slash commands, the same three that scripts/register-discord-commands.mjs registers.</summary>
+/// <summary>The slash commands, the same ones scripts/register-discord-commands.mjs registers.</summary>
 public static class DiscordCommands
 {
     private static readonly object Range = new
@@ -118,6 +118,7 @@ public static class DiscordCommands
     [
         new { name = "myhours", description = "View your own AVI Hours totals", options = new[] { Range } },
         new { name = "clockstatus", description = "Check your own clock-in status" },
+        new { name = "leaderboard", description = "This season's Hours leaderboard (if your organization shows one)" },
         new
         {
             name = "teamhours", description = "View aggregate Hours for a team you lead",

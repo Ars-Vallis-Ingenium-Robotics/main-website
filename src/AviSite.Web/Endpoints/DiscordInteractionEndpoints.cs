@@ -88,6 +88,7 @@ public static class DiscordInteractionEndpoints
                     "myhours" => MyHours(data, account, hours),
                     "clockstatus" => ClockStatus(account, hours),
                     "teamhours" => await TeamHours(data, account, server, accounts, hours, http.RequestAborted),
+                    "leaderboard" => await LeaderboardReply(account, server, accounts, hours, http.RequestAborted),
                     _ => null,
                 };
             return reply is null ? Done("unknown", Ephemeral("That command isn't supported.")) : Done("ok", reply);
@@ -112,6 +113,20 @@ public static class DiscordInteractionEndpoints
         if (store.ClockIn(account.Email, team, "") is null) return Ephemeral("You're already clocked in.");
         var site = config.PublicBaseUrl is { Length: > 0 } b ? $" Pick what you worked on later: {b.TrimEnd('/')}/admin/hours" : "";
         return Ephemeral($"Clocked in · {tree.Path(team)}.{site}");
+    }
+
+    /// <summary>The organization's leaderboard (this server's, or the caller's own in a DM), if it turned one on. Members only.</summary>
+    private static async Task<IResult> LeaderboardReply(Account account, DiscordGuild? server, IAccountStore accounts, HoursStore store, CancellationToken ct)
+    {
+        var tree = await accounts.GroupsAsync(ct);
+        var access = Access.For(account, tree);
+        var mine = access.BelongsTo.Select(id => HoursRules.OrgOf(id, tree)).ToHashSet();
+        var org = server is not null ? HoursRules.OrgOf(server.Team, tree) : mine.Order().FirstOrDefault() ?? JsonAccountStore.AviRoot;
+        if (!access.IsOwner && !mine.Contains(org)) return Ephemeral($"The {tree.Name(org)} leaderboard is for its members.");
+        var people = (await accounts.ListAsync(ct)).ToDictionary(a => a.Email);
+        return HoursRules.Leaderboard(org, store, tree, people) is { } lb
+            ? Ephemeral(DiscordPosts.LeaderboardText(lb, 10, account.Email))
+            : Ephemeral($"{tree.Name(org)} hasn't turned on a leaderboard. A lead can switch it on in Hours settings.");
     }
 
     private static IResult ButtonClockOut(Account account, HoursStore store)

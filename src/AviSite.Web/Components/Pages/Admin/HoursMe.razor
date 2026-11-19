@@ -269,16 +269,10 @@
         var people = (await Accounts.ListAsync()).ToDictionary(a => a.Email);
         foreach (var org in orgs)
         {
-            var s = Store.Settings(org);
-            if (!s.Leaderboard) continue;
-            var sn = s.SeasonOf(today);
-            var from = HoursText.StartOfDayPacific(sn.Start);
-            var orgTeams = access.Tree.WithDescendants([org]);
-            var rows = Store.List(teams: orgTeams, from: from)
-                .GroupBy(e => e.Email).Select(g => new BoardRow(g.Key, people.TryGetValue(g.Key, out var p) ? JsonAccountStore.DisplayName(p) : g.Key, g.Sum(e => Clip(e, from, null))))
-                .Where(r => r.Hours > 0).OrderByDescending(r => r.Hours).ToList();
+            if (HoursRules.Leaderboard(org, Store, access.Tree, people) is not { } lb) continue;
+            var rows = lb.Rows.Select(r => new BoardRow(r.Email, r.Name ?? r.Email, r.Hours)).ToList();
             var myIndex = rows.FindIndex(r => r.Email == me);
-            boards.Add(new Board(org, access.Tree.Name(org), sn.Label, rows.Take(10).ToList(), myIndex >= 0 ? myIndex + 1 : null, myIndex >= 0 ? rows[myIndex].Hours : 0));
+            boards.Add(new Board(org, lb.OrgName, lb.Season, rows.Take(10).ToList(), myIndex >= 0 ? myIndex + 1 : null, myIndex >= 0 ? rows[myIndex].Hours : 0));
         }
     }
 }

@@ -158,6 +158,7 @@ public sealed class SiteDb
             command_channels TEXT NOT NULL DEFAULT '',
             updates_channel TEXT,
             weekly_summary INTEGER NOT NULL DEFAULT 0,
+            weekly_leaderboard INTEGER NOT NULL DEFAULT 0,
             panel_channel TEXT,
             meeting_day INTEGER,
             meeting_time TEXT,

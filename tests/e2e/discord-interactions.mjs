@@ -218,6 +218,14 @@ try {
   admin.prepare("UPDATE discord_bot SET paused = 0 WHERE id = 1").run();
   await expectEphemeral(await post(inGuild(command("myhours", selfId))), "2.0 h");
 
+  // Leaderboard: only when the organization turned it on; names, never emails.
+  await expectEphemeral(await post(inGuild(command("leaderboard", selfId))), "hasn't turned on a leaderboard");
+  admin.prepare("INSERT INTO hours_settings (org, leaderboard, season_month, season_day) VALUES ('avi', 1, 8, 1) ON CONFLICT(org) DO UPDATE SET leaderboard = 1").run();
+  const board = await expectEphemeral(await post(inGuild(command("leaderboard", otherId))), "AVI Robotics leaderboard");
+  assert.ok(board.indexOf("Private Other Name") < board.indexOf("Private Self Name"), `ranked by hours: ${board}`);
+  assert.ok(board.includes("← you"), "the caller's own row is marked");
+  assert.ok(!/example\.test|PRIVATE_.*_NOTE/.test(board), "leaderboard shows names only, never emails or notes");
+
   // The status log keeps counts by command and outcome, never who.
   const outcomes = new Set(admin.prepare("SELECT DISTINCT outcome FROM discord_events").all().map(r => r.outcome));
   for (const o of ["ok", "blocked", "channel", "unlinked", "paused"]) assert.ok(outcomes.has(o), `activity log records ${o}`);

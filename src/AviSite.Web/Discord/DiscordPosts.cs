@@ -1,11 +1,56 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
+using AviSite.Web.Endpoints;
 using AviSite.Web.Store;
 
 namespace AviSite.Web.Discord;
 
 /// <summary>What the bot posts in channels: the clock panel and the weekly team summary. Totals only, never names.</summary>
-public sealed class DiscordPosts(DiscordApi api, DiscordBotStore bot, HoursStore hours, IAccountStore accounts)
+public sealed partial class DiscordPosts(DiscordApi api, DiscordBotStore bot, HoursStore hours, IAccountStore accounts)
 {
+    /// <summary>
+    /// The organization's leaderboard for a server, or null if the organization hasn't turned one on.
+    /// Same rows as the site's leaderboard on /admin/hours.
+    /// </summary>
+    public async Task<Leaderboard?> LeaderboardForAsync(string team, CancellationToken ct = default)
+    {
+        var tree = await accounts.GroupsAsync(ct);
+        var people = (await accounts.ListAsync(ct)).ToDictionary(a => a.Email);
+        return HoursRules.Leaderboard(HoursRules.OrgOf(team, tree), hours, tree, people);
+    }
+
+    /// <summary>"AVI Robotics leaderboard · 2026–27" and the top <paramref name="top"/>. Names only (never emails), no pings.</summary>
+    public static string LeaderboardText(Leaderboard lb, int top = 10, string? me = null)
+    {
+        var lines = new List<string> { $"**{Escape(lb.OrgName)} leaderboard · {lb.Season}**" };
+        if (lb.Rows.Count == 0) lines.Add("No hours logged this season yet.");
+        foreach (var (row, i) in lb.Rows.Take(top).Select((r, i) => (r, i)))
+        {
+            var line = $"{i + 1}. {NameOf(row)} · {HoursText.Hours(row.Hours)} h";
+            lines.Add(row.Email == me ? $"**{line}** ← you" : line);
+        }
+        if (me is not null && lb.RankOf(me) is { } rank && rank > top)
+            lines.Add($"You're #{rank} with {HoursText.Hours(lb.Rows[rank - 1].Hours)} h.");
+        return string.Join('\n', lines);
+    }
+
+    /// <summary>A display name safe to show in a Discord channel: never an email address, markdown escaped.</summary>
+    private static string NameOf(LeaderboardRow row) =>
+        row.Name is { } n && !n.Contains('@') ? Escape(n) : "AVI member";
+
+    [GeneratedRegex(@"([\\*_~`|>\[\]])")]
+    private static partial Regex MarkdownChars();
+    private static string Escape(string s) => MarkdownChars().Replace(s, "\\$1");
+
+    public async Task<bool> PostLeaderboardAsync(DiscordGuild g, CancellationToken ct = default)
+    {
+        if (g.UpdatesChannel is not { } channel) return false;
+        if (await LeaderboardForAsync(g.Team, ct) is not { } lb) return false;
+        var id = await api.PostAsync(channel, LeaderboardText(lb), null, ct);
+        bot.Record("post:leaderboard", id is null ? "error" : "ok", g.GuildId);
+        return id is not null;
+    }
+
     /// <summary>Posts a fresh clock panel and removes the previous one, so the channel keeps a single set of buttons.</summary>
     public async Task<bool> PostClockPanelAsync(DiscordGuild g, string? heading = null, CancellationToken ct = default)
     {
@@ -84,11 +129,15 @@ public sealed class DiscordScheduler(DiscordApi api, DiscordBotStore bot, Discor
 
         foreach (var g in bot.List())
         {
-            if (g.WeeklySummary && g.UpdatesChannel is not null && local.DayOfWeek == DayOfWeek.Monday && TimeOnly.FromDateTime(local.DateTime) >= SummaryTime)
+            if ((g.WeeklySummary || g.WeeklyLeaderboard) && g.UpdatesChannel is not null
+                && local.DayOfWeek == DayOfWeek.Monday && TimeOnly.FromDateTime(local.DateTime) >= SummaryTime)
             {
                 var lastWeek = HoursText.WeekStart(today).AddDays(-7);
                 if (bot.TryClaim(g.GuildId, DiscordBotStore.SummaryKey, lastWeek.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)))
-                    await posts.PostWeeklySummaryAsync(g, lastWeek, ct);
+                {
+                    if (g.WeeklySummary) await posts.PostWeeklySummaryAsync(g, lastWeek, ct);
+                    if (g.WeeklyLeaderboard) await posts.PostLeaderboardAsync(g, ct);
+                }
             }
 
             if (g.PanelChannel is not null && g.MeetingDay == local.DayOfWeek && g.MeetingTime is { } time)

@@ -56,7 +56,7 @@ public static class DiscordBotAdminEndpoints
 
         // A server's own settings: its managers.
         bot.MapPost("/servers/{id}/settings", async (string id, [FromForm] string? commandChannels, [FromForm] string? updatesChannel,
-            [FromForm] bool? weeklySummary, [FromForm] string? panelChannel, [FromForm] string? meetingDay, [FromForm] string? meetingTime,
+            [FromForm] bool? weeklySummary, [FromForm] bool? weeklyLeaderboard, [FromForm] string? panelChannel, [FromForm] string? meetingDay, [FromForm] string? meetingTime,
             HttpContext http, IAccountStore accounts, DiscordBotStore store) =>
         {
             var me = await http.AccessAsync(accounts);
@@ -67,6 +67,7 @@ public static class DiscordBotAdminEndpoints
             g.CommandChannels = DiscordBotRules.ParseIds(commandChannels);
             g.UpdatesChannel = DiscordBotRules.ParseId(updatesChannel);
             g.WeeklySummary = weeklySummary == true && g.UpdatesChannel is not null;
+            g.WeeklyLeaderboard = weeklyLeaderboard == true && g.UpdatesChannel is not null;
             g.PanelChannel = DiscordBotRules.ParseId(panelChannel);
             g.MeetingDay = int.TryParse(meetingDay, NumberStyles.None, CultureInfo.InvariantCulture, out var d) && d is >= 0 and <= 6 ? (DayOfWeek)d : null;
             g.MeetingTime = TimeOnly.TryParse(meetingTime, CultureInfo.InvariantCulture, out var t) ? new TimeOnly(t.Hour, t.Minute) : null;
@@ -92,6 +93,7 @@ public static class DiscordBotAdminEndpoints
                 "panel" => g.PanelChannel is not null && await posts.PostClockPanelAsync(g, null, http.RequestAborted),
                 "summary" => g.UpdatesChannel is not null && await posts.PostWeeklySummaryAsync(g,
                     HoursText.WeekStart(DateOnly.FromDateTime(store.Now.ToPacific().DateTime)).AddDays(-7), http.RequestAborted),
+                "leaderboard" => g.UpdatesChannel is not null && await posts.PostLeaderboardAsync(g, http.RequestAborted),
                 _ => false,
             };
             return ok ? Back(done: "posted", anchor: "server-" + id) : Back(error: "post", anchor: "server-" + id);

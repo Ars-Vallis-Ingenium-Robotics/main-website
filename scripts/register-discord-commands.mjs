@@ -26,6 +26,7 @@ const range = {
 const commands = [
   { name: "myhours", description: "View your own AVI Hours totals", options: [range] },
   { name: "clockstatus", description: "Check your own clock-in status" },
+  { name: "leaderboard", description: "This season's Hours leaderboard (if your organization shows one)" },
   {
     name: "teamhours", description: "View aggregate Hours for a team you lead",
     options: [range, { type: 3, name: "team", description: "Team ID (optional if you manage one team)", required: false }],
@@ -43,4 +44,4 @@ if (!response.ok) {
   console.error(`Discord command registration failed: HTTP ${response.status}. Check the application, bot token, and command permissions.`);
   process.exit(1);
 }
-console.log(`Registered ${commands.length} read-only Discord slash commands${guildId ? " for the selected test guild" : " globally"}.`);
+console.log(`Registered ${commands.length} Discord slash commands${guildId ? " for the selected test guild" : " globally"}.`);
