@@ -2096,9 +2096,6 @@
   .site-header__bar > .nav--wide { order: 1; margin-left: auto; }
   .site-header__bar > .nav--narrow { order: 3; }
   @media (max-width: 60.99rem) { .site-header__bar > .theme-toggle { margin-left: auto; } }
-  /* Sponsor logos are made for white backgrounds: keep a white card under them in dark mode. */
-  :root[data-theme="dark"] .sponsor-wall img { background: var(--white); border-radius: 8px; padding: 6px; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sponsor-wall img { background: var(--white); border-radius: 8px; padding: 6px; } }
 }
 /* ---------- Hours: week calendar ---------- */
 @layer components {
