@@ -173,12 +173,64 @@ try {
   assert.ok(!team.includes("Build") && !team.includes("Outreach"), "team output must be total-only, without category detail");
   assert.ok(!/Private (Self|Other) Name|example\.test|PRIVATE_.*_NOTE|123456789012345678|223456789012345678/.test(team), "team reply must be aggregate-only");
 
+  // ---- Bot management: allowed servers, command channels, clock-panel buttons, pause ----
+  const guildId = "523456789012345678";
+  const channelId = "623456789012345678";
+  const otherChannel = "723456789012345678";
+  const inGuild = (payload, channel = channelId, guild = guildId) => ({ ...payload, guild_id: guild, channel_id: channel });
+  const button = (customId, userId) => ({ application_id: appId, type: 3, version: 1, data: { custom_id: customId, component_type: 2 }, member: { user: { id: userId } } });
+
+  // No servers listed yet: any server works.
+  await expectEphemeral(await post(inGuild(command("myhours", selfId), channelId, "823456789012345678")), "2.0 h");
+
+  const admin = new DatabaseSync(path.join(dataDir, "site.db"));
+  admin.prepare("INSERT INTO discord_guilds (guild_id, name, team, command_channels, added_by, added_utc) VALUES (?, ?, ?, ?, ?, ?)")
+    .run(guildId, "Test server", "avi", channelId, "owner@example.test", new Date().toISOString());
+
+  await expectEphemeral(await post(inGuild(command("myhours", selfId), channelId, "823456789012345678")), "isn't enabled in this server");
+  const wrongChannel = await expectEphemeral(await post(inGuild(command("myhours", selfId), otherChannel)), `<#${channelId}>`);
+  assert.ok(!wrongChannel.includes("2.0 h"), "a command in the wrong channel must not answer");
+  await expectEphemeral(await post(inGuild(command("myhours", selfId))), "2.0 h");
+  await expectEphemeral(await post(command("myhours", selfId)), "2.0 h"); // DMs stay personal and keep working
+  await expectEphemeral(await post(inGuild(command("teamhours", selfId))), "7.0 h"); // defaults to the server's team
+
+  // Clock panel buttons work in any channel of a listed server, and only for linked accounts.
+  await expectEphemeral(await post(inGuild(button("avi:clock:in", "333456789012345678"), otherChannel)), "Link your Discord account");
+  await expectEphemeral(await post(inGuild(button("avi:clock:in", selfId), otherChannel)), "Clocked in · AVI Robotics");
+  await expectEphemeral(await post(inGuild(button("avi:clock:in", selfId), otherChannel)), "already clocked in");
+  await expectEphemeral(await post(inGuild(command("clockstatus", selfId))), "Clocked in");
+  await expectEphemeral(await post(inGuild(button("avi:clock:status", selfId), otherChannel)), "Clocked in");
+  await expectEphemeral(await post(inGuild(button("avi:clock:out", selfId), otherChannel)), "Clocked out");
+  await expectEphemeral(await post(inGuild(button("avi:clock:out", selfId), otherChannel)), "not clocked in");
+  const running = admin.prepare("SELECT COUNT(*) AS n FROM hours WHERE email = ? AND end_utc IS NULL").get("self@example.test");
+  assert.equal(Number(running.n), 0, "clock out from Discord must end the session");
+  const panelEntry = admin.prepare("SELECT team, category, source FROM hours WHERE email = ? ORDER BY id DESC LIMIT 1").get("self@example.test");
+  assert.equal(panelEntry.team, "avi", "the panel clocks into the server's team");
+  assert.equal(panelEntry.category, "", "the reason is picked later on the site");
+
+  // Pause: commands and buttons answer "paused" on every instance; Discord's PING still passes.
+  admin.prepare("UPDATE discord_bot SET paused = 1 WHERE id = 1").run();
+  await expectEphemeral(await post(inGuild(command("myhours", selfId))), "paused");
+  await expectEphemeral(await post(command("myhours", selfId), {}, baseUrl2), "paused");
+  await expectEphemeral(await post(inGuild(button("avi:clock:in", selfId))), "paused");
+  const pausedPing = await post({ application_id: appId, type: 1, version: 1 });
+  assert.deepEqual(await pausedPing.json(), { type: 1 }, "PING must still pass while paused");
+  admin.prepare("UPDATE discord_bot SET paused = 0 WHERE id = 1").run();
+  await expectEphemeral(await post(inGuild(command("myhours", selfId))), "2.0 h");
+
+  // The status log keeps counts by command and outcome, never who.
+  const outcomes = new Set(admin.prepare("SELECT DISTINCT outcome FROM discord_events").all().map(r => r.outcome));
+  for (const o of ["ok", "blocked", "channel", "unlinked", "paused"]) assert.ok(outcomes.has(o), `activity log records ${o}`);
+  const columns = admin.prepare("PRAGMA table_info(discord_events)").all().map(c => c.name);
+  assert.deepEqual(columns.sort(), ["at_utc", "guild_id", "id", "kind", "outcome"], "activity log has no user columns");
+  admin.close();
+
   const hugeBody = JSON.stringify({ application_id: appId, type: 1, padding: "x".repeat(70_000) });
   const oversized = await post(hugeBody);
   assert.equal(oversized.status, 413, "oversized interactions must be rejected before parsing");
 
   success = true;
-  console.log("Discord interaction E2E passed: concurrent startup, unique-link constraint, signatures, stale-signature rejection, PING, account isolation, team permissions, aggregate-only output, and ephemeral replies.");
+  console.log("Discord interaction E2E passed: concurrent startup, unique-link constraint, signatures, stale-signature rejection, PING, account isolation, team permissions, aggregate-only output, allowed servers, command channels, clock buttons, pause, activity log, and ephemeral replies.");
 } catch (error) {
   console.error(error);
   console.error(`Discord E2E scratch kept at ${scratch}`);

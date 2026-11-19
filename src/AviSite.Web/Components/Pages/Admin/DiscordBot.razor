@@ -1,0 +1,305 @@
+@page "/admin/discord/bot"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
+@using System.Globalization
+@using AviSite.Web.Discord
+@using AviSite.Web.Endpoints
+@inject IAccountStore Accounts
+@inject DiscordBotStore Bot
+@inject DiscordApi Api
+@inject IOptions<DiscordOptions> Discord
+
+<PageTitle>Discord bot · AVI Robotics admin</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin discord-bot">
+    <div class="wrap">
+        <AdminNav Current="discord" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Admin</p>
+                <h1 class="h1">Discord bot</h1>
+                <p class="muted">The AVI Hours bot: private <code>/myhours</code>, <code>/clockstatus</code> and <code>/teamhours</code> replies, a clock-in panel, and a weekly team summary. The site owner runs the bot and picks its servers; each server's team leads set its channels.</p>
+            </div>
+        </div>
+
+        @if (Message is { } m) { <p class="alert @(m.Ok ? "alert--ok" : "")" role="status">@m.Text</p> }
+
+        @if (!allowed)
+        {
+            <p class="alert" role="status">This page is for the site owner, officers, and leads of a team with a Discord server.</p>
+        }
+        else
+        {
+            <h2 class="h3">Status</h2>
+            <dl class="discord-bot__status">
+                <div><dt>Bot</dt><dd data-bot-state="@(state.Paused ? "paused" : "running")"><strong>@(state.Paused ? "Paused" : "Running")</strong>@if (state.ChangedUtc is { } at) { <span class="small muted"> · since @Stamp(at)@(state.ChangedBy is { } by && owner ? " by " + by : "")</span> }</dd></div>
+                <div><dt>Slash commands</dt><dd>@(Discord.Value.InteractionsConfigured ? "Configured" : "Not configured (Discord__ApplicationId, Discord__PublicKey)")</dd></div>
+                <div><dt>Account linking</dt><dd>@(Discord.Value.LinkingConfigured ? "Configured" : "Not configured (Discord__ClientSecret, Discord__RedirectUri, Discord__PublicBaseUrl)") · @linked linked @(linked == 1 ? "account" : "accounts")</dd></div>
+                <div><dt>Posting</dt><dd>@(Api.Configured ? "Bot token set" : "No bot token (Discord__BotToken): no panels, summaries or command registration")</dd></div>
+                @if (app is not null)
+                {
+                    <div><dt>Discord says</dt><dd>@app.Name · installed in about @(app.Servers ?? 0) @((app.Servers ?? 0) == 1 ? "server" : "servers") and by @(app.UserInstalls ?? 0) @((app.UserInstalls ?? 0) == 1 ? "person" : "people")</dd></div>
+                    <div><dt>Interactions endpoint</dt><dd><code>@(app.InteractionsUrl ?? "not set")</code>@if (expectedUrl is not null && app.InteractionsUrl != expectedUrl) { <span class="small muted"> (this site is <code>@expectedUrl</code>)</span> }</dd></div>
+                }
+                else if (owner && Api.Configured)
+                {
+                    <div><dt>Discord says</dt><dd class="muted">Couldn't reach Discord with the bot token. Check that it's current.</dd></div>
+                }
+            </dl>
+
+            @if (owner)
+            {
+                <div class="actions">
+                    <form method="post" action="/admin/discord/bot/state">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="action" value="@(state.Paused ? "resume" : "pause")" />
+                        <button class="btn @(state.Paused ? "btn--accent" : "btn--ghost")" type="submit" data-bot-toggle>@(state.Paused ? "Start the bot" : "Pause the bot")</button>
+                    </form>
+                    @if (Api.Configured)
+                    {
+                        <form method="post" action="/admin/discord/bot/commands">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="scope" value="global" />
+                            <button class="btn btn--ghost" type="submit">Register commands everywhere</button>
+                        </form>
+                    }
+                    @if (Api.Configured && expectedUrl is not null && app?.InteractionsUrl != expectedUrl)
+                    {
+                        <form method="post" action="/admin/discord/bot/endpoint">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="confirm" value="true" />
+                            <button class="btn btn--ghost" type="submit">Point Discord at this site</button>
+                        </form>
+                    }
+                </div>
+                <p class="small muted">Paused: every command and button answers "paused" and nothing is posted; Discord's endpoint check still passes, so starting again is instant.</p>
+            }
+
+            <h2 class="h3">Last 7 days</h2>
+            @if (activity.Count == 0)
+            {
+                <p class="muted">No activity yet.</p>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="table">
+                        <thead><tr><th scope="col">What</th><th scope="col">Result</th><th scope="col" class="num">Count</th><th scope="col">Last</th></tr></thead>
+                        <tbody>
+                            @foreach (var a in activity)
+                            {
+                                <tr><th scope="row"><code>@a.Kind</code></th><td>@Outcome(a.Outcome)</td><td class="num mono">@a.Count</td><td class="small">@Stamp(a.Last)</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small muted">Counts only: no Discord IDs, names or message text are kept. @(owner ? "All servers." : "Your servers only.")</p>
+            }
+
+            <h2 class="h3">Servers</h2>
+            @if (visible.Count == 0)
+            {
+                <p class="muted">@(servers.Count == 0 ? "No servers yet: the bot answers in any server it's installed in. Add one to limit it to listed servers." : "None you can see.")</p>
+            }
+            @foreach (var g in visible)
+            {
+                var manage = DiscordBotRules.CanManage(access, g);
+                <article class="discord-bot__server" id="server-@g.GuildId">
+                    <h3 class="h4">@g.Name</h3>
+                    <p class="small muted">Server <code>@g.GuildId</code> · @access.Tree.Path(g.Team) · managed by its leads@(manage ? "" : " (view only)")@(g.UpdatedBy is { } u && g.UpdatedUtc is { } when ? $" · changed {Stamp(when)}" : "")</p>
+
+                    @if (manage)
+                    {
+                        <form method="post" action="/admin/discord/bot/servers/@g.GuildId/settings" class="form">
+                            <AntiforgeryToken />
+                            <div class="qr-admin__grid">
+                                <div class="field">
+                                    <label class="label" for="cmd-@g.GuildId">Command channels <span class="muted">(IDs or links; empty: any channel)</span></label>
+                                    <input id="cmd-@g.GuildId" name="commandChannels" value="@string.Join(", ", g.CommandChannels)" autocomplete="off" />
+                                </div>
+                                <div class="field">
+                                    <label class="label" for="upd-@g.GuildId">Updates channel <span class="muted">(weekly summary)</span></label>
+                                    <input id="upd-@g.GuildId" name="updatesChannel" value="@g.UpdatesChannel" autocomplete="off" />
+                                </div>
+                                <div class="field">
+                                    <label class="label" for="panel-@g.GuildId">Clock panel channel</label>
+                                    <input id="panel-@g.GuildId" name="panelChannel" value="@g.PanelChannel" autocomplete="off" />
+                                </div>
+                                <div class="field">
+                                    <label class="label" for="day-@g.GuildId">Weekly meeting <span class="muted">(Pacific)</span></label>
+                                    <select id="day-@g.GuildId" name="meetingDay">
+                                        <option value="" selected="@(g.MeetingDay is null)">No weekly meeting</option>
+                                        @foreach (var d in Week)
+                                        {
+                                            <option value="@((int)d)" selected="@(g.MeetingDay == d)">@CultureInfo.InvariantCulture.DateTimeFormat.GetDayName(d)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label class="label" for="time-@g.GuildId">Meeting starts</label>
+                                    <input id="time-@g.GuildId" name="meetingTime" type="time" value="@g.MeetingTime?.ToString("HH:mm", CultureInfo.InvariantCulture)" />
+                                </div>
+                            </div>
+                            <label class="check"><input type="checkbox" name="weeklySummary" value="true" checked="@g.WeeklySummary" /> Post last week's team total in the updates channel every Monday at 9:00</label>
+                            <p class="small muted">With a meeting set, a fresh clock panel (Clock in / Clock out / My status) goes up in the panel channel 15 minutes before it starts. Paste a channel ID (right-click the channel → Copy Channel ID) or its link.</p>
+                            <div class="actions"><button class="btn btn--accent" type="submit">Save</button></div>
+                        </form>
+                        <div class="actions">
+                            <form method="post" action="/admin/discord/bot/servers/@g.GuildId/post">
+                                <AntiforgeryToken /><input type="hidden" name="what" value="panel" />
+                                <button class="btn btn--ghost btn--sm" type="submit" disabled="@(g.PanelChannel is null || !Api.Configured)">Post clock panel now</button>
+                            </form>
+                            <form method="post" action="/admin/discord/bot/servers/@g.GuildId/post">
+                                <AntiforgeryToken /><input type="hidden" name="what" value="summary" />
+                                <button class="btn btn--ghost btn--sm" type="submit" disabled="@(g.UpdatesChannel is null || !Api.Configured)">Post last week's summary now</button>
+                            </form>
+                        </div>
+                    }
+                    else
+                    {
+                        <ul class="small" role="list">
+                            <li>Commands: @(g.CommandChannels.Count == 0 ? "any channel" : string.Join(", ", g.CommandChannels))</li>
+                            <li>Updates: @(g.UpdatesChannel ?? "none")@(g.WeeklySummary ? " · weekly summary on" : "")</li>
+                            <li>Clock panel: @(g.PanelChannel ?? "none")@(g.MeetingDay is { } md && g.MeetingTime is { } mt ? $" · before {CultureInfo.InvariantCulture.DateTimeFormat.GetDayName(md)} {mt.ToString("h:mm tt", CultureInfo.InvariantCulture)} meetings" : "")</li>
+                        </ul>
+                    }
+
+                    @if (owner)
+                    {
+                        <details class="discord-bot__owner">
+                            <summary>Owner: rename, move or remove</summary>
+                            <form method="post" action="/admin/discord/bot/servers" class="form">
+                                <AntiforgeryToken />
+                                <input type="hidden" name="guild" value="@g.GuildId" />
+                                <div class="qr-admin__grid">
+                                    <div class="field"><label class="label" for="name-@g.GuildId">Name</label><input id="name-@g.GuildId" name="name" value="@g.Name" /></div>
+                                    <div class="field">
+                                        <label class="label" for="team-@g.GuildId">Team</label>
+                                        <select id="team-@g.GuildId" name="team">
+                                            @foreach (var t in access.Tree.Ordered()) { <option value="@t.Id" selected="@(t.Id == g.Team)">@access.Tree.Path(t.Id)</option> }
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="actions"><button class="btn btn--ghost btn--sm" type="submit">Save name and team</button></div>
+                            </form>
+                            @if (Api.Configured)
+                            {
+                                <form method="post" action="/admin/discord/bot/commands">
+                                    <AntiforgeryToken /><input type="hidden" name="scope" value="@g.GuildId" />
+                                    <button class="btn btn--ghost btn--sm" type="submit">Register commands in this server</button>
+                                </form>
+                            }
+                            <form method="post" action="/admin/discord/bot/servers/@g.GuildId/remove" class="form">
+                                <AntiforgeryToken />
+                                <label class="check"><input type="checkbox" name="confirm" value="true" /> Yes, stop answering in @g.Name</label>
+                                <div><button class="btn btn--ghost btn--sm" type="submit">Remove server</button></div>
+                            </form>
+                        </details>
+                    }
+                </article>
+            }
+
+            @if (owner)
+            {
+                <h2 class="h3" id="add">Add a server</h2>
+                <p class="small muted">Once any server is listed, the bot only answers in listed servers (private DMs still work). To post panels and summaries the bot must be in the server: @if (Api.InviteUrl is { } invite) { <a href="@invite" rel="noopener" target="_blank">add the bot to a server</a> } else { <span>set Discord__ApplicationId first</span> }. Server ID: Discord settings → Advanced → Developer Mode, then right-click the server → Copy Server ID.</p>
+                <form method="post" action="/admin/discord/bot/servers" class="form">
+                    <AntiforgeryToken />
+                    <div class="qr-admin__grid">
+                        <div class="field"><label class="label" for="add-guild">Server ID</label><input id="add-guild" name="guild" required inputmode="numeric" autocomplete="off" /></div>
+                        <div class="field"><label class="label" for="add-name">Name</label><input id="add-name" name="name" placeholder="e.g. Crush Depth Discord" /></div>
+                        <div class="field">
+                            <label class="label" for="add-team">Team <span class="muted">(its leads manage the server)</span></label>
+                            <select id="add-team" name="team">
+                                @foreach (var t in access.Tree.Ordered()) { <option value="@t.Id">@access.Tree.Path(t.Id)</option> }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="actions"><button class="btn btn--accent" type="submit">Add server</button></div>
+                </form>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery(Name = "done")] public string? Done { get; set; }
+    [SupplyParameterFromQuery(Name = "error")] public string? Error { get; set; }
+
+    private static readonly DayOfWeek[] Week = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday];
+
+    private Access access = new();
+    private bool allowed, owner;
+    private DiscordBotState state = new(false, null, null);
+    private List<DiscordGuild> servers = [], visible = [];
+    private List<DiscordActivity> activity = [];
+    private DiscordAppInfo? app;
+    private string? expectedUrl;
+    private int linked;
+
+    private (string Text, bool Ok)? Message => Done switch
+    {
+        "paused" => ("The bot is paused.", true),
+        "resumed" => ("The bot is running.", true),
+        "server" => ("Server saved.", true),
+        "removed" => ("Server removed. The bot no longer answers there.", true),
+        "saved" => ("Settings saved.", true),
+        "posted" => ("Posted.", true),
+        "commands" => ("Commands registered. In one server they show at once; everywhere can take up to an hour.", true),
+        "endpoint" => ("Discord now sends interactions to this site.", true),
+        _ => Error switch
+        {
+            null => null,
+            "denied" => ("You can't change that.", false),
+            "guild" => ("That doesn't look like a Discord server ID (17–20 digits).", false),
+            "team" => ("Pick a team.", false),
+            "confirm" => ("Tick the box to confirm.", false),
+            "gone" => ("That server isn't listed anymore.", false),
+            "channel" => ("That doesn't look like a channel ID or link.", false),
+            "meeting" => ("Set both the meeting day and the start time, or neither.", false),
+            "panel-channel" => ("A weekly meeting needs a clock panel channel.", false),
+            "no-token" => ("Needs the bot token (Discord__BotToken) on the server.", false),
+            "paused" => ("The bot is paused. Start it first.", false),
+            "post" => ("Discord refused the post. Is the bot in that server, and can it see and send messages in the channel?", false),
+            "commands" => ("Discord refused the command registration. Check the bot token and that the bot is in that server.", false),
+            "endpoint" => ("Discord didn't accept this site as the endpoint. Is this deploy live and configured with the right public key?", false),
+            _ => ("That didn't work.", false),
+        },
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Http is null) return;
+        access = await Http.AccessAsync(Accounts);
+        servers = Bot.List();
+        allowed = DiscordBotRules.CanOpenPage(access, servers);
+        if (!allowed) return;
+        owner = DiscordBotRules.CanAdminister(access);
+        visible = servers.Where(g => DiscordBotRules.CanView(access, g)).ToList();
+        state = Bot.State();
+        linked = Bot.LinkedAccounts();
+        var since = Bot.Now.AddDays(-7);
+        activity = owner || access.IsOfficer
+            ? Bot.Activity(since)
+            : visible.SelectMany(g => Bot.Activity(since, g.GuildId))
+                .GroupBy(a => (a.Kind, a.Outcome)).Select(x => new DiscordActivity(x.Key.Kind, x.Key.Outcome, x.Sum(a => a.Count), x.Max(a => a.Last)))
+                .OrderByDescending(a => a.Count).ToList();
+        if (Discord.Value.PublicBaseUrl is { Length: > 0 } baseUrl) expectedUrl = DiscordBotAdminEndpoints.InteractionsUrl(baseUrl);
+        if (owner && Api.Configured) app = await Api.ApplicationAsync(Http.RequestAborted);
+    }
+
+    private static string Stamp(DateTimeOffset t) => t.ToPacific().ToString("MMM d, h:mm tt", CultureInfo.InvariantCulture);
+
+    private static string Outcome(string o) => o switch
+    {
+        "ok" => "Answered",
+        "unlinked" => "Not linked yet",
+        "paused" => "Paused",
+        "blocked" => "Server not listed",
+        "channel" => "Wrong channel",
+        "unknown" => "Unknown command",
+        "error" => "Error",
+        _ => o,
+    };
+}

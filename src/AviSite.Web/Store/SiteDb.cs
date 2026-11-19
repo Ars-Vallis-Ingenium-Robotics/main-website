@@ -141,6 +141,43 @@ public sealed class SiteDb
             discord_user_id TEXT NOT NULL UNIQUE
         );
         """,
+        // 5: Discord bot management. One state row (pause), allowed servers with their per-server settings,
+        // and an anonymous activity log for the owner's status page (no Discord user IDs, no message content).
+        """
+        CREATE TABLE discord_bot (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            paused INTEGER NOT NULL DEFAULT 0,
+            changed_by TEXT,
+            changed_utc TEXT
+        );
+        INSERT INTO discord_bot (id, paused) VALUES (1, 0);
+        CREATE TABLE discord_guilds (
+            guild_id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            team TEXT NOT NULL,
+            command_channels TEXT NOT NULL DEFAULT '',
+            updates_channel TEXT,
+            weekly_summary INTEGER NOT NULL DEFAULT 0,
+            panel_channel TEXT,
+            meeting_day INTEGER,
+            meeting_time TEXT,
+            panel_message_id TEXT,
+            last_summary TEXT,
+            last_panel TEXT,
+            added_by TEXT NOT NULL,
+            added_utc TEXT NOT NULL,
+            updated_by TEXT,
+            updated_utc TEXT
+        );
+        CREATE TABLE discord_events (
+            id INTEGER PRIMARY KEY,
+            at_utc TEXT NOT NULL,
+            guild_id TEXT,
+            kind TEXT NOT NULL,
+            outcome TEXT NOT NULL
+        );
+        CREATE INDEX discord_events_by_time ON discord_events(at_utc);
+        """,
     ];
 
     private static void Migrate(SqliteConnection c)

@@ -2229,3 +2229,14 @@
 @layer components {
   .review-banner { margin: 0 0 var(--s-4); padding: var(--s-3) var(--s-4); border-radius: 12px; border: 2px solid var(--accent); background: var(--surface); }
 }
+/* ---------- Discord bot admin (/admin/discord/bot) ---------- */
+@layer components {
+  .discord-bot__status { display: grid; gap: var(--s-2); margin-bottom: var(--s-4); }
+  .discord-bot__status > div { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: var(--s-3); }
+  .discord-bot__status dt { font-weight: 600; }
+  .discord-bot__status dd { margin: 0; }
+  .discord-bot__server { border-top: 1px solid var(--line); padding-block: var(--s-5); }
+  .discord-bot__owner { margin-top: var(--s-4); }
+  .discord-bot__owner > summary { cursor: pointer; font-weight: 600; }
+  .discord-bot .actions { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
+}

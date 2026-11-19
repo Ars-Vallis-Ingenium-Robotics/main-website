@@ -1,6 +1,6 @@
-# Discord Hours integration (read-only)
+# Discord Hours integration
 
-This is a stateless Discord Interactions endpoint. It is not a gateway bot: no persistent Discord connection, Message Content intent, clock controls, or public replies.
+This is a stateless Discord Interactions endpoint. It is not a gateway bot: no persistent Discord connection and no Message Content intent. Every reply is private (ephemeral). With a bot token the site can also post two kinds of channel messages: a clock panel and a weekly team total (see "Bot management").
 
 ## Commands
 
@@ -20,6 +20,7 @@ Discord__PublicKey=<64-character Ed25519 public key from the Developer Portal>
 Discord__ClientSecret=<OAuth client secret; needed only for account linking>
 Discord__RedirectUri=https://<site-host>/admin/discord/callback
 Discord__PublicBaseUrl=https://<site-host>
+Discord__BotToken=<bot token; optional, enables posting, command registration and live status>
 ```
 
 Register the exact callback URL in the Discord Developer Portal. HTTPS is required except for loopback-only local development. The interaction endpoint URL is:
@@ -45,6 +46,25 @@ node scripts/register-discord-commands.mjs
 
 The Discord app needs the `applications.commands` installation scope. No gateway intents are needed. Do not enable Message Content. The script registers only the three read-only commands above.
 
+## Bot management (`/admin/discord/bot`)
+
+Who can do what:
+
+- **Site owner** (the `Admin:Owners` accounts of the main site): pause and start the bot, add and remove servers and pick each server's team, register commands (one server or everywhere), point Discord's Interactions Endpoint at this site, and see live status from Discord.
+- **Leads** of a server's team (or a team above it): that server's command channels, updates channel, weekly summary, clock panel channel and weekly meeting time; post a clock panel or a summary right away.
+- **Officers**: view only, every server. They don't manage servers.
+
+Behavior:
+
+- **Pause** answers every command and button with "paused" and stops scheduled posts. Discord's verification `PING` is still answered, so Discord keeps the endpoint and starting again is instant.
+- **Allowed servers**: with no servers listed the bot answers anywhere it's installed. Once any server is listed, only listed servers get answers. DMs and user installs (no server) keep working for personal commands.
+- **Command channels**: empty means any channel. Otherwise slash commands in other channels reply with where to use them. Panel buttons work wherever the panel is.
+- **Clock panel**: a message with Clock in / Clock out / My status buttons. Clock in picks a team the person can log to inside the server's team (their last-used one first), with the reason picked later on the site, like the header's quick clock-in. Clock out applies the site's 24-hour cap. With a weekly meeting set, a fresh panel goes up 15 minutes before it (the previous panel is deleted).
+- **Weekly summary**: Mondays from 9:00 Pacific, last week's total hours and head count for the server's team, plus one line per team directly under it. Totals only, never names.
+- **Activity**: counts per command/button and result for 30 days. No Discord IDs, names or message text are stored.
+
+Posting needs the bot user in the server with View Channel and Send Messages. The page links Discord's add-to-server flow with `bot applications.commands` and exactly those permissions. One app instance claims each scheduled post in SQLite, so several instances never double-post.
+
 ## Verification
 
 Run the release build, then the isolated signed-webhook E2E test:
@@ -58,4 +78,4 @@ The E2E test creates an ephemeral Ed25519 key, isolated account/database files u
 
 ## Operational boundary
 
-This repository change does not configure a Discord application, register commands, add production secrets, deploy the site, or alter the separate Hours pie-chart PR. After review and authorization, an operator must configure the application, secrets, interaction URL, and command registration in the target environment.
+The original integration change did not configure a Discord application, register commands, add production secrets, deploy the site, or alter the separate Hours pie-chart PR. After review and authorization, an operator must configure the application, secrets, interaction URL, and command registration in the target environment.

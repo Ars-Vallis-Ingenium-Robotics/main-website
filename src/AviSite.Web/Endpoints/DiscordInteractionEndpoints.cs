@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using AviSite.Web.Discord;
 using AviSite.Web.Options;
 using AviSite.Web.Store;
 using Microsoft.AspNetCore.Diagnostics;
@@ -11,7 +12,7 @@ using Org.BouncyCastle.Crypto.Signers;
 
 namespace AviSite.Web.Endpoints;
 
-/// <summary>Stateless Discord Interactions webhook. No gateway connection or public message writes.</summary>
+/// <summary>Stateless Discord Interactions webhook: slash commands and clock-panel buttons. No gateway connection; every reply is private.</summary>
 public static class DiscordInteractionEndpoints
 {
     private const int MaxBodyBytes = 64 * 1024;
@@ -24,7 +25,7 @@ public static class DiscordInteractionEndpoints
         app.MapPost("/discord/interactions", HandleAsync).DisableAntiforgery();
 
     private static async Task<IResult> HandleAsync(HttpContext http, IOptions<DiscordOptions> options,
-        IAccountStore accounts, HoursStore hours, TimeProvider clock)
+        IAccountStore accounts, HoursStore hours, DiscordBotStore bot, TimeProvider clock)
     {
         // Keep Discord's signed webhook response codes intact; the site's HTML 404 re-execution is for browsers.
         if (http.Features.Get<IStatusCodePagesFeature>() is { } statusPages) statusPages.Enabled = false;
@@ -45,27 +46,86 @@ public static class DiscordInteractionEndpoints
             var root = document.RootElement;
             if (String(root, "application_id") != config.ApplicationId) return Results.Unauthorized();
             if (!root.TryGetProperty("type", out var type) || !type.TryGetInt32(out var interactionType)) return Results.BadRequest();
-            if (interactionType == 1) return Results.Json(new { type = 1 }); // Discord endpoint verification PING
-            if (interactionType != 2) return Results.BadRequest();
+            // Discord endpoint verification PING. Answered even while paused, so Discord keeps the endpoint.
+            if (interactionType == 1) return Results.Json(new { type = 1 });
+            if (interactionType is not (2 or 3)) return Results.BadRequest(); // 2: slash command, 3: button
 
             if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Object)
                 return Ephemeral("I couldn't read that command.");
-            var command = String(data, "name");
+            var isButton = interactionType == 3;
+            var name = isButton ? String(data, "custom_id") ?? "" : String(data, "name") ?? "";
+            var kind = (isButton ? "button:" : "/") + name;
+            var guildId = String(root, "guild_id");
+            var channelId = String(root, "channel_id");
+            IResult Done(string outcome, IResult reply) { bot.Record(kind, outcome, guildId); return reply; }
+
+            if (bot.State().Paused)
+                return Done("paused", Ephemeral("The AVI Hours bot is paused right now. Try again later."));
+            var server = bot.Get(guildId);
+            // Once the owner lists servers, only those get answers. DMs and user installs (no server) stay personal.
+            if (guildId is not null && server is null && bot.AnyServers())
+                return Done("blocked", Ephemeral("AVI Hours isn't enabled in this server. Ask the AVI site owner to add it."));
+            if (!isButton && server is { CommandChannels.Count: > 0 } && (channelId is null || !server.CommandChannels.Contains(channelId)))
+                return Done("channel", Ephemeral("Hours commands work in " + string.Join(", ", server.CommandChannels.Select(DiscordBotRules.Mention)) + " in this server."));
+
             var discordUserId = UserId(root);
-            if (discordUserId is null) return Ephemeral("I couldn't identify the invoking Discord account.");
+            if (discordUserId is null) return Done("error", Ephemeral("I couldn't identify the invoking Discord account."));
 
             var account = await accounts.FindByDiscordUserIdAsync(discordUserId, http.RequestAborted);
             if (account is null || (!account.SiteWide && account.Teams.Count == 0))
-                return Ephemeral(LinkPrompt(config));
+                return Done("unlinked", Ephemeral(LinkPrompt(config)));
 
-            return command switch
-            {
-                "myhours" => MyHours(data, account, hours),
-                "clockstatus" => ClockStatus(account, hours),
-                "teamhours" => await TeamHours(data, account, accounts, hours, http.RequestAborted),
-                _ => Ephemeral("That command isn't supported."),
-            };
+            var reply = isButton
+                ? name switch
+                {
+                    DiscordCommands.ClockIn => await ButtonClockIn(account, server, accounts, hours, config, http.RequestAborted),
+                    DiscordCommands.ClockOut => ButtonClockOut(account, hours),
+                    DiscordCommands.ClockStatus => ClockStatus(account, hours),
+                    _ => null,
+                }
+                : name switch
+                {
+                    "myhours" => MyHours(data, account, hours),
+                    "clockstatus" => ClockStatus(account, hours),
+                    "teamhours" => await TeamHours(data, account, server, accounts, hours, http.RequestAborted),
+                    _ => null,
+                };
+            return reply is null ? Done("unknown", Ephemeral("That command isn't supported.")) : Done("ok", reply);
         }
+    }
+
+    /// <summary>Clock-panel button: clock in to the server's team (or one under it), with the reason picked later on the site.</summary>
+    private static async Task<IResult> ButtonClockIn(Account account, DiscordGuild? server, IAccountStore accounts, HoursStore store,
+        DiscordOptions config, CancellationToken ct)
+    {
+        if (store.Running(account.Email) is { } running)
+            return Ephemeral($"You're already clocked in · {HoursText.Cat(running.Category)} · {HoursText.Duration(running.Duration(store.Now))}.");
+        var tree = await accounts.GroupsAsync(ct);
+        var loggable = HoursRules.LoggableTeams(Access.For(account, tree)).Select(g => g.Id).ToList();
+        // Prefer a team inside this server's organization; among those, the one used last.
+        HashSet<string> here = server is null ? [] : tree.WithDescendants([server.Team]);
+        var candidates = loggable.Where(here.Contains).ToList();
+        if (candidates.Count == 0) candidates = loggable;
+        var last = store.LastUsed(account.Email)?.Team;
+        var team = last is not null && candidates.Contains(last) ? last : candidates.FirstOrDefault();
+        if (team is null) return Ephemeral("You're not on a team you can log hours for yet. Ask your team lead to add you.");
+        if (store.ClockIn(account.Email, team, "") is null) return Ephemeral("You're already clocked in.");
+        var site = config.PublicBaseUrl is { Length: > 0 } b ? $" Pick what you worked on later: {b.TrimEnd('/')}/admin/hours" : "";
+        return Ephemeral($"Clocked in · {tree.Path(team)}.{site}");
+    }
+
+    private static IResult ButtonClockOut(Account account, HoursStore store)
+    {
+        var e = store.ClockOut(account.Email, null);
+        if (e is null) return Ephemeral("You're not clocked in.");
+        // Same rule as the site: a forgotten clock-out is capped instead of becoming a 30-hour entry.
+        if (e.Duration(store.Now) > HoursStore.LongSession)
+        {
+            e.EndUtc = e.StartUtc + HoursStore.LongSession;
+            store.Update(e, account.Email);
+            return Ephemeral($"Clocked out. That session ran over {HoursStore.LongSession.TotalHours:0} h, so it was capped; fix the end time on the site.");
+        }
+        return Ephemeral($"Clocked out · {HoursText.Duration(e.Duration(store.Now))} · {HoursText.Cat(e.Category)}.");
     }
 
     private static IResult MyHours(JsonElement data, Account account, HoursStore store)
@@ -92,7 +152,7 @@ public static class DiscordInteractionEndpoints
         return Ephemeral($"Clocked in · {running.Team} · {HoursText.Cat(running.Category)} · {elapsed}.");
     }
 
-    private static async Task<IResult> TeamHours(JsonElement data, Account account, IAccountStore accounts,
+    private static async Task<IResult> TeamHours(JsonElement data, Account account, DiscordGuild? server, IAccountStore accounts,
         HoursStore store, CancellationToken ct)
     {
         var tree = await accounts.GroupsAsync(ct);
@@ -102,6 +162,7 @@ public static class DiscordInteractionEndpoints
 
         var requested = Option(data, "team")?.Trim().ToLowerInvariant();
         if (requested is null && managed.Count == 1) requested = managed.First();
+        if (requested is null && server is not null && managed.Contains(server.Team)) requested = server.Team; // this server's team
         if (requested is null)
         {
             var choices = managed.OrderBy(id => tree.Path(id), StringComparer.OrdinalIgnoreCase).Take(30)
