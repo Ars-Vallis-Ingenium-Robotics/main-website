@@ -24,6 +24,10 @@
     }
     @if (hasAccount && (isAdmin || lead))
     {
+        @if (owner || lead)
+        {
+            <a href="/admin/branding" class="@(Current == "branding" ? "is-current" : "")" aria-current="@(Current == "branding" ? "page" : null)">Branding</a>
+        }
         <a href="/admin/discord/bot" class="@(Current == "discord" ? "is-current" : "")" aria-current="@(Current == "discord" ? "page" : null)">Discord bot</a>
     }
     @if (canPeople)
@@ -61,7 +65,7 @@
     [CascadingParameter] public HttpContext? Http { get; set; }
     private bool isAdmin, hasAccount;
     private string? team;
-    private bool lead, canPeople;
+    private bool lead, canPeople, owner;
     private string who = "";
     private GroupTree Tree = new([]);
     private List<(HoursEntry Entry, string Name)> forgotten = [];
@@ -73,6 +77,7 @@
         isAdmin = u?.IsInRole("Admin") == true;
         team = u?.FindFirst(AdminEndpoints.TeamClaim)?.Value;
         lead = u?.IsInRole("Lead") == true;
+        owner = u?.IsInRole("Owner") == true;
         hasAccount = u?.FindFirst(AccountAuth.EmailClaim) is not null;
         canPeople = hasAccount && (isAdmin || lead);
         // Accounts show their name; the old shared passwords show what they unlock.

@@ -1,0 +1,149 @@
+@page "/admin/branding"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.QrPolicy)]
+@using AviSite.Web.Endpoints
+@inject IAccountStore Accounts
+@inject BrandingStore Store
+
+<PageTitle>Report branding · AVI Robotics admin</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+
+<section class="section admin branding-admin">
+    <div class="wrap">
+        <AdminNav Current="branding" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Admin</p>
+                <h1 class="h1">Report branding</h1>
+                <p class="muted">Logo, colors, name and footer on hours reports and their PDFs. Each organization has its own. Its leads can give a team its own too; every other team uses the nearest branding above it.</p>
+            </div>
+        </div>
+
+        @if (Message is { } m) { <p class="alert @(m.Ok ? "alert--ok" : "")" role="status">@m.Text</p> }
+
+        @if (sources.Count == 0)
+        {
+            <p class="alert" role="status">Branding is set by the site owner and each organization's leads (and team leads, once their team has its own).</p>
+        }
+
+        @foreach (var g in sources)
+        {
+            var brand = Store.Resolve(g.Id, access.Tree);
+            var saved = all.GetValueOrDefault(g.Id);
+            <article class="branding-admin__card" id="brand-@g.Id" style="--brand: @brand.Primary; --brand-accent: @brand.Accent">
+                <h2 class="h3">@access.Tree.Path(g.Id)</h2>
+                <div class="brand-preview" aria-label="Preview of the report header">
+                    <div class="brand-preview__head">
+                        @if (brand.LogoUrl is { } logo) { <img class="brand-preview__logo" src="@logo" alt="@brand.Name logo" /> }
+                        <div>
+                            <p class="brand-preview__name">@brand.Name</p>
+                            @if (brand.Tagline is { } tag) { <p class="brand-preview__tagline">@tag</p> }
+                        </div>
+                    </div>
+                    <div class="brand-preview__rule"></div>
+                    <div class="brand-preview__bars" aria-hidden="true"><span style="--w: 90%"></span><span style="--w: 60%"></span><span style="--w: 35%"></span></div>
+                    @if (brand.Footer is { } f) { <p class="brand-preview__footer">@f</p> }
+                </div>
+
+                <form method="post" action="/admin/branding/@g.Id" class="form">
+                    <AntiforgeryToken />
+                    <div class="qr-admin__grid">
+                        <div class="field"><label class="label" for="name-@g.Id">Name on reports</label><input id="name-@g.Id" name="displayName" value="@saved?.DisplayName" placeholder="@access.Tree.Name(g.Id)" maxlength="80" /></div>
+                        <div class="field"><label class="label" for="tag-@g.Id">Tagline <span class="muted">(optional)</span></label><input id="tag-@g.Id" name="tagline" value="@saved?.Tagline" maxlength="140" /></div>
+                        <div class="field">
+                            <label class="label" for="primary-@g.Id">Main color <span class="muted">(name, headings; must read on white)</span></label>
+                            <input id="primary-@g.Id" name="primary" type="color" value="@brand.Primary" />
+                        </div>
+                        <div class="field">
+                            <label class="label" for="accent-@g.Id">Chart color</label>
+                            <input id="accent-@g.Id" name="accent" type="color" value="@brand.Accent" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label" for="footer-@g.Id">Report footer <span class="muted">(contact, sponsor thanks; optional)</span></label>
+                        <textarea id="footer-@g.Id" name="footer" rows="2" maxlength="400">@saved?.Footer</textarea>
+                    </div>
+                    <div class="actions"><button class="btn btn--accent" type="submit">Save @access.Tree.Name(g.Id) branding</button></div>
+                </form>
+
+                <form method="post" action="/admin/branding/@g.Id/logo" enctype="multipart/form-data" class="form branding-admin__logo">
+                    <AntiforgeryToken />
+                    <div class="field">
+                        <label class="label" for="logo-@g.Id">Logo <span class="muted">(PNG or JPEG, up to 1 MB; a transparent PNG looks best)</span></label>
+                        <input id="logo-@g.Id" name="logo" type="file" accept="image/png,image/jpeg" />
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn--ghost btn--sm" type="submit">Upload logo</button>
+                        @if (saved?.LogoStamp is not null)
+                        {
+                            <button class="btn btn--ghost btn--sm" type="submit" name="remove" value="true">Remove logo</button>
+                        }
+                    </div>
+                </form>
+
+                @{ var under = access.Tree.WithDescendants([g.Id]).Where(id => id != g.Id).Select(id => access.Tree.Find(id)!).Where(t => BrandingStore.SourceFor(t.Id, access.Tree, all) == g.Id || all.GetValueOrDefault(t.Id)?.Enabled == true).OrderBy(t => access.Tree.Path(t.Id)).ToList(); }
+                @if (under.Count > 0)
+                {
+                    <h3 class="h4">Teams under @access.Tree.Name(g.Id)</h3>
+                    <ul class="branding-admin__teams" role="list">
+                        @foreach (var t in under)
+                        {
+                            var own = all.GetValueOrDefault(t.Id)?.Enabled == true;
+                            <li>
+                                <span>@access.Tree.Path(t.Id) <span class="small muted">· @(own ? "own branding" : "uses the " + access.Tree.Name(BrandingStore.SourceFor(t.Id, access.Tree, all)) + " branding")</span></span>
+                                @if (BrandingRules.CanToggle(access, t))
+                                {
+                                    <form method="post" action="/admin/branding/@t.Id/own">
+                                        <AntiforgeryToken />
+                                        <input type="hidden" name="enabled" value="@(own ? "false" : "true")" />
+                                        <button class="btn btn--ghost btn--sm" type="submit">@(own ? "Use the " + access.Tree.Name(t.Parent) + " branding" : "Give it its own")</button>
+                                    </form>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </article>
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery(Name = "done")] public string? Done { get; set; }
+    [SupplyParameterFromQuery(Name = "error")] public string? Error { get; set; }
+
+    private Access access = new();
+    private Dictionary<string, Branding> all = [];
+    private List<AccountGroup> sources = [];
+
+    private (string Text, bool Ok)? Message => Done switch
+    {
+        "saved" => ("Branding saved.", true),
+        "logo" => ("Logo uploaded.", true),
+        "logo-removed" => ("Logo removed.", true),
+        "own-on" => ("That team now has its own branding. Its leads can set it up below.", true),
+        "own-off" => ("That team uses its organization's branding again.", true),
+        _ => Error switch
+        {
+            null => null,
+            "denied" => ("You can't change that.", false),
+            "gone" => ("That team doesn't exist anymore.", false),
+            "color" => ("Colors are hex values like #0c63e6.", false),
+            "primary-contrast" => ("That main color is too light to read on white (needs 4.5:1). Pick a darker one.", false),
+            "accent-contrast" => ("That chart color is too light to see on white (needs 3:1). Pick a darker one.", false),
+            "logo-missing" => ("Choose a logo file first.", false),
+            "logo-size" => ("Logos can be up to 1 MB and 4000 × 4000 px.", false),
+            "logo-format" => ("Use a PNG or JPEG (not interlaced, not CMYK).", false),
+            _ => ("That didn't work.", false),
+        },
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Http is null) return;
+        access = await Http.AccessAsync(Accounts);
+        all = Store.All();
+        // Every group that has its own branding (organizations always do) and that this person may edit.
+        sources = access.Tree.Ordered(g => (g.Parent is null || all.GetValueOrDefault(g.Id)?.Enabled == true) && BrandingRules.CanEdit(access, g.Id)).ToList();
+    }
+}

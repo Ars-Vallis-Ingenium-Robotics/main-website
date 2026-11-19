@@ -1,5 +1,6 @@
 @* Team + range (+ search) for the team page and the report. A plain GET form: filters live in the URL. *@
 <form method="get" action="@Action" class="qr-filter" role="search" aria-label="Filter hours">
+    @if (View is not null) { <input type="hidden" name="view" value="@View" /> }
     @if (ShowSearch)
     {
         <div class="field qr-filter__q">
@@ -30,5 +31,7 @@
     [Parameter] public string? Range { get; set; }
     [Parameter] public string? Q { get; set; }
     [Parameter] public bool ShowSearch { get; set; } = true;
+    /// <summary>Kept across filter changes (the report's audience).</summary>
+    [Parameter] public string? View { get; set; }
     [Parameter, EditorRequired] public string Action { get; set; } = "";
 }

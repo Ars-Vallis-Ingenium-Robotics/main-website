@@ -179,6 +179,23 @@ public sealed class SiteDb
         );
         CREATE INDEX discord_events_by_time ON discord_events(at_utc);
         """,
+        // 6: report branding per organization (and per team, where its organization switches that on).
+        """
+        CREATE TABLE group_branding (
+            group_id TEXT PRIMARY KEY,
+            enabled INTEGER NOT NULL DEFAULT 0,
+            display_name TEXT,
+            tagline TEXT,
+            primary_color TEXT,
+            accent_color TEXT,
+            footer TEXT,
+            logo BLOB,
+            logo_type TEXT,
+            logo_stamp TEXT,
+            updated_by TEXT,
+            updated_utc TEXT
+        );
+        """,
     ];
 
     private static void Migrate(SqliteConnection c)

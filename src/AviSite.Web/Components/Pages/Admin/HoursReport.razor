@@ -3,138 +3,128 @@
 @using AviSite.Web.Endpoints
 @inject IAccountStore Accounts
 @inject HoursStore Store
+@inject BrandingStore Branding
 @inject NavigationManager Nav
 
-<PageTitle>Hours report · AVI Robotics</PageTitle>
+<PageTitle>@(sponsor ? "Hours summary" : "Hours report") · @(r?.Brand.Name ?? "AVI Robotics")</PageTitle>
 <HeadContent><meta name="robots" content="noindex" /></HeadContent>
 
-<section class="section admin hours report">
-    <div class="wrap">
-        <div class="no-print"><AdminNav Current="hours" /></div>
-        <div class="section__head">
-            <div>
-                <p class="eyebrow no-print"><a href="/admin/hours">Hours</a> / Report</p>
-                <h1 class="h1">Hours report</h1>
-                <p class="report__scope">@ScopeName · @RangeLabel</p>
-            </div>
-            <div class="hours__leadlinks no-print">
-                <a class="btn btn--ghost btn--sm" href="/admin/hours/export.csv?@Query">Download CSV</a>
-                <button class="btn btn--ink btn--sm" type="button" data-print>Print or save as PDF</button>
-            </div>
-        </div>
+@if (r is not null)
+{
+    <section class="section admin hours report report--@(sponsor ? "sponsor" : "internal")" style="--brand: @r.Brand.Primary; --brand-accent: @r.Brand.Accent">
+        <div class="wrap">
+            <div class="no-print"><AdminNav Current="hours" /></div>
 
-        <div class="no-print"><HoursFilter Teams="teams" Tree="access.Tree" Team="@Team" Range="@Range" ShowSearch="false" Action="/admin/hours/report" /></div>
-
-        <div class="hours__totals" data-report-total-hours="@total.ToString(System.Globalization.CultureInfo.InvariantCulture)">
-            <div class="stat"><span class="stat__num">@HoursText.Hours(total)</span><span class="stat__label">hours</span></div>
-            <div class="stat"><span class="stat__num">@byPerson.Count</span><span class="stat__label">@(byPerson.Count == 1 ? "person" : "people") logged time</span></div>
-            <div class="stat"><span class="stat__num">@sessions</span><span class="stat__label">sessions</span></div>
-            <div class="stat"><span class="stat__num">@HoursText.Hours(byPerson.Count == 0 ? 0 : total / byPerson.Count)</span><span class="stat__label">hours per person</span></div>
-        </div>
-
-        @if (total <= 0)
-        {
-            <p class="muted">No hours in this range yet.</p>
-        }
-        else
-        {
-            <section class="report__block">
-                <h2 class="h4">Hours per @(weekly ? "week" : "month")</h2>
-                <ColumnChart Points="overTime" Label="@($"Hours per {(weekly ? "week" : "month")}, {RangeLabel}")" />
-                <ReportTable Rows="overTime.Select(p => (p.Label, p.Value)).ToList()" Head="@(weekly ? "Week of" : "Month")" />
-            </section>
-
-            <div class="report__pair">
-                <section class="report__block">
-                    <h2 class="h4">By category</h2>
-                    <HoursPieChart Rows="byCategory" Label="@($"Hours by category, {ScopeName}, {RangeLabel}")" />
-                </section>
-                <section class="report__block">
-                    <h2 class="h4">By team</h2>
-                    <HBars Rows="byTeam" />
-                </section>
-            </div>
-
-            <section class="report__block">
-                <h2 class="h4">By person@(byPerson.Count > 25 ? " (top 25)" : "")</h2>
-                <HBars Rows="byPerson.Take(25).ToList()" />
-            </section>
-
-            <section class="report__block">
-                <h2 class="h4">Everyone, by category</h2>
-                <div class="table-scroll">
-                    <table class="table report__matrix">
-                        <thead><tr><th scope="col">Person</th>@foreach (var c in byCategory) { <th scope="col" class="num">@c.Label</th> }<th scope="col" class="num">Total</th></tr></thead>
-                        <tbody>
-                            @foreach (var (person, cells, sum) in matrix)
-                            {
-                                <tr><th scope="row">@person</th>@foreach (var v in cells) { <td class="num mono">@(v > 0 ? HoursText.Hours(v) : "")</td> }<td class="num mono"><strong>@HoursText.Hours(sum)</strong></td></tr>
-                            }
-                        </tbody>
-                    </table>
+            <div class="report__toolbar no-print">
+                <p class="eyebrow"><a href="/admin/hours">Hours</a> / Report</p>
+                <nav class="report__audience" aria-label="Report version">
+                    <a href="/admin/hours/report?@r.Query(ReportAudience.Internal)" aria-current="@(sponsor ? null : "page")">Internal</a>
+                    <a href="/admin/hours/report?@r.Query(ReportAudience.Sponsor)" aria-current="@(sponsor ? "page" : null)" data-audience-sponsor>For sponsors</a>
+                </nav>
+                <div class="hours__leadlinks">
+                    <a class="btn btn--accent btn--sm" href="/admin/hours/report.pdf?@r.Query()" data-report-pdf>Download PDF</a>
+                    @if (!sponsor) { <a class="btn btn--ghost btn--sm" href="/admin/hours/export.csv?@r.Query()">Download CSV</a> }
+                    <button class="btn btn--ghost btn--sm" type="button" data-print>Print</button>
                 </div>
-            </section>
-            <p class="small muted">Generated @Store.Now.ToPacific().ToString("MMM d, yyyy h:mm tt") Pacific. Sessions still running count up to now.</p>
-        }
-    </div>
-</section>
+                <p class="small muted">@(sponsor ? "For sponsors and grants: totals and charts, no names." : "Internal: includes each person's hours. Use \"For sponsors\" for anything you send outside the team.")</p>
+            </div>
+
+            <div class="no-print"><HoursFilter Teams="r.Teams" Tree="r.Access.Tree" Team="@r.Team" Range="@r.Range" View="@(sponsor ? "sponsor" : null)" ShowSearch="false" Action="/admin/hours/report" /></div>
+
+            <header class="report__brand">
+                <div class="report__brand-id">
+                    @if (r.Brand.LogoUrl is { } logo) { <img class="report__logo" src="@logo" alt="@r.Brand.Name" /> }
+                    <div>
+                        <p class="report__org">@r.Brand.Name</p>
+                        @if (r.Brand.Tagline is { } tag) { <p class="report__tagline">@tag</p> }
+                    </div>
+                </div>
+                <div class="report__title">
+                    <h1 class="report__h1">@(sponsor ? "Hours summary" : "Hours report")</h1>
+                    <p class="report__scope">@r.ScopeName · @r.RangeLabel</p>
+                </div>
+            </header>
+
+            <div class="hours__totals report__stats" data-report-total-hours="@r.Total.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                <div class="stat"><span class="stat__num">@HoursText.Hours(r.Total)</span><span class="stat__label">hours</span></div>
+                <div class="stat"><span class="stat__num">@r.People</span><span class="stat__label">@(r.People == 1 ? "person" : "people") logged time</span></div>
+                <div class="stat"><span class="stat__num">@r.Sessions</span><span class="stat__label">sessions</span></div>
+                <div class="stat"><span class="stat__num">@HoursText.Hours(r.People == 0 ? 0 : r.Total / r.People)</span><span class="stat__label">hours per person</span></div>
+            </div>
+
+            @if (r.Total <= 0)
+            {
+                <p class="muted">No hours in this range yet.</p>
+            }
+            else
+            {
+                <section class="report__block">
+                    <h2 class="report__h2">Hours per @(r.Weekly ? "week" : "month")</h2>
+                    <ColumnChart Points="r.OverTime" Label="@($"Hours per {(r.Weekly ? "week" : "month")}, {r.RangeLabel}")" />
+                    <ReportTable Rows="r.OverTime.Select(p => (p.Label, p.Value)).ToList()" Head="@(r.Weekly ? "Week of" : "Month")" />
+                </section>
+
+                <div class="report__pair">
+                    <section class="report__block">
+                        <h2 class="report__h2">By category</h2>
+                        <HoursPieChart Rows="r.ByCategory" Label="@($"Hours by category, {r.ScopeName}, {r.RangeLabel}")" />
+                    </section>
+                    <section class="report__block">
+                        <h2 class="report__h2">By team</h2>
+                        <HBars Rows="r.ByTeam" />
+                    </section>
+                </div>
+
+                @if (sponsor)
+                {
+                    <p class="report__note">@r.People @(r.People == 1 ? "person" : "people") logged @HoursText.Hours(r.Total) hours across @r.ByTeam.Count @(r.ByTeam.Count == 1 ? "team" : "teams"), @r.RangeLabel.ToLowerInvariant().</p>
+                }
+                else
+                {
+                    <section class="report__block report__people" data-report-people>
+                        <h2 class="report__h2">By person@(r.ByPerson.Count > 25 ? " (top 25)" : "")</h2>
+                        <HBars Rows="r.ByPerson.Take(25).ToList()" />
+                    </section>
+
+                    <section class="report__block report__people">
+                        <h2 class="report__h2">Everyone, by category</h2>
+                        <div class="table-scroll">
+                            <table class="table report__matrix">
+                                <thead><tr><th scope="col">Person</th>@foreach (var c in r.ByCategory) { <th scope="col" class="num">@c.Label</th> }<th scope="col" class="num">Total</th></tr></thead>
+                                <tbody>
+                                    @foreach (var (person, cells, sum) in r.Matrix)
+                                    {
+                                        <tr><th scope="row">@person</th>@foreach (var v in cells) { <td class="num mono">@(v > 0 ? HoursText.Hours(v) : "")</td> }<td class="num mono"><strong>@HoursText.Hours(sum)</strong></td></tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                }
+            }
+
+            <footer class="report__footer">
+                @if (r.Brand.Footer is { } f) { <p>@f</p> }
+                <p class="small muted">Generated @r.Generated.ToPacific().ToString("MMM d, yyyy h:mm tt") Pacific. Sessions still running count up to now.</p>
+            </footer>
+        </div>
+    </section>
+}
 <script src="/js/hours.js" defer></script>
 
 @code {
     [CascadingParameter] public HttpContext? Http { get; set; }
     [SupplyParameterFromQuery] public string? Team { get; set; }
     [SupplyParameterFromQuery] public string? Range { get; set; }
+    [SupplyParameterFromQuery] public string? View { get; set; }
 
-    private Access access = new();
-    private List<AccountGroup> teams = [];
-    private string ScopeName = "", RangeLabel = "";
-    private double total; private int sessions; private bool weekly;
-    private List<ColumnChart.Point> overTime = [];
-    private List<(string Label, double Value)> byCategory = [], byTeam = [], byPerson = [];
-    private List<(string Person, List<double> Cells, double Sum)> matrix = [];
-    private string Query => $"team={Uri.EscapeDataString(Team ?? "")}&range={Uri.EscapeDataString(Range ?? "")}";
+    private HoursReportData? r;
+    private bool sponsor;
 
     protected override async Task OnInitializedAsync()
     {
-        access = await Http!.AccessAsync(Accounts);
-        var managed = HoursRules.ManagedTeams(access);
-        if (managed.Count == 0) { Nav.NavigateTo("/admin/hours"); return; }
-        if (string.IsNullOrWhiteSpace(Team) || !managed.Contains(Team)) Team = null;
-        teams = access.Tree.Ordered(g => managed.Contains(g.Id)).ToList();
-        var scope = Team is null ? managed : access.Tree.WithDescendants([Team]);
-        ScopeName = Team is null ? "All your teams" : access.Tree.Path(Team);
-        var org = Team is not null ? HoursRules.OrgOf(Team, access.Tree) : HoursRules.OrgOf(teams[0].Id, access.Tree);
-        var now = Store.Now;
-        var (from, to, label) = HoursRanges.Resolve(Range, Store.Settings(org), now);
-        RangeLabel = label;
-        var entries = Store.List(teams: scope, from: from, to: to);
-        double H(HoursEntry e) => HoursRanges.Clip(e, from, to, now);
-        total = entries.Sum(H);
-        sessions = entries.Count;
-        var names = (await Accounts.ListAsync()).ToDictionary(a => a.Email, JsonAccountStore.DisplayName);
-        string Name(string e) => names.GetValueOrDefault(e, e);
-
-        byCategory = entries.GroupBy(e => HoursText.Cat(e.Category)).Select(g => (g.Key, g.Sum(H))).Where(x => x.Item2 > 0).OrderByDescending(x => x.Item2).ToList();
-        byTeam = entries.GroupBy(e => e.Team).Select(g => (access.Tree.Name(g.Key), g.Sum(H))).Where(x => x.Item2 > 0).OrderByDescending(x => x.Item2).ToList();
-        byPerson = entries.GroupBy(e => e.Email).Select(g => (Name(g.Key), g.Sum(H))).Where(x => x.Item2 > 0).OrderByDescending(x => x.Item2).ToList();
-        matrix = entries.GroupBy(e => e.Email).Select(g => (Name(g.Key), byCategory.Select(c => g.Where(e => HoursText.Cat(e.Category) == c.Label).Sum(H)).ToList(), g.Sum(H)))
-            .Where(r => r.Item3 > 0).OrderByDescending(r => r.Item3).ToList();
-
-        // Over time: weeks for up to ~6 months, months beyond that.
-        if (entries.Count > 0)
-        {
-            var first = DateOnly.FromDateTime((from ?? entries.Min(e => e.StartUtc)).ToPacific().DateTime);
-            var last = DateOnly.FromDateTime(((to ?? now) < now ? to!.Value.AddSeconds(-1) : now).ToPacific().DateTime);
-            weekly = last.DayNumber - first.DayNumber <= 190;
-            var buckets = new List<(DateOnly Start, DateOnly End)>();
-            if (weekly) for (var w = HoursText.WeekStart(first); w <= last; w = w.AddDays(7)) buckets.Add((w, w.AddDays(7)));
-            else for (var m = new DateOnly(first.Year, first.Month, 1); m <= last; m = m.AddMonths(1)) buckets.Add((m, m.AddMonths(1)));
-            overTime = buckets.Select(b =>
-            {
-                var bf = HoursText.StartOfDayPacific(b.Start); var bt = HoursText.StartOfDayPacific(b.End);
-                var v = entries.Sum(e => HoursRanges.Clip(e, from is { } f && f > bf ? f : bf, to is { } t && t < bt ? t : bt, now));
-                return new ColumnChart.Point(weekly ? b.Start.ToString("MMM d") : b.Start.ToString("MMMM yyyy"), weekly ? b.Start.ToString("M/d") : b.Start.ToString("MMM"), Math.Round(v, 1));
-            }).ToList();
-        }
+        r = await HoursReportData.BuildAsync(Http!, Accounts, Store, Branding, Team, Range, View);
+        if (r is null) { Nav.NavigateTo("/admin/hours"); return; }
+        sponsor = r.Audience == ReportAudience.Sponsor;
     }
 }

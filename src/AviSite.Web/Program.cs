@@ -59,6 +59,7 @@ services.AddHttpClient("discord-oauth", c =>
 });
 // Discord bot management (/admin/discord/bot): pause, servers, channel posts. Calls Discord only with Discord__BotToken set.
 services.AddSingleton<DiscordBotStore>();
+services.AddSingleton<BrandingStore>(); // report branding per organization/team (/admin/branding)
 services.AddHttpClient(AviSite.Web.Discord.DiscordApi.ClientName, c =>
 {
     c.Timeout = TimeSpan.FromSeconds(10);
@@ -212,6 +213,7 @@ app.MapHoursEndpoints();
 app.MapDiscordInteractionEndpoints();
 app.MapDiscordAccountEndpoints();
 app.MapDiscordBotAdminEndpoints();
+app.MapBrandingEndpoints();
 app.MapPeopleEndpoints();
 app.MapProfileEndpoints();
 app.MapDynamicQrEndpoints();

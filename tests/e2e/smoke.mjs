@@ -1140,6 +1140,80 @@ await test("hours: report with charts and CSV; leaderboard is each organization'
   await c.close(); await oc.close();
 });
 
+await test("reports: sponsor version has no names; real PDF; branding per organization, and per team where switched on", async () => {
+  const [oc, op] = await signIn("owner@example.com");
+  // Internal vs sponsor.
+  await op.goto(BASE + "/admin/hours/report?range=all");
+  assert.ok(await op.locator("[data-report-people]").count() > 0, "internal report lists people");
+  await op.locator("[data-audience-sponsor]").click(); await op.waitForLoadState();
+  assert.match(op.url(), /view=sponsor/);
+  assert.equal(await op.locator("[data-report-people]").count(), 0, "sponsor report has no per-person sections");
+  assert.equal(await op.locator(".report__matrix").count(), 0);
+  assert.match(await op.locator("h1").innerText(), /Hours summary/);
+  // The filter keeps the sponsor view.
+  await op.click(".qr-filter button[type=submit]"); await op.waitForLoadState();
+  assert.match(op.url(), /view=sponsor/, "changing the filter stays on the sponsor version");
+  // The PDF is a real PDF, for both versions.
+  for (const view of ["sponsor", "internal"]) {
+    const pdf = await op.request.get(BASE + `/admin/hours/report.pdf?range=all&view=${view}`);
+    assert.equal(pdf.status(), 200);
+    assert.equal(pdf.headers()["content-type"], "application/pdf");
+    const body = await pdf.body();
+    assert.equal(body.subarray(0, 5).toString(), "%PDF-", `${view} PDF starts like a PDF`);
+    assert.ok(body.subarray(body.length - 8).toString().includes("%%EOF"));
+  }
+
+  // Branding: AVI gets a tagline, footer and logo; SMS gets its own; contrast is checked.
+  await op.goto(BASE + "/admin/branding");
+  await op.fill("#tag-avi", "Smoke tagline");
+  await op.fill("#footer-avi", "Smoke footer line");
+  await op.locator('#brand-avi form[action="/admin/branding/avi"] button[type=submit]').click(); await op.waitForLoadState();
+  assert.match(await op.locator(".alert").first().innerText(), /saved/i);
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAYAAACzzX7wAAAAIElEQVR4XmNkYGBg4El+9h9EYwNM+CRBgAmXThggqAAABC4EsGclMTEAAAAASUVORK5CYII=", "base64");
+  await op.setInputFiles("#logo-avi", { name: "logo.png", mimeType: "image/png", buffer: png });
+  await op.locator('#brand-avi form[action$="/logo"] button', { hasText: "Upload logo" }).click(); await op.waitForLoadState();
+  assert.match(await op.locator(".alert").first().innerText(), /Logo uploaded/);
+  await op.setInputFiles("#logo-avi", { name: "fake.png", mimeType: "image/png", buffer: Buffer.from("not an image at all") });
+  await op.locator('#brand-avi form[action$="/logo"] button', { hasText: "Upload logo" }).click(); await op.waitForLoadState();
+  assert.match(await op.locator(".alert").first().innerText(), /PNG or JPEG/, "files are checked by content");
+  const own = op.locator('form[action="/admin/branding/sms/own"] input[name=enabled][value=true]');
+  if (await own.count()) { await own.locator("xpath=..").locator("button").click(); await op.waitForLoadState(); }
+  assert.equal(await op.locator("#brand-sms").count(), 1, "SMS has its own branding card once switched on");
+  await op.locator("#accent-sms").evaluate((e) => { e.value = "#eeeeee"; });
+  await op.locator('#brand-sms form[action="/admin/branding/sms"] button[type=submit]').click(); await op.waitForLoadState();
+  assert.match(await op.locator(".alert").first().innerText(), /too light/, "a chart color that can't be seen on white is refused");
+  await op.fill("#name-sms", "Smoke SMS");
+  await op.locator("#primary-sms").evaluate((e) => { e.value = "#0f6f69"; });
+  await op.locator("#accent-sms").evaluate((e) => { e.value = "#1f9a92"; });
+  await op.locator('#brand-sms form[action="/admin/branding/sms"] button[type=submit]').click(); await op.waitForLoadState();
+  assert.match(await op.locator(".alert").first().innerText(), /saved/i);
+
+  // Reports pick the right branding: SMS's own for SMS, AVI's for everything else.
+  await op.goto(BASE + "/admin/hours/report?team=sms&range=all");
+  assert.equal(await op.locator(".report__org").innerText(), "Smoke SMS");
+  assert.match(await op.locator(".report").getAttribute("style"), /--brand: #0f6f69/);
+  await op.goto(BASE + "/admin/hours/report?team=avi&range=all");
+  assert.equal(await op.locator(".report__org").innerText(), "AVI Robotics");
+  assert.match(await op.locator(".report__tagline").innerText(), /Smoke tagline/);
+  assert.match(await op.locator(".report__footer").innerText(), /Smoke footer line/);
+  const logo = await op.locator(".report__logo").getAttribute("src");
+  assert.equal((await op.request.get(BASE + logo)).headers()["content-type"], "image/png");
+  const brandedPdf = await op.request.get(BASE + "/admin/hours/report.pdf?team=avi&range=all");
+  assert.ok((await brandedPdf.body()).includes(Buffer.from("/Subtype /Image")), "the logo is in the PDF");
+
+  // Members can't change branding.
+  const id = Date.now().toString(36).slice(-5), who = `br-${id}@example.com`;
+  await addPerson(op, who, "sms");
+  const [mc, mp] = await signIn(who);
+  await mp.goto(BASE + "/admin/branding");
+  assert.equal(await mp.locator(".branding-admin__card").count(), 0, "members see no branding to edit");
+  // Turn SMS back to AVI's branding so other tests see the default.
+  await op.goto(BASE + "/admin/branding");
+  await op.locator('form[action="/admin/branding/sms/own"] button').click(); await op.waitForLoadState();
+  assert.equal(await op.locator("#brand-sms").count(), 0);
+  await mc.close(); await oc.close();
+});
+
 // ---------- Layout checks: catch "looks a little off" bugs (off-center icons, buttons jammed together) ----------
 // Looks at the real pixels: finds the icon's ink inside a button and checks its middle is the button's middle.
 const lens = await (await browser.newContext({ deviceScaleFactor: 1 })).newPage(); // about:blank, no CSP, for pixel math

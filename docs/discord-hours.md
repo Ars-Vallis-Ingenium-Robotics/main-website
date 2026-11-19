@@ -6,6 +6,7 @@ This is a stateless Discord Interactions endpoint. It is not a gateway bot: no p
 
 - `/myhours range:<week|month|all>` — only the linked caller's own Hours totals.
 - `/clockstatus` — only the linked caller's current clock status.
+- `/leaderboard` — the organization's season leaderboard, only where the organization turned one on (see Bot management).
 - `/teamhours range:<week|month|all> team:<id>` — aggregate totals for a team the caller may manage under the existing `HoursRules` access model. Owners, officers, and team leads retain the same scope as the website. It never returns member names, emails, notes, or individual rows.
 
 Every application-command response is ephemeral. The interaction endpoint rejects unsigned, invalid, stale (over five minutes), oversized, malformed, or wrong-application requests before acting. Discord `PING` is acknowledged with `PONG`.
@@ -60,6 +61,7 @@ Behavior:
 - **Allowed servers**: with no servers listed the bot answers anywhere it's installed. Once any server is listed, only listed servers get answers. DMs and user installs (no server) keep working for personal commands.
 - **Command channels**: empty means any channel. Otherwise slash commands in other channels reply with where to use them. Panel buttons work wherever the panel is.
 - **Clock panel**: a message with Clock in / Clock out / My status buttons. Clock in picks a team the person can log to inside the server's team (their last-used one first), with the reason picked later on the site, like the header's quick clock-in. Clock out applies the site's 24-hour cap. With a weekly meeting set, a fresh panel goes up 15 minutes before it (the previous panel is deleted).
+- **Leaderboard**: if the server's organization turned its leaderboard on (Hours settings), `/leaderboard` answers privately with the season's top 10 and your own rank, and the server can post it in the updates channel every Monday (or right away). Names only: someone whose name is an email, or who has left, shows as "AVI member". Organizations without a leaderboard get a note instead.
 - **Weekly summary**: Mondays from 9:00 Pacific, last week's total hours and head count for the server's team, plus one line per team directly under it. Totals only, never names.
 - **Activity**: counts per command/button and result for 30 days. No Discord IDs, names or message text are stored.
 

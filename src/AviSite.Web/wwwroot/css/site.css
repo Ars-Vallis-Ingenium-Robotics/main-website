@@ -2265,3 +2265,64 @@
   .discord-bot__owner > summary { cursor: pointer; font-weight: 600; }
   .discord-bot .actions { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
 }
+/* ---------- Hours report: branded header, audience switch (/admin/hours/report) ---------- */
+@layer components {
+  .report__toolbar { display: grid; gap: var(--s-3); margin-bottom: var(--s-4); }
+  .report__toolbar .eyebrow { margin: 0; }
+  .report__toolbar .hours__leadlinks { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .report__toolbar > .small { margin: 0; }
+  .report__audience { display: inline-flex; width: fit-content; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; }
+  .report__audience a { display: flex; align-items: center; min-height: 44px; padding: 0 var(--s-4); color: var(--fg); font-weight: 600; text-decoration: none; }
+  .report__audience a + a { border-left: 1px solid var(--line-strong); }
+  .report__audience a[aria-current="page"] { background: var(--ink); color: var(--on-ink); }
+  .report__audience a:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+  .report__brand { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--s-4); margin: var(--s-6) 0 var(--s-5); padding-bottom: var(--s-4); border-bottom: 4px solid var(--brand, var(--fg)); }
+  .report__brand-id { display: flex; align-items: center; gap: var(--s-4); min-width: 0; }
+  /* Logos are made for white (the PDF is white too), so they sit on a white chip in both themes. */
+  .report__logo { width: auto; height: auto; max-width: 12rem; max-height: 4.5rem; padding: 6px; border-radius: 6px; background: var(--white); }
+  .report__org { margin: 0; font-family: var(--font-display); font-size: var(--step-2); line-height: 1.05; overflow-wrap: anywhere; }
+  .report__tagline { margin: var(--s-1) 0 0; color: var(--text-muted); }
+  .report__title { text-align: right; margin-left: auto; }
+  .report__h1 { margin: 0; font-size: var(--step-1); line-height: 1.2; }
+  .report__title .report__scope { margin: var(--s-1) 0 0; font-size: 1rem; color: var(--text-muted); }
+  .report__h2 { margin: 0 0 var(--s-3); font-size: var(--step-0); font-weight: 700; }
+  .report__note { max-width: 42rem; color: var(--text-muted); }
+  .report__footer { margin-top: var(--s-6); padding-top: var(--s-3); border-top: 1px solid var(--line); }
+  .report__footer p { margin: 0 0 var(--s-1); white-space: pre-line; }
+  @media (max-width: 40rem) { .report__title { text-align: left; margin-left: 0; } }
+  /* The brand's colors are checked against white, so they apply in light mode and on paper; dark mode keeps its own. */
+  :root[data-theme="light"] .report .report__org, :root[data-theme="light"] .report .report__h2 { color: var(--brand, var(--fg)); }
+  :root[data-theme="light"] .report .colchart__bar { fill: var(--brand-accent, var(--accent)); }
+  :root[data-theme="light"] .report .hbars__bar { background: var(--brand-accent, var(--accent)); }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme]) .report .report__org, :root:not([data-theme]) .report .report__h2 { color: var(--brand, var(--fg)); }
+    :root:not([data-theme]) .report .colchart__bar { fill: var(--brand-accent, var(--accent)); }
+    :root:not([data-theme]) .report .hbars__bar { background: var(--brand-accent, var(--accent)); }
+  }
+  @media print {
+    .report .report__org, .report .report__h2 { color: var(--brand, var(--fg)); }
+    .report .colchart__bar { fill: var(--brand-accent, var(--accent)); }
+    .report .hbars__bar { background: var(--brand-accent, var(--accent)); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .report__brand { margin-top: 0; break-after: avoid; }
+    .report__footer { break-inside: avoid; }
+  }
+}
+/* ---------- Report branding admin (/admin/branding) ---------- */
+@layer components {
+  .branding-admin__card { border-top: 1px solid var(--line); padding-block: var(--s-6); display: grid; gap: var(--s-4); }
+  .branding-admin__card > h2 { margin: 0; }
+  /* The preview is a piece of white paper, like the PDF. */
+  .brand-preview { max-width: 40rem; padding: var(--s-4) var(--s-5); background: var(--white); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); }
+  .brand-preview__head { display: flex; align-items: center; gap: var(--s-4); }
+  .brand-preview__logo { width: auto; height: auto; max-width: 9rem; max-height: 3.5rem; }
+  .brand-preview__name { margin: 0; font-weight: 800; font-size: 1.35rem; color: var(--brand); }
+  .brand-preview__tagline { margin: 2px 0 0; color: var(--slate); font-size: 0.92rem; }
+  .brand-preview__rule { height: 4px; margin: var(--s-3) 0; background: var(--brand); }
+  .brand-preview__bars { display: grid; gap: 6px; }
+  .brand-preview__bars span { display: block; height: 10px; width: var(--w); border-radius: 0 3px 3px 0; background: var(--brand-accent); }
+  .brand-preview__footer { margin: var(--s-3) 0 0; padding-top: var(--s-2); border-top: 1px solid rgb(16 16 17 / 0.14); font-size: 0.8rem; color: var(--slate); white-space: pre-line; }
+  .branding-admin input[type="color"] { width: 4rem; min-height: 44px; padding: 2px; }
+  .branding-admin__logo { max-width: 40rem; }
+  .branding-admin__teams { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--s-2); max-width: 46rem; }
+  .branding-admin__teams li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) 0; border-bottom: 1px solid var(--line); }
+}
