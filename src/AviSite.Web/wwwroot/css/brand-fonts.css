@@ -1,0 +1,23 @@
+/* Fonts a brand can pick for its reports (/admin/branding). Loaded only on report and branding pages.
+   Made by tools/fonts/make_pdf_fonts.py; SIL Open Font License 1.1 (licenses in Pdf/Fonts). Porcine and Archivo come from site.css. */
+@font-face { font-family: "Brand Inter"; src: url("/fonts/brand/inter-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Brand Inter"; src: url("/fonts/brand/inter-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Brand Inter"; src: url("/fonts/brand/inter-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Brand Source Sans 3"; src: url("/fonts/brand/source-sans-3-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Brand Source Sans 3"; src: url("/fonts/brand/source-sans-3-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Brand Source Sans 3"; src: url("/fonts/brand/source-sans-3-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Brand IBM Plex Sans"; src: url("/fonts/brand/ibm-plex-sans-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Brand IBM Plex Sans"; src: url("/fonts/brand/ibm-plex-sans-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Brand Montserrat"; src: url("/fonts/brand/montserrat-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Brand Montserrat"; src: url("/fonts/brand/montserrat-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Brand Montserrat"; src: url("/fonts/brand/montserrat-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Brand Space Grotesk"; src: url("/fonts/brand/space-grotesk-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Brand Space Grotesk"; src: url("/fonts/brand/space-grotesk-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Brand Oswald"; src: url("/fonts/brand/oswald-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Brand Oswald"; src: url("/fonts/brand/oswald-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Brand Bebas Neue"; src: url("/fonts/brand/bebas-neue-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Brand Roboto Slab"; src: url("/fonts/brand/roboto-slab-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Brand Roboto Slab"; src: url("/fonts/brand/roboto-slab-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Brand Roboto Slab"; src: url("/fonts/brand/roboto-slab-800.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Brand Lora"; src: url("/fonts/brand/lora-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Brand Lora"; src: url("/fonts/brand/lora-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }

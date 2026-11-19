@@ -27,10 +27,8 @@ public readonly record struct PdfColor(byte R, byte G, byte B)
     internal static string N(double v) => Math.Round(v, 3).ToString("0.###", CultureInfo.InvariantCulture);
 }
 
-public enum PdfFont { Regular, Bold }
-
 /// <summary>
-/// A small, dependency-free PDF 1.4 writer: text in the standard Helvetica faces (not embedded; every viewer has them),
+/// A small, dependency-free PDF 1.4 writer: text in embedded TrueType fonts (<see cref="PdfTypeface"/>),
 /// filled rectangles and rounded bars, lines, and PNG/JPEG images. Coordinates are points from the TOP-left of the page.
 /// Enough for the hours reports; not a general layout engine.
 /// </summary>
@@ -39,6 +37,8 @@ public sealed class PdfDocument
     public const double LetterWidth = 612, LetterHeight = 792;
     private readonly List<PdfPage> _pages = [];
     private readonly List<PdfImage> _images = [];
+    private readonly List<PdfTypeface> _fonts = [];
+    private readonly Dictionary<PdfTypeface, SortedSet<ushort>> _used = [];
     public string Title { get; set; } = "";
     public string Author { get; set; } = "";
 
@@ -59,6 +59,14 @@ public sealed class PdfDocument
         return _images.Count - 1;
     }
 
+    /// <summary>Font resource name (F0, F1…) for <paramref name="face"/>, remembering which glyphs the text uses.</summary>
+    internal string Use(PdfTypeface face, IEnumerable<ushort> glyphs)
+    {
+        if (!_used.TryGetValue(face, out var set)) { _fonts.Add(face); _used[face] = set = []; }
+        set.UnionWith(glyphs);
+        return "F" + _fonts.IndexOf(face);
+    }
+
     public byte[] Save()
     {
         var objects = new List<byte[]>(); // object n is objects[n - 1]
@@ -69,11 +77,28 @@ public sealed class PdfDocument
 
         var catalog = Reserve();
         var pagesRoot = Reserve();
-        var fontRegular = Reserve();
-        var fontBold = Reserve();
         var info = Reserve();
-        Set(fontRegular, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
-        Set(fontBold, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+        // Each font: the whole TrueType file, a descriptor, a CID font with the widths of the glyphs used,
+        // a ToUnicode map (so text can be copied and searched), and the Type0 font the pages refer to.
+        var fontRefs = new List<int>();
+        foreach (var face in _fonts)
+        {
+            var glyphs = _used[face];
+            var file = Reserve();
+            SetStream(file, $"<< /Length1 {face.Data.Length} /Filter /FlateDecode >>", Deflate(face.Data));
+            var descriptor = Reserve();
+            Set(descriptor, $"<< /Type /FontDescriptor /FontName /{face.PdfName} /Flags {face.Flags} /FontBBox [{string.Join(' ', face.BBox.Select(b => face.Scale(b)))}] " +
+                $"/ItalicAngle {PdfColor.N(face.ItalicAngle)} /Ascent {face.Scale(face.Ascender)} /Descent {face.Scale(face.Descender)} /CapHeight {face.Scale(face.CapHeight)} /StemV 80 /FontFile2 {file} 0 R >>");
+            var cid = Reserve();
+            var widths = string.Join(' ', glyphs.Select(g => $"{g} [{face.Scale(face.Advance(g))}]"));
+            Set(cid, $"<< /Type /Font /Subtype /CIDFontType2 /BaseFont /{face.PdfName} /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> " +
+                $"/FontDescriptor {descriptor} 0 R /CIDToGIDMap /Identity /DW {face.Scale(face.Advance(0))} /W [{widths}] >>");
+            var toUnicode = Reserve();
+            SetStream(toUnicode, "<< >>", Latin1(face.ToUnicodeCMap(glyphs)));
+            var type0 = Reserve();
+            Set(type0, $"<< /Type /Font /Subtype /Type0 /BaseFont /{face.PdfName} /Encoding /Identity-H /DescendantFonts [{cid} 0 R] /ToUnicode {toUnicode} 0 R >>");
+            fontRefs.Add(type0);
+        }
         Set(info, $"<< /Title {PdfText.Literal(Title)} /Author {PdfText.Literal(Author)} /Producer (AVI Robotics site) " +
             $"/CreationDate (D:{DateTime.UtcNow:yyyyMMddHHmmss}Z) >>");
 
@@ -94,7 +119,8 @@ public sealed class PdfDocument
             imageRefs.Add(n);
         }
         var xobjects = imageRefs.Count == 0 ? "" : " /XObject << " + string.Join(' ', imageRefs.Select((r, i) => $"/Im{i} {r} 0 R")) + " >>";
-        var resources = $"<< /Font << /F1 {fontRegular} 0 R /F2 {fontBold} 0 R >>{xobjects} >>";
+        var fonts = string.Join(' ', fontRefs.Select((r, i) => $"/F{i} {r} 0 R"));
+        var resources = $"<< /Font << {fonts} >>{xobjects} >>";
 
         var kids = new List<int>();
         foreach (var page in _pages)
@@ -173,20 +199,23 @@ public sealed class PdfPage
     }
 
     /// <summary>Text with its baseline at <paramref name="baseline"/> (points from the top).</summary>
-    public void Text(double x, double baseline, string text, PdfFont font, double size, PdfColor color)
+    public void Text(double x, double baseline, string text, PdfTypeface font, double size, PdfColor color)
     {
         if (string.IsNullOrEmpty(text)) return;
-        _c.Append($"BT {color.Fill} /{(font == PdfFont.Bold ? "F2" : "F1")} {N(size)} Tf {N(x)} {N(Y(baseline))} Td {PdfText.Literal(text)} Tj ET\n");
+        var glyphs = font.Glyphs(text);
+        var name = _doc.Use(font, glyphs);
+        var hex = string.Concat(glyphs.Select(g => g.ToString("X4")));
+        _c.Append($"BT {color.Fill} /{name} {N(size)} Tf {N(x)} {N(Y(baseline))} Td <{hex}> Tj ET\n");
     }
 
-    public void TextRight(double right, double baseline, string text, PdfFont font, double size, PdfColor color) =>
-        Text(right - PdfText.Width(text, font, size), baseline, text, font, size, color);
+    public void TextRight(double right, double baseline, string text, PdfTypeface font, double size, PdfColor color) =>
+        Text(right - font.Width(text, size), baseline, text, font, size, color);
 
-    public void TextCenter(double center, double baseline, string text, PdfFont font, double size, PdfColor color) =>
-        Text(center - PdfText.Width(text, font, size) / 2, baseline, text, font, size, color);
+    public void TextCenter(double center, double baseline, string text, PdfTypeface font, double size, PdfColor color) =>
+        Text(center - font.Width(text, size) / 2, baseline, text, font, size, color);
 
     /// <summary>Wrapped text starting at <paramref name="top"/>; returns the y just below the last line.</summary>
-    public double Paragraph(double x, double top, double width, string text, PdfFont font, double size, PdfColor color, double leading = 1.35, int maxLines = int.MaxValue)
+    public double Paragraph(double x, double top, double width, string text, PdfTypeface font, double size, PdfColor color, double leading = 1.35, int maxLines = int.MaxValue)
     {
         var y = top;
         foreach (var line in PdfText.Wrap(text, font, size, width).Take(maxLines))
@@ -213,76 +242,13 @@ public sealed class PdfPage
     }
 }
 
-/// <summary>WinAnsi text: encoding, string literals, and Helvetica widths (from the Adobe AFM files) for layout.</summary>
+/// <summary>Layout helpers: wrapping and fitting text to a width.</summary>
 public static class PdfText
 {
-    // Widths in 1/1000 em for characters 32..126.
-    private static readonly short[] Regular =
-    [
-        278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278,
-        556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556,
-        1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778,
-        667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556,
-        333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556,
-        556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584,
-    ];
-    private static readonly short[] Bold =
-    [
-        278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278,
-        556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611,
-        975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778,
-        667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556,
-        333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611,
-        611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584,
-    ];
-
-    /// <summary>Unicode → WinAnsi (cp1252) for the punctuation the site uses. Anything else unmappable becomes '?'.</summary>
-    private static readonly Dictionary<char, byte> Specials = new()
-    {
-        ['€'] = 0x80, ['‚'] = 0x82, ['„'] = 0x84, ['…'] = 0x85, ['•'] = 0x95, ['–'] = 0x96, ['—'] = 0x97,
-        ['‘'] = 0x91, ['’'] = 0x92, ['“'] = 0x93, ['”'] = 0x94, ['™'] = 0x99, ['›'] = 0x9B, ['‹'] = 0x8B,
-        ['→'] = (byte)'>', ['←'] = (byte)'<', [' '] = 0x20, [' '] = 0x20, [' '] = 0x20,
-    };
-
-    public static byte Encode(char c) =>
-        c is >= ' ' and <= '~' ? (byte)c :
-        Specials.TryGetValue(c, out var b) ? b :
-        c is >= '¡' and <= 'ÿ' ? (byte)c : (byte)'?';
-
-    private static double CharWidth(byte b, PdfFont font)
-    {
-        if (b is >= 32 and <= 126) return (font == PdfFont.Bold ? Bold : Regular)[b - 32];
-        return b switch
-        {
-            0x95 => 350, 0x96 => 556, 0x97 => 1000, 0x85 => 1000, 0x91 or 0x92 => font == PdfFont.Bold ? 278 : 222,
-            0x93 or 0x94 => font == PdfFont.Bold ? 500 : 333, 0xB7 => 278, 0x9B or 0x8B => 333, 0xD7 => 584, 0xB0 => 400,
-            _ => 556,
-        };
-    }
-
-    public static double Width(string text, PdfFont font, double size)
-    {
-        double w = 0;
-        foreach (var c in text) w += CharWidth(Encode(c), font);
-        return w * size / 1000;
-    }
-
-    /// <summary>A PDF string literal: (…) with \, ( and ) escaped; bytes ≥ 128 as octal.</summary>
-    public static string Literal(string text)
-    {
-        var sb = new StringBuilder("(");
-        foreach (var c in text)
-        {
-            var b = Encode(c);
-            if (b is (byte)'(' or (byte)')' or (byte)'\\') sb.Append('\\').Append((char)b);
-            else if (b >= 128) sb.Append('\\').Append(Convert.ToString(b, 8).PadLeft(3, '0'));
-            else sb.Append((char)b);
-        }
-        return sb.Append(')').ToString();
-    }
+    public static double Width(string text, PdfTypeface font, double size) => font.Width(text, size);
 
     /// <summary>Greedy word wrap; words longer than a line are cut.</summary>
-    public static List<string> Wrap(string text, PdfFont font, double size, double width)
+    public static List<string> Wrap(string text, PdfTypeface font, double size, double width)
     {
         var lines = new List<string>();
         foreach (var para in text.Replace("\r", "").Split('\n'))
@@ -291,13 +257,13 @@ public static class PdfText
             foreach (var word in para.Split(' ', StringSplitOptions.RemoveEmptyEntries))
             {
                 var candidate = line.Length == 0 ? word : line + " " + word;
-                if (Width(candidate, font, size) <= width) { line = candidate; continue; }
+                if (font.Width(candidate, size) <= width) { line = candidate; continue; }
                 if (line.Length > 0) lines.Add(line);
                 line = word;
-                while (Width(line, font, size) > width && line.Length > 1)
+                while (font.Width(line, size) > width && line.Length > 1)
                 {
                     var cut = line.Length - 1;
-                    while (cut > 1 && Width(line[..cut], font, size) > width) cut--;
+                    while (cut > 1 && font.Width(line[..cut], size) > width) cut--;
                     lines.Add(line[..cut]);
                     line = line[cut..];
                 }
@@ -308,11 +274,24 @@ public static class PdfText
     }
 
     /// <summary>Shortens <paramref name="text"/> with "…" to fit <paramref name="width"/>.</summary>
-    public static string Fit(string text, PdfFont font, double size, double width)
+    public static string Fit(string text, PdfTypeface font, double size, double width)
     {
-        if (Width(text, font, size) <= width) return text;
+        if (font.Width(text, size) <= width) return text;
         var n = text.Length;
-        while (n > 0 && Width(text[..n] + "…", font, size) > width) n--;
+        while (n > 0 && font.Width(text[..n] + "…", size) > width) n--;
         return text[..n].TrimEnd() + "…";
+    }
+
+    /// <summary>A PDF string literal for document info (ASCII only, the rest becomes '?').</summary>
+    public static string Literal(string text)
+    {
+        var sb = new StringBuilder("(");
+        foreach (var c in text)
+        {
+            var ch = c is >= ' ' and <= '~' ? c : c is '·' or '›' or '–' or '—' ? '-' : '?';
+            if (ch is '(' or ')' or '\\') sb.Append('\\');
+            sb.Append(ch);
+        }
+        return sb.Append(')').ToString();
     }
 }

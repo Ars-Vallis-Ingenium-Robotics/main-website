@@ -22,6 +22,9 @@ public sealed class Branding
     /// <summary>Chart bars. Must be visible on white (3:1).</summary>
     public string? Accent { get; set; }
     public string? Footer { get; set; }
+    /// <summary><see cref="BrandFonts"/> ids. Null: AVI's (Porcine Heavy headings, Archivo text).</summary>
+    public string? HeadingFont { get; set; }
+    public string? BodyFont { get; set; }
     public string? LogoType { get; set; }
     /// <summary>Changes with every logo upload; part of the logo URL so browsers fetch the new one.</summary>
     public string? LogoStamp { get; set; }
@@ -30,8 +33,19 @@ public sealed class Branding
 }
 
 /// <summary>What a report actually uses: the resolved branding for a team, with defaults filled in.</summary>
-public sealed record Brand(string SourceGroup, string Name, string? Tagline, string Primary, string Accent, string? Footer, string? LogoUrl)
+public sealed record Brand(string SourceGroup, string Name, string? Tagline, string Primary, string Accent, string? Footer, string? LogoUrl,
+    BrandFont HeadingFont, BrandFont BodyFont)
 {
+    /// <summary>The colors lifted for dark backgrounds (same hue), so the brand still shows in dark mode.</summary>
+    public string PrimaryOnDark => BrandingRules.ForDark(Primary, 4.5);
+    public string AccentOnDark => BrandingRules.ForDark(Accent, 3);
+
+    /// <summary>CSS custom properties for a branded block (inline style).</summary>
+    public string CssVars =>
+        $"--brand: {Primary}; --brand-accent: {Accent}; --brand-dark: {PrimaryOnDark}; --brand-accent-dark: {AccentOnDark}; " +
+        $"--brand-heading-font: {BrandFonts.Stack(HeadingFont)}; --brand-heading-weight: {HeadingFont.HeadingWeight}; " +
+        $"--brand-heading-stretch: {HeadingFont.Stretch ?? "normal"}; --brand-body-font: {BrandFonts.Stack(BodyFont)}";
+
     /// <summary>AVI's own colors (ink, blurple): the default for anyone who hasn't picked theirs.</summary>
     public const string DefaultPrimary = "#101011";
     public const string DefaultAccent = "#0c63e6";
@@ -40,13 +54,14 @@ public sealed record Brand(string SourceGroup, string Name, string? Tagline, str
 public sealed class BrandingStore(SiteDb db, TimeProvider clock)
 {
     public const int MaxLogoBytes = 1_000_000;
-    private const string Cols = "group_id, enabled, display_name, tagline, primary_color, accent_color, footer, logo_type, logo_stamp, updated_by, updated_utc";
+    private const string Cols = "group_id, enabled, display_name, tagline, primary_color, accent_color, footer, logo_type, logo_stamp, updated_by, updated_utc, heading_font, body_font";
 
     private static Branding Read(SqliteDataReader r) => new()
     {
         GroupId = r.GetString(0), Enabled = r.GetInt64(1) != 0, DisplayName = SiteDb.StrOrNull(r, 2), Tagline = SiteDb.StrOrNull(r, 3),
         Primary = SiteDb.StrOrNull(r, 4), Accent = SiteDb.StrOrNull(r, 5), Footer = SiteDb.StrOrNull(r, 6), LogoType = SiteDb.StrOrNull(r, 7),
         LogoStamp = SiteDb.StrOrNull(r, 8), UpdatedBy = SiteDb.StrOrNull(r, 9), UpdatedUtc = SiteDb.TimeOrNull(r, 10),
+        HeadingFont = SiteDb.StrOrNull(r, 11), BodyFont = SiteDb.StrOrNull(r, 12),
     };
 
     public Dictionary<string, Branding> All()
@@ -66,11 +81,13 @@ public sealed class BrandingStore(SiteDb db, TimeProvider clock)
     {
         using var c = db.Open();
         SiteDb.Exec(c, """
-            INSERT INTO group_branding (group_id, enabled, display_name, tagline, primary_color, accent_color, footer, updated_by, updated_utc)
-            VALUES ($g, 0, $name, $tag, $p, $a, $f, $by, $now)
+            INSERT INTO group_branding (group_id, enabled, display_name, tagline, primary_color, accent_color, footer, heading_font, body_font, updated_by, updated_utc)
+            VALUES ($g, 0, $name, $tag, $p, $a, $f, $hf, $bf, $by, $now)
             ON CONFLICT(group_id) DO UPDATE SET display_name = excluded.display_name, tagline = excluded.tagline, primary_color = excluded.primary_color,
-                accent_color = excluded.accent_color, footer = excluded.footer, updated_by = excluded.updated_by, updated_utc = excluded.updated_utc
+                accent_color = excluded.accent_color, footer = excluded.footer, heading_font = excluded.heading_font, body_font = excluded.body_font,
+                updated_by = excluded.updated_by, updated_utc = excluded.updated_utc
             """, null, ("$g", b.GroupId), ("$name", b.DisplayName), ("$tag", b.Tagline), ("$p", b.Primary), ("$a", b.Accent), ("$f", b.Footer),
+            ("$hf", b.HeadingFont), ("$bf", b.BodyFont),
             ("$by", by), ("$now", SiteDb.Iso(clock.GetUtcNow())));
     }
 
@@ -122,7 +139,8 @@ public sealed class BrandingStore(SiteDb db, TimeProvider clock)
             b?.Primary ?? Brand.DefaultPrimary,
             b?.Accent ?? Brand.DefaultAccent,
             string.IsNullOrWhiteSpace(b?.Footer) ? null : b.Footer,
-            b?.LogoStamp is { } stamp ? $"/branding/{source}/logo?v={stamp}" : null);
+            b?.LogoStamp is { } stamp ? $"/branding/{source}/logo?v={stamp}" : null,
+            BrandFonts.Heading(b?.HeadingFont), BrandFonts.Body(b?.BodyFont));
     }
 }
 
@@ -148,11 +166,68 @@ public static partial class BrandingRules
     }
 
     /// <summary>WCAG contrast ratio of a color against white.</summary>
-    public static double ContrastOnWhite(string hex)
+    public static double ContrastOnWhite(string hex) => 1.05 / (Luminance(hex) + 0.05);
+
+    /// <summary>The site's dark-mode page background (--paper in dark mode).</summary>
+    public const string DarkBackground = "#111216";
+    /// <summary>The site's dark-mode text color (--fg in dark mode).</summary>
+    public const string DarkText = "#eceef1";
+
+    public static double Contrast(string a, string b)
+    {
+        double la = Luminance(a), lb = Luminance(b);
+        return (Math.Max(la, lb) + 0.05) / (Math.Min(la, lb) + 0.05);
+    }
+
+    private static double Luminance(string hex)
     {
         var v = int.Parse(hex.AsSpan(1), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
         static double Lin(int c) { var s = c / 255.0; return s <= 0.03928 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4); }
-        var l = 0.2126 * Lin((v >> 16) & 255) + 0.7152 * Lin((v >> 8) & 255) + 0.0722 * Lin(v & 255);
-        return 1.05 / (l + 0.05);
+        return 0.2126 * Lin((v >> 16) & 255) + 0.7152 * Lin((v >> 8) & 255) + 0.0722 * Lin(v & 255);
+    }
+
+    /// <summary>
+    /// The same hue made lighter until it reaches <paramref name="minRatio"/> against the dark-mode background.
+    /// Brand colors are chosen to read on white, so most need lifting to read on dark.
+    /// </summary>
+    public static string ForDark(string hex, double minRatio)
+    {
+        if (Contrast(hex, DarkBackground) >= minRatio) return hex;
+        var v = int.Parse(hex.AsSpan(1), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+        var (h, s, l) = ToHsl(((v >> 16) & 255) / 255.0, ((v >> 8) & 255) / 255.0, (v & 255) / 255.0);
+        // Near-black or grey brands (like AVI's ink) read best as the dark theme's own text color, not a lifted grey.
+        if (s < 0.12) return DarkText;
+        for (var lift = l; lift <= 1.0001; lift += 0.01)
+        {
+            var c = FromHsl(h, s, Math.Min(1, lift));
+            if (Contrast(c, DarkBackground) >= minRatio) return c;
+        }
+        return "#ffffff";
+    }
+
+    private static (double H, double S, double L) ToHsl(double r, double g, double b)
+    {
+        double max = Math.Max(r, Math.Max(g, b)), min = Math.Min(r, Math.Min(g, b)), l = (max + min) / 2, d = max - min;
+        if (d < 1e-9) return (0, 0, l);
+        var s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        var h = max == r ? (g - b) / d + (g < b ? 6 : 0) : max == g ? (b - r) / d + 2 : (r - g) / d + 4;
+        return (h / 6, s, l);
+    }
+
+    private static string FromHsl(double h, double s, double l)
+    {
+        static double Hue(double p, double q, double t)
+        {
+            if (t < 0) t += 1; if (t > 1) t -= 1;
+            return t < 1.0 / 6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2.0 / 3 ? p + (q - p) * (2.0 / 3 - t) * 6 : p;
+        }
+        double r, g, b;
+        if (s < 1e-9) r = g = b = l;
+        else
+        {
+            var q = l < 0.5 ? l * (1 + s) : l + s - l * s; var p = 2 * l - q;
+            r = Hue(p, q, h + 1.0 / 3); g = Hue(p, q, h); b = Hue(p, q, h - 1.0 / 3);
+        }
+        return $"#{(int)Math.Round(r * 255):x2}{(int)Math.Round(g * 255):x2}{(int)Math.Round(b * 255):x2}";
     }
 }

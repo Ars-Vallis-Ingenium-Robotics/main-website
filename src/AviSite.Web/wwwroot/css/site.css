@@ -2290,19 +2290,29 @@
   .report__footer { margin-top: var(--s-6); padding-top: var(--s-3); border-top: 1px solid var(--line); }
   .report__footer p { margin: 0 0 var(--s-1); white-space: pre-line; }
   @media (max-width: 40rem) { .report__title { text-align: left; margin-left: 0; } }
-  /* The brand's colors are checked against white, so they apply in light mode and on paper; dark mode keeps its own. */
-  :root[data-theme="light"] .report .report__org, :root[data-theme="light"] .report .report__h2 { color: var(--brand, var(--fg)); }
-  :root[data-theme="light"] .report .colchart__bar { fill: var(--brand-accent, var(--accent)); }
-  :root[data-theme="light"] .report .hbars__bar { background: var(--brand-accent, var(--accent)); }
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme]) .report .report__org, :root:not([data-theme]) .report .report__h2 { color: var(--brand, var(--fg)); }
-    :root:not([data-theme]) .report .colchart__bar { fill: var(--brand-accent, var(--accent)); }
-    :root:not([data-theme]) .report .hbars__bar { background: var(--brand-accent, var(--accent)); }
+  /* Brand colors: as chosen in light mode and print (they're checked against white); in dark mode the same hues
+     lifted to read on dark (--brand-dark / --brand-accent-dark, worked out on the server). */
+  .report { --brand-ui: var(--brand, var(--fg)); --brand-accent-ui: var(--brand-accent, var(--accent)); }
+  :root[data-theme="dark"] .report { --brand-ui: var(--brand-dark, var(--fg)); --brand-accent-ui: var(--brand-accent-dark, var(--accent-on-ink)); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .report { --brand-ui: var(--brand-dark, var(--fg)); --brand-accent-ui: var(--brand-accent-dark, var(--accent-on-ink)); }
   }
+  .report .report__org, .report .report__h2 { color: var(--brand-ui); }
+  .report .report__brand { border-bottom-color: var(--brand-ui); }
+  .report .colchart__bar { fill: var(--brand-accent-ui); }
+  .report .colchart__col:hover .colchart__bar { fill: var(--brand-accent-ui); opacity: 0.85; }
+  .report .hbars__bar { background: var(--brand-accent-ui); }
+  /* Brand fonts: headings in the heading font, the document's text in the body font (the site's own controls stay as they are). */
+  .report .report__org, .report .report__h1, .report .report__h2, .report .report__stats .stat__num {
+    font-family: var(--brand-heading-font, var(--font-display)); font-weight: var(--brand-heading-weight, 900); font-stretch: var(--brand-heading-stretch, normal);
+  }
+  .report .report__brand, .report .report__stats .stat__label, .report .report__block, .report .report__note, .report .report__footer {
+    font-family: var(--brand-body-font, var(--font-sans));
+  }
+  .report .report__stats .stat__label { text-transform: none; letter-spacing: 0; }
   @media print {
-    .report .report__org, .report .report__h2 { color: var(--brand, var(--fg)); }
-    .report .colchart__bar { fill: var(--brand-accent, var(--accent)); }
-    .report .hbars__bar { background: var(--brand-accent, var(--accent)); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .report { --brand-ui: var(--brand, var(--fg)); --brand-accent-ui: var(--brand-accent, var(--accent)); }
+    .report .hbars__bar { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     .report__brand { margin-top: 0; break-after: avoid; }
     .report__footer { break-inside: avoid; }
   }
@@ -2315,7 +2325,8 @@
   .brand-preview { max-width: 40rem; padding: var(--s-4) var(--s-5); background: var(--white); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); }
   .brand-preview__head { display: flex; align-items: center; gap: var(--s-4); }
   .brand-preview__logo { width: auto; height: auto; max-width: 9rem; max-height: 3.5rem; }
-  .brand-preview__name { margin: 0; font-weight: 800; font-size: 1.35rem; color: var(--brand); }
+  .brand-preview { font-family: var(--brand-body-font, var(--font-sans)); }
+  .brand-preview__name { margin: 0; font-size: 1.5rem; line-height: 1.1; color: var(--brand); font-family: var(--brand-heading-font, var(--font-display)); font-weight: var(--brand-heading-weight, 900); font-stretch: var(--brand-heading-stretch, normal); }
   .brand-preview__tagline { margin: 2px 0 0; color: var(--slate); font-size: 0.92rem; }
   .brand-preview__rule { height: 4px; margin: var(--s-3) 0; background: var(--brand); }
   .brand-preview__bars { display: grid; gap: 6px; }

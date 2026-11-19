@@ -858,6 +858,7 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
 await test("accounts: the owner can also be on teams (e.g. lead of SMS); co-leads are allowed", async () => {
   const c = await browser.newContext(); const pg = await c.newPage();
   await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
+  await pg.waitForURL((u) => !u.pathname.startsWith("/admin/login")); // signed in before moving on
   await pg.goto(BASE + "/admin/people");
   const co = `co-${Date.now().toString(36)}@example.com`;
   await pg.fill("#add-list", `owner@example.com\n${co}`); await pg.selectOption("#add-team", "sms"); await pg.selectOption("#add-role", "Lead");
@@ -871,6 +872,7 @@ await test("accounts: the owner can also be on teams (e.g. lead of SMS); co-lead
 await test("team prefixes follow the whole chain, swap with the team picker; People 'Everyone' shows everyone", async () => {
   const c = await browser.newContext(); const pg = await c.newPage();
   await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
+  await pg.waitForURL((u) => !u.pathname.startsWith("/admin/login")); // signed in before moving on
   await pg.goto(BASE + "/admin/people?q=&team=");
   assert.ok(await pg.locator("tbody tr[data-person]").count() > 0, "an empty team filter means everyone, not nobody");
   const sub = "sub" + Date.now().toString(36).slice(-5);
@@ -1183,6 +1185,7 @@ await test("reports: sponsor version has no names; real PDF; branding per organi
   await op.locator('#brand-sms form[action="/admin/branding/sms"] button[type=submit]').click(); await op.waitForLoadState();
   assert.match(await op.locator(".alert").first().innerText(), /too light/, "a chart color that can't be seen on white is refused");
   await op.fill("#name-sms", "Smoke SMS");
+  await op.selectOption("#hfont-sms", "archivo-expanded"); await op.selectOption("#bfont-sms", "inter");
   await op.locator("#primary-sms").evaluate((e) => { e.value = "#0f6f69"; });
   await op.locator("#accent-sms").evaluate((e) => { e.value = "#1f9a92"; });
   await op.locator('#brand-sms form[action="/admin/branding/sms"] button[type=submit]').click(); await op.waitForLoadState();
@@ -1191,7 +1194,14 @@ await test("reports: sponsor version has no names; real PDF; branding per organi
   // Reports pick the right branding: SMS's own for SMS, AVI's for everything else.
   await op.goto(BASE + "/admin/hours/report?team=sms&range=all");
   assert.equal(await op.locator(".report__org").innerText(), "Smoke SMS");
-  assert.match(await op.locator(".report").getAttribute("style"), /--brand: #0f6f69/);
+  const style = await op.locator(".report").getAttribute("style");
+  assert.match(style, /--brand: #0f6f69/);
+  assert.match(style, /--brand-dark: #[0-9a-f]{6}/, "a dark-mode version of the brand color");
+  assert.match(style, /--brand-body-font: "Brand Inter"/, "the brand's text font");
+  assert.match(style, /--brand-heading-stretch: 125%/, "Archivo Expanded headings");
+  assert.equal(await op.locator(".report__org").evaluate((e) => getComputedStyle(e).fontStretch), "125%");
+  const smsPdf = await (await op.request.get(BASE + "/admin/hours/report.pdf?team=sms&range=all")).body();
+  assert.ok(smsPdf.includes(Buffer.from("/BaseFont /AVI-inter_regular")) && smsPdf.includes(Buffer.from("/FontFile2")), "the PDF embeds the brand's fonts");
   await op.goto(BASE + "/admin/hours/report?team=avi&range=all");
   assert.equal(await op.locator(".report__org").innerText(), "AVI Robotics");
   assert.match(await op.locator(".report__tagline").innerText(), /Smoke tagline/);
@@ -1513,6 +1523,7 @@ await test("layout: icons sit in the middle of their buttons", async () => {
   }); }, "Customize icon");
   // Team chip × on People
   await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
+  await pg.waitForURL((u) => !u.pathname.startsWith("/admin/login")); // signed in before moving on
   await pg.goto(BASE + "/admin/people");
   const x = pg.locator(".team-chip__x").first();
   if (await x.count()) await assertIconCentered(pg, x, "Team chip ×");

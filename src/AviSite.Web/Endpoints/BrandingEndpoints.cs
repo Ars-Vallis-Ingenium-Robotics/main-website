@@ -26,7 +26,8 @@ public static partial class BrandingEndpoints
         var admin = app.MapGroup(Page).RequireAuthorization(AdminEndpoints.QrPolicy);
 
         admin.MapPost("/{group}", async (string group, [FromForm] string? displayName, [FromForm] string? tagline, [FromForm] string? primary,
-            [FromForm] string? accent, [FromForm] string? footer, HttpContext http, IAccountStore accounts, BrandingStore store) =>
+            [FromForm] string? accent, [FromForm] string? footer, [FromForm] string? headingFont, [FromForm] string? bodyFont,
+            HttpContext http, IAccountStore accounts, BrandingStore store) =>
         {
             var me = await http.AccessAsync(accounts);
             if (me.Tree.Find(group) is null) return Back(error: "gone");
@@ -36,9 +37,12 @@ public static partial class BrandingEndpoints
             if ((!string.IsNullOrWhiteSpace(primary) && p is null) || (!string.IsNullOrWhiteSpace(accent) && a is null)) return Back(error: "color", group: group);
             if (p is not null && BrandingRules.ContrastOnWhite(p) < 4.5) return Back(error: "primary-contrast", group: group);
             if (a is not null && BrandingRules.ContrastOnWhite(a) < 3) return Back(error: "accent-contrast", group: group);
+            if ((headingFont is not null && BrandFonts.Find(headingFont) is not { ForHeadings: true })
+                || (bodyFont is not null && BrandFonts.Find(bodyFont) is not { ForBody: true })) return Back(error: "font", group: group);
             store.Save(new Branding
             {
                 GroupId = group, DisplayName = Clean(displayName, 80), Tagline = Clean(tagline, 140), Primary = p, Accent = a, Footer = Clean(footer, 400),
+                HeadingFont = headingFont, BodyFont = bodyFont,
             }, me.Account.Email);
             return Back(done: "saved", group: group);
         });

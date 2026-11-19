@@ -26,6 +26,8 @@
     <None Remove="App_Data\**" />
     <Content Update="Store\catalog.seed.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="legacy-static\**" CopyToPublishDirectory="PreserveNewest" />
+    <!-- Report fonts for the PDF writer (tools/fonts/make_pdf_fonts.py), compiled in. -->
+    <EmbeddedResource Include="Pdf\Fonts\*.ttf" LogicalName="AviSite.Web.Pdf.Fonts.%(Filename)%(Extension)" />
     <!-- Site copy (Markdown) lives at the repo root in content/; ship it next to the app. -->
     <None Include="..\..\content\**\*.md" LinkBase="content" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

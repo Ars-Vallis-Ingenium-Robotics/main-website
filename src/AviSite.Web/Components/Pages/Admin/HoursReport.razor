@@ -7,11 +7,11 @@
 @inject NavigationManager Nav
 
 <PageTitle>@(sponsor ? "Hours summary" : "Hours report") · @(r?.Brand.Name ?? "AVI Robotics")</PageTitle>
-<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+<HeadContent><meta name="robots" content="noindex" /><link rel="stylesheet" href="@Assets["css/brand-fonts.css"]" /></HeadContent>
 
 @if (r is not null)
 {
-    <section class="section admin hours report report--@(sponsor ? "sponsor" : "internal")" style="--brand: @r.Brand.Primary; --brand-accent: @r.Brand.Accent">
+    <section class="section admin hours report report--@(sponsor ? "sponsor" : "internal")" style="@r.Brand.CssVars">
         <div class="wrap">
             <div class="no-print"><AdminNav Current="hours" /></div>
 

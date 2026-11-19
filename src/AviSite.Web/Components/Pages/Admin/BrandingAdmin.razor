@@ -5,7 +5,7 @@
 @inject BrandingStore Store
 
 <PageTitle>Report branding · AVI Robotics admin</PageTitle>
-<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+<HeadContent><meta name="robots" content="noindex" /><link rel="stylesheet" href="@Assets["css/brand-fonts.css"]" /></HeadContent>
 
 <section class="section admin branding-admin">
     <div class="wrap">
@@ -14,7 +14,7 @@
             <div>
                 <p class="eyebrow">Admin</p>
                 <h1 class="h1">Report branding</h1>
-                <p class="muted">Logo, colors, name and footer on hours reports and their PDFs. Each organization has its own. Its leads can give a team its own too; every other team uses the nearest branding above it.</p>
+                <p class="muted">Logo, colors, fonts, name and footer on hours reports and their PDFs. Each organization has its own. Its leads can give a team its own too; every other team uses the nearest branding above it.</p>
             </div>
         </div>
 
@@ -29,7 +29,7 @@
         {
             var brand = Store.Resolve(g.Id, access.Tree);
             var saved = all.GetValueOrDefault(g.Id);
-            <article class="branding-admin__card" id="brand-@g.Id" style="--brand: @brand.Primary; --brand-accent: @brand.Accent">
+            <article class="branding-admin__card" id="brand-@g.Id" style="@brand.CssVars">
                 <h2 class="h3">@access.Tree.Path(g.Id)</h2>
                 <div class="brand-preview" aria-label="Preview of the report header">
                     <div class="brand-preview__head">
@@ -56,6 +56,18 @@
                         <div class="field">
                             <label class="label" for="accent-@g.Id">Chart color</label>
                             <input id="accent-@g.Id" name="accent" type="color" value="@brand.Accent" />
+                        </div>
+                        <div class="field">
+                            <label class="label" for="hfont-@g.Id">Heading font</label>
+                            <select id="hfont-@g.Id" name="headingFont">
+                                @foreach (var font in BrandFonts.All.Where(x => x.ForHeadings)) { <option value="@font.Id" selected="@(font.Id == brand.HeadingFont.Id)">@font.Label</option> }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="label" for="bfont-@g.Id">Text font</label>
+                            <select id="bfont-@g.Id" name="bodyFont">
+                                @foreach (var font in BrandFonts.All.Where(x => x.ForBody)) { <option value="@font.Id" selected="@(font.Id == brand.BodyFont.Id)">@font.Label</option> }
+                            </select>
                         </div>
                     </div>
                     <div class="field">
@@ -134,6 +146,7 @@
             "logo-missing" => ("Choose a logo file first.", false),
             "logo-size" => ("Logos can be up to 1 MB and 4000 × 4000 px.", false),
             "logo-format" => ("Use a PNG or JPEG (not interlaced, not CMYK).", false),
+            "font" => ("Pick a font from the list.", false),
             _ => ("That didn't work.", false),
         },
     };

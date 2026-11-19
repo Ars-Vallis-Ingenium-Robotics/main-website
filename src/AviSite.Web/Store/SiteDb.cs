@@ -189,6 +189,8 @@ public sealed class SiteDb
             primary_color TEXT,
             accent_color TEXT,
             footer TEXT,
+            heading_font TEXT,
+            body_font TEXT,
             logo BLOB,
             logo_type TEXT,
             logo_stamp TEXT,
