@@ -1,0 +1,108 @@
+@* Accessible server-rendered category pie. The legend carries the exact hours and share, so color is never the only key. *@
+@if (slices.Count == 0)
+{
+    <p class="muted small">Nothing to chart in this selection.</p>
+}
+else
+{
+    <figure class="hours-pie" data-hours-pie data-total-hours="@F(total)">
+        <svg class="hours-pie__svg" viewBox="0 0 240 240" role="img" aria-labelledby="@TitleId" aria-describedby="@DescriptionId">
+            <title id="@TitleId">@Label</title>
+            <desc id="@DescriptionId">Sector size represents hours. The accompanying list gives each category's hours and percentage.</desc>
+            @if (slices.Count == 1)
+            {
+                var slice = slices[0];
+                <circle cx="120" cy="120" r="104" class="@SliceClass(0)" data-pie-wedge data-pie-label="@slice.Label" data-pie-hours="@F(slice.Value)"><title>@SliceTitle(slice)</title></circle>
+            }
+            else
+            {
+                @for (var i = 0; i < slices.Count; i++)
+                {
+                    var slice = slices[i];
+                    <path d="@Wedge(slice)" class="@SliceClass(i)" data-pie-wedge data-pie-label="@slice.Label" data-pie-hours="@F(slice.Value)"><title>@SliceTitle(slice)</title></path>
+                }
+            }
+        </svg>
+        <figcaption class="hours-pie__details">
+            <p class="hours-pie__total">@HoursText.Hours(total) h total · @slices.Count @(slices.Count == 1 ? "category" : "categories")</p>
+            <ul class="hours-pie__legend" aria-label="Hours by category and percentage">
+                @for (var i = 0; i < slices.Count; i++)
+                {
+                    var slice = slices[i];
+                    <li data-pie-slice data-pie-label="@slice.Label" data-pie-hours="@F(slice.Value)">
+                        <span class="hours-pie__swatch hours-pie__swatch--@(i % 8)" aria-hidden="true"></span>
+                        <span class="hours-pie__label">@slice.Label</span>
+                        <span class="hours-pie__value mono">@HoursFor(slice.Value) h</span>
+                        <span class="hours-pie__share mono">@PercentLabel(slice)%</span>
+                    </li>
+                }
+            </ul>
+        </figcaption>
+    </figure>
+}
+
+@code {
+    [Parameter, EditorRequired] public List<(string Label, double Value)> Rows { get; set; } = [];
+    [Parameter, EditorRequired] public string Label { get; set; } = "Hours by category";
+
+    private const double Center = 120;
+    private const double Radius = 104;
+    private readonly string chartId = $"hours-pie-{Guid.NewGuid():N}";
+    private List<Slice> slices = [];
+    private double total;
+
+    private string TitleId => $"{chartId}-title";
+    private string DescriptionId => $"{chartId}-description";
+
+    protected override void OnParametersSet()
+    {
+        var rows = Rows.Where(row => double.IsFinite(row.Value) && row.Value > 0).ToList();
+        total = rows.Sum(row => row.Value);
+        slices = [];
+        if (total <= 0) return;
+
+        var angle = -90d;
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var next = i == rows.Count - 1 ? 270d : angle + 360d * rows[i].Value / total;
+            slices.Add(new Slice(rows[i].Label, rows[i].Value, angle, next));
+            angle = next;
+        }
+    }
+
+    private double Percent(Slice slice) => slice.Value * 100 / total;
+
+    private string PercentLabel(Slice slice)
+    {
+        var percent = Percent(slice);
+        if (percent > 0 && percent < 0.1) return "<0.1";
+        if (percent < 100 && percent >= 99.95) return "99.9";
+        return percent.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private static string HoursFor(double value) => value > 0 && value < 0.05 ? "<0.1" : HoursText.Hours(value);
+
+    private string SliceTitle(Slice slice) =>
+        $"{slice.Label}: {HoursFor(slice.Value)} hours, {PercentLabel(slice)} percent";
+
+    private static string SliceClass(int index) => $"hours-pie__slice hours-pie__slice--{index % 8}";
+
+    private static string Wedge(Slice slice)
+    {
+        var start = Point(slice.StartAngle);
+        var end = Point(slice.EndAngle);
+        var largeArc = slice.EndAngle - slice.StartAngle > 180 ? 1 : 0;
+        return $"M{F(Center)},{F(Center)} L{F(start.X)},{F(start.Y)} A{F(Radius)},{F(Radius)} 0 {largeArc} 1 {F(end.X)},{F(end.Y)} Z";
+    }
+
+    private static (double X, double Y) Point(double angle)
+    {
+        var radians = angle * Math.PI / 180;
+        return (Center + Radius * Math.Cos(radians), Center + Radius * Math.Sin(radians));
+    }
+
+    // Round-trip precision keeps tiny-but-positive sectors from collapsing to identical SVG points.
+    private static string F(double value) => value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+
+    private sealed record Slice(string Label, double Value, double StartAngle, double EndAngle);
+}
