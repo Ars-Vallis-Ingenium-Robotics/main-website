@@ -1,0 +1,59 @@
+{
+  "_": "Fonts a brand can pick (/admin/branding). source: 'site' = wwwroot/fonts (variable or single files), else a @fontsource npm package. Weights: regular/bold for text (null = headings only), heading = the weight used for headings. Run make_pdf_fonts.py after editing.",
+  "groups": ["AVI & SMS", "Sans serif", "Serif", "Slab serif", "Display", "Condensed", "Tech", "Monospace", "Handwritten"],
+  "fonts": [
+    { "id": "porcine", "label": "Porcine Heavy (AVI)", "group": "AVI & SMS", "source": "site", "css": "Porcine", "heading": 900 },
+    { "id": "archivo", "label": "Archivo (AVI)", "group": "AVI & SMS", "source": "site", "css": "Archivo", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "archivo-expanded", "label": "Archivo Expanded (SMS)", "group": "AVI & SMS", "source": "site", "css": "Archivo", "heading": 800, "stretch": "125%" },
+
+    { "id": "inter", "label": "Inter", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "source-sans-3", "label": "Source Sans 3", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "ibm-plex-sans", "label": "IBM Plex Sans", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 700 },
+    { "id": "open-sans", "label": "Open Sans", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "lato", "label": "Lato", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 900 },
+    { "id": "dm-sans", "label": "DM Sans", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "work-sans", "label": "Work Sans", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "manrope", "label": "Manrope", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "figtree", "label": "Figtree", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "nunito-sans", "label": "Nunito Sans", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "rubik", "label": "Rubik", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "poppins", "label": "Poppins", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "montserrat", "label": "Montserrat", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "raleway", "label": "Raleway", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "josefin-sans", "label": "Josefin Sans", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 700 },
+    { "id": "space-grotesk", "label": "Space Grotesk", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 700 },
+    { "id": "barlow", "label": "Barlow", "group": "Sans serif", "regular": 400, "bold": 700, "heading": 800 },
+
+    { "id": "source-serif-4", "label": "Source Serif 4", "group": "Serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "merriweather", "label": "Merriweather", "group": "Serif", "regular": 400, "bold": 700, "heading": 900 },
+    { "id": "lora", "label": "Lora", "group": "Serif", "regular": 400, "bold": 700, "heading": 700 },
+    { "id": "libre-baskerville", "label": "Libre Baskerville", "group": "Serif", "regular": 400, "bold": 700, "heading": 700 },
+    { "id": "eb-garamond", "label": "EB Garamond", "group": "Serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "crimson-pro", "label": "Crimson Pro", "group": "Serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "playfair-display", "label": "Playfair Display", "group": "Serif", "regular": 400, "bold": 700, "heading": 900 },
+
+    { "id": "roboto-slab", "label": "Roboto Slab", "group": "Slab serif", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "alfa-slab-one", "label": "Alfa Slab One", "group": "Slab serif", "heading": 400 },
+
+    { "id": "archivo-black", "label": "Archivo Black", "group": "Display", "heading": 400 },
+    { "id": "anton", "label": "Anton", "group": "Display", "heading": 400 },
+    { "id": "bebas-neue", "label": "Bebas Neue", "group": "Display", "heading": 400 },
+    { "id": "bungee", "label": "Bungee", "group": "Display", "heading": 400 },
+    { "id": "russo-one", "label": "Russo One", "group": "Display", "heading": 400 },
+
+    { "id": "oswald", "label": "Oswald", "group": "Condensed", "regular": 400, "bold": 700, "heading": 700 },
+    { "id": "barlow-condensed", "label": "Barlow Condensed", "group": "Condensed", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "teko", "label": "Teko", "group": "Condensed", "heading": 600 },
+
+    { "id": "orbitron", "label": "Orbitron", "group": "Tech", "heading": 800 },
+    { "id": "exo-2", "label": "Exo 2", "group": "Tech", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "rajdhani", "label": "Rajdhani", "group": "Tech", "regular": 500, "bold": 700, "heading": 700 },
+    { "id": "saira", "label": "Saira", "group": "Tech", "regular": 400, "bold": 700, "heading": 800 },
+
+    { "id": "jetbrains-mono", "label": "JetBrains Mono", "group": "Monospace", "source": "site", "css": "JetBrains Mono", "regular": 400, "bold": 700, "heading": 800 },
+    { "id": "ibm-plex-mono", "label": "IBM Plex Mono", "group": "Monospace", "regular": 400, "bold": 700, "heading": 700 },
+    { "id": "space-mono", "label": "Space Mono", "group": "Monospace", "regular": 400, "bold": 700, "heading": 700 },
+
+    { "id": "caveat", "label": "Caveat", "group": "Handwritten", "heading": 700 }
+  ]
+}

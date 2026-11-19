@@ -31,7 +31,7 @@
             var saved = all.GetValueOrDefault(g.Id);
             <article class="branding-admin__card" id="brand-@g.Id" style="@brand.CssVars">
                 <h2 class="h3">@access.Tree.Path(g.Id)</h2>
-                <div class="brand-preview" aria-label="Preview of the report header">
+                <div class="brand-preview" aria-label="Preview of the report header" data-brand-preview>
                     <div class="brand-preview__head">
                         @if (brand.LogoUrl is { } logo) { <img class="brand-preview__logo" src="@logo" alt="@brand.Name logo" /> }
                         <div>
@@ -40,6 +40,8 @@
                         </div>
                     </div>
                     <div class="brand-preview__rule"></div>
+                    <p class="brand-preview__heading">Hours per week</p>
+                    <p class="brand-preview__text">350 hours from 4 people this season. Thank you for making it possible.</p>
                     <div class="brand-preview__bars" aria-hidden="true"><span style="--w: 90%"></span><span style="--w: 60%"></span><span style="--w: 35%"></span></div>
                     @if (brand.Footer is { } f) { <p class="brand-preview__footer">@f</p> }
                 </div>
@@ -51,22 +53,32 @@
                         <div class="field"><label class="label" for="tag-@g.Id">Tagline <span class="muted">(optional)</span></label><input id="tag-@g.Id" name="tagline" value="@saved?.Tagline" maxlength="140" /></div>
                         <div class="field">
                             <label class="label" for="primary-@g.Id">Main color <span class="muted">(name, headings; must read on white)</span></label>
-                            <input id="primary-@g.Id" name="primary" type="color" value="@brand.Primary" />
+                            <input id="primary-@g.Id" name="primary" type="color" value="@brand.Primary" data-brand-color="--brand" />
                         </div>
                         <div class="field">
                             <label class="label" for="accent-@g.Id">Chart color</label>
-                            <input id="accent-@g.Id" name="accent" type="color" value="@brand.Accent" />
+                            <input id="accent-@g.Id" name="accent" type="color" value="@brand.Accent" data-brand-color="--brand-accent" />
                         </div>
                         <div class="field">
                             <label class="label" for="hfont-@g.Id">Heading font</label>
-                            <select id="hfont-@g.Id" name="headingFont">
-                                @foreach (var font in BrandFonts.All.Where(x => x.ForHeadings)) { <option value="@font.Id" selected="@(font.Id == brand.HeadingFont.Id)">@font.Label</option> }
+                            <select id="hfont-@g.Id" name="headingFont" data-brand-font="heading">
+                                @foreach (var (group, fonts) in BrandFonts.Grouped(body: false))
+                                {
+                                    <optgroup label="@group">
+                                        @foreach (var font in fonts) { <option value="@font.Id" selected="@(font.Id == brand.HeadingFont.Id)" data-stack="@BrandFonts.Stack(font)" data-weight="@font.HeadingWeight" data-stretch="@(font.Stretch ?? "normal")">@font.Label</option> }
+                                    </optgroup>
+                                }
                             </select>
                         </div>
                         <div class="field">
                             <label class="label" for="bfont-@g.Id">Text font</label>
-                            <select id="bfont-@g.Id" name="bodyFont">
-                                @foreach (var font in BrandFonts.All.Where(x => x.ForBody)) { <option value="@font.Id" selected="@(font.Id == brand.BodyFont.Id)">@font.Label</option> }
+                            <select id="bfont-@g.Id" name="bodyFont" data-brand-font="body">
+                                @foreach (var (group, fonts) in BrandFonts.Grouped(body: true))
+                                {
+                                    <optgroup label="@group">
+                                        @foreach (var font in fonts) { <option value="@font.Id" selected="@(font.Id == brand.BodyFont.Id)" data-stack="@BrandFonts.Stack(font)">@font.Label</option> }
+                                    </optgroup>
+                                }
                             </select>
                         </div>
                     </div>
@@ -118,6 +130,7 @@
         }
     </div>
 </section>
+<script src="/js/branding.js" defer></script>
 
 @code {
     [CascadingParameter] public HttpContext? Http { get; set; }

@@ -2329,6 +2329,8 @@
   .brand-preview__name { margin: 0; font-size: 1.5rem; line-height: 1.1; color: var(--brand); font-family: var(--brand-heading-font, var(--font-display)); font-weight: var(--brand-heading-weight, 900); font-stretch: var(--brand-heading-stretch, normal); }
   .brand-preview__tagline { margin: 2px 0 0; color: var(--slate); font-size: 0.92rem; }
   .brand-preview__rule { height: 4px; margin: var(--s-3) 0; background: var(--brand); }
+  .brand-preview__heading { margin: 0 0 var(--s-1); color: var(--brand); font-family: var(--brand-heading-font, var(--font-display)); font-weight: var(--brand-heading-weight, 900); font-stretch: var(--brand-heading-stretch, normal); font-size: 1.05rem; }
+  .brand-preview__text { margin: 0 0 var(--s-3); font-size: 0.92rem; }
   .brand-preview__bars { display: grid; gap: 6px; }
   .brand-preview__bars span { display: block; height: 10px; width: var(--w); border-radius: 0 3px 3px 0; background: var(--brand-accent); }
   .brand-preview__footer { margin: var(--s-3) 0 0; padding-top: var(--s-2); border-top: 1px solid rgb(16 16 17 / 0.14); font-size: 0.8rem; color: var(--slate); white-space: pre-line; }

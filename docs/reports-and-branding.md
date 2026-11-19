@@ -13,7 +13,7 @@ Leads, officers and the owner. Pick a team and a range; two versions:
 
 What a report carries: logo (PNG or JPEG, ≤ 1 MB, ≤ 4000 px; checked by content), name, tagline, main color, chart color, heading font, text font, footer.
 
-Fonts come from a fixed list (`Store/BrandFonts.cs`): Porcine Heavy (AVI, default headings), Archivo (default text), Archivo Expanded (SMS style), Inter, Source Sans 3, IBM Plex Sans, Montserrat, Space Grotesk, Oswald, Bebas Neue, Roboto Slab, Lora. To add one, add it to `tools/fonts/make_pdf_fonts.py` and `BrandFonts.All`, run the script, and add its `@font-face` to `wwwroot/css/brand-fonts.css`.
+Fonts come from a list of 45, grouped in the pickers (AVI & SMS, sans serif, serif, slab, display, condensed, tech, monospace, handwritten); display-only faces are offered for headings only. The preview follows the pickers before you save (`wwwroot/js/branding.js`). The list lives in `tools/fonts/fonts.json`; to add a font, add it there and run `tools/fonts/make_pdf_fonts.py`, which rebuilds the web files, the PDF fonts, `brand-fonts.css` and `Store/BrandFonts.Catalog.g.cs`.
 
 - Every **organization** (top-level group: AVI Robotics, CCC Engineering Renaissance, …) has its own branding. Unset fields fall back to the group name and AVI's ink/blurple.
 - An organization's **leads** (and the owner) can switch on **own branding** for any team under them (e.g. SMS under AVI, Crush Depth under ER). That team's leads can then edit it.
