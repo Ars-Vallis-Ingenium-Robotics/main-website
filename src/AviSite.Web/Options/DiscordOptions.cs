@@ -15,6 +15,8 @@ public sealed class DiscordOptions
     public string? RedirectUri { get; set; }
     /// <summary>Canonical site URL used to build account-link instructions; no trailing slash required.</summary>
     public string? PublicBaseUrl { get; set; }
+    /// <summary>Bot token: only for posting to channels, registering commands and reading app status. Environment only.</summary>
+    public string? BotToken { get; set; }
 
     public bool InteractionsConfigured => IsSnowflake(ApplicationId) && IsHex(PublicKey, 64);
 
@@ -22,6 +24,9 @@ public sealed class DiscordOptions
         && !string.IsNullOrWhiteSpace(ClientSecret)
         && IsSafeUrl(RedirectUri)
         && IsSafeUrl(PublicBaseUrl);
+
+    /// <summary>Owner tools that call Discord's API (status, command registration, channel posts).</summary>
+    public bool BotConfigured => InteractionsConfigured && !string.IsNullOrWhiteSpace(BotToken);
 
     public static bool IsSnowflake(string? value) =>
         value is { Length: >= 17 and <= 20 } && value.All(char.IsAsciiDigit);

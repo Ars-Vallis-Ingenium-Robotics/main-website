@@ -22,6 +22,10 @@
         <a href="/admin/countdowns" class="@(Current == "countdowns" ? "is-current" : "")" aria-current="@(Current == "countdowns" ? "page" : null)">Countdowns</a>
         <a href="/admin/usage" class="@(Current == "usage" ? "is-current" : "")" aria-current="@(Current == "usage" ? "page" : null)">Tool usage</a>
     }
+    @if (hasAccount && (isAdmin || lead))
+    {
+        <a href="/admin/discord/bot" class="@(Current == "discord" ? "is-current" : "")" aria-current="@(Current == "discord" ? "page" : null)">Discord bot</a>
+    }
     @if (canPeople)
     {
         <a href="/admin/people" class="@(Current == "people" ? "is-current" : "")" aria-current="@(Current == "people" ? "page" : null)">People</a>

@@ -64,6 +64,7 @@ else
         if (admin || u.IsInRole("Lead")) links.Add(("/admin/hours/team", "Team hours"));
         links.Add(("/admin/qr", admin ? "QR codes" : "My QR codes"));
         if (email is not null && (admin || u.IsInRole("Lead"))) links.Add(("/admin/people", "People"));
+        if (email is not null && (admin || u.IsInRole("Lead"))) links.Add(("/admin/discord/bot", "Discord bot"));
         if (admin) { links.Add(("/admin", "Shop orders")); links.Add(("/admin/countdowns", "Countdowns")); }
     }
 }

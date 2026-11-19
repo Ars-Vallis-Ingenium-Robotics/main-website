@@ -57,6 +57,16 @@ services.AddHttpClient("discord-oauth", c =>
     c.Timeout = TimeSpan.FromSeconds(15);
     c.DefaultRequestHeaders.UserAgent.ParseAdd("AVI-Hours-Discord-Link/1.0");
 });
+// Discord bot management (/admin/discord/bot): pause, servers, channel posts. Calls Discord only with Discord__BotToken set.
+services.AddSingleton<DiscordBotStore>();
+services.AddHttpClient(AviSite.Web.Discord.DiscordApi.ClientName, c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(10);
+    c.DefaultRequestHeaders.UserAgent.ParseAdd("DiscordBot (https://avirobotics.org, 1.0)");
+});
+services.AddSingleton<AviSite.Web.Discord.DiscordApi>();
+services.AddSingleton<AviSite.Web.Discord.DiscordPosts>();
+services.AddHostedService<AviSite.Web.Discord.DiscordScheduler>();
 // Countdowns (/countdown, edited in /admin/countdowns)
 services.AddSingleton<ICountdownStore, JsonCountdownStore>();
 services.AddSingleton<IToolUsageStore, JsonToolUsageStore>();
@@ -201,6 +211,7 @@ app.MapQrLookEndpoints();
 app.MapHoursEndpoints();
 app.MapDiscordInteractionEndpoints();
 app.MapDiscordAccountEndpoints();
+app.MapDiscordBotAdminEndpoints();
 app.MapPeopleEndpoints();
 app.MapProfileEndpoints();
 app.MapDynamicQrEndpoints();
