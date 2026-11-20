@@ -2257,7 +2257,8 @@
 /* ---------- Discord bot admin (/admin/discord/bot) ---------- */
 @layer components {
   .discord-bot__status { display: grid; gap: var(--s-2); margin-bottom: var(--s-4); }
-  .discord-bot__status > div { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: var(--s-3); }
+  .discord-bot__status > div { display: grid; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr); gap: var(--s-3); }
+  .discord-bot__status dt, .discord-bot__status dd { min-width: 0; overflow-wrap: anywhere; }
   .discord-bot__status dt { font-weight: 600; }
   .discord-bot__status dd { margin: 0; }
   .discord-bot__server { border-top: 1px solid var(--line); padding-block: var(--s-5); }
@@ -2267,6 +2268,13 @@
   .discord-bot__owner > summary { cursor: pointer; font-weight: 600; }
   .discord-bot__owner:not([open]) > .discord-bot__owner-actions { display: none; }
   .discord-bot__owner-actions { display: grid; gap: var(--s-4); }
+  .discord-bot__server h3 { overflow-wrap: anywhere; }
+  .discord-bot__remove { display: grid; gap: var(--s-3); padding: var(--s-4); border: 2px solid var(--danger); border-left-width: 6px; border-radius: var(--radius); background: var(--surface); }
+  .discord-bot__remove > p { margin: 0; max-width: 72ch; }
+  .discord-bot__remove-form { display: grid; justify-items: start; gap: var(--s-3); }
+  .discord-bot__remove .check { align-items: flex-start; width: 100%; min-width: 0; }
+  .discord-bot__remove .check > span { min-width: 0; overflow-wrap: anywhere; }
+  .discord-bot__remove .check input { accent-color: var(--danger); }
   .discord-bot__add-heading { margin-block-start: var(--s-6); }
   .discord-bot .actions { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
 }

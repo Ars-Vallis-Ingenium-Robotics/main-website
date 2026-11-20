@@ -1464,14 +1464,42 @@ await test("header: Sign in when signed out; Clock in + account menu when signed
   await pg.locator("[data-bot-toggle]").click();
   await pg.waitForURL(/done=resumed/);
   assert.equal(await pg.locator("[data-bot-state]").getAttribute("data-bot-state"), "running");
+  const longGuildName = "Smoke-" + "X".repeat(74);
   await pg.fill("#add-guild", "923456789012345678");
-  await pg.fill("#add-name", "Smoke test server");
+  await pg.fill("#add-name", longGuildName);
   await pg.locator("form[action='/admin/discord/bot/servers'] button[type=submit]").last().click();
   await pg.waitForURL(/done=server/);
-  assert.equal(await pg.locator("#server-923456789012345678 h3").innerText(), "Smoke test server");
+  assert.equal(await pg.locator("#server-923456789012345678 h3").innerText(), longGuildName);
   await pg.locator("#server-923456789012345678 summary").click();
-  await pg.locator("#server-923456789012345678 form[action$='/remove'] input[name=confirm]").check();
-  await pg.locator("#server-923456789012345678 form[action$='/remove'] button").click();
+  await pg.setViewportSize({ width: 320, height: 800 });
+  const removeForm = pg.locator("#server-923456789012345678 form[action$='/remove']");
+  const wrap = await removeForm.locator(".check span").evaluate(el => {
+    const label = el.closest("label"), heading = document.querySelector("#server-923456789012345678 h3");
+    const panel = el.closest(".discord-bot__remove").getBoundingClientRect();
+    return {
+      textWidth: el.clientWidth, textScroll: el.scrollWidth,
+      labelWidth: label.clientWidth, labelScroll: label.scrollWidth,
+      headingWidth: heading.clientWidth, headingScroll: heading.scrollWidth,
+      panelRight: panel.right, viewport: window.innerWidth,
+      pageScroll: document.documentElement.scrollWidth,
+    };
+  });
+  assert.ok(wrap.textScroll <= wrap.textWidth + 1, "long server names wrap inside the confirmation label");
+  assert.ok(wrap.labelScroll <= wrap.labelWidth + 1, "confirmation label stays inside its panel");
+  assert.ok(wrap.headingScroll <= wrap.headingWidth + 1, "long server names wrap in the server heading");
+  assert.ok(wrap.panelRight <= wrap.viewport + 1, "confirmation panel stays inside a narrow viewport");
+  assert.ok(wrap.pageScroll <= wrap.viewport + 1, "long server name causes no mobile horizontal scroll");
+  const removeConfirm = removeForm.locator("input[name=confirm]");
+  assert.equal(await removeConfirm.getAttribute("required"), "", "removal needs explicit browser confirmation");
+  assert.match(await pg.locator("#remove-info-923456789012345678").innerText(), /does not kick or uninstall the bot from Discord/);
+  assert.match(await removeForm.innerText(), /remove it from this website/);
+  const beforeUnconfirmedClick = pg.url();
+  await removeForm.locator("button[type=submit]").click();
+  assert.equal(await removeConfirm.evaluate(el => el.validity.valueMissing), true, "the browser blocks unconfirmed removal");
+  assert.equal(pg.url(), beforeUnconfirmedClick, "unconfirmed click stays on the page, not a dead 404");
+  assert.equal(await pg.locator("#server-923456789012345678").count(), 1, "unconfirmed click keeps the server listed");
+  await removeConfirm.check();
+  await removeForm.locator("button[type=submit]").click();
   await pg.waitForURL(/done=removed/);
   assert.equal(await pg.locator("#server-923456789012345678").count(), 0, "removed servers disappear");
   // Re-add the same guild to prove the site configuration can be restored after removal.
@@ -1480,6 +1508,7 @@ await test("header: Sign in when signed out; Clock in + account menu when signed
   await pg.locator('form[action="/admin/discord/bot/servers"]').last().locator("button[type=submit]").click();
   await pg.waitForURL(/done=server/);
   assert.equal(await pg.locator("#server-923456789012345678 h3").innerText(), "Smoke test server restored", "removed server can be re-added");
+  await pg.setViewportSize({ width: 1280, height: 900 });
   await pg.goto(BASE + "/about");
   await pg.locator("header .nav--wide .account-menu > summary").click();
   await pg.locator("header .nav--wide .account-menu__panel a", { hasText: "QR codes" }).click();
