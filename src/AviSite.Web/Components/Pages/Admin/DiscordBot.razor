@@ -19,7 +19,7 @@
             <div>
                 <p class="eyebrow">Admin</p>
                 <h1 class="h1">Discord bot</h1>
-                <p class="muted">The AVI Hours bot: private <code>/myhours</code>, <code>/clockstatus</code>, <code>/teamhours</code> and <code>/leaderboard</code> replies, a clock-in panel, a weekly team summary and leaderboard. The site owner runs the bot and picks its servers; each server's team leads set its channels.</p>
+                <p class="muted">The AVI Hours bot: private <code>/myhours</code>, <code>/clock in</code>, <code>/clock out</code>, <code>/clock status</code>, <code>/teamhours</code> and <code>/leaderboard</code> replies, a clock-in panel, a weekly team summary and leaderboard. The site owner runs the bot and picks its servers; each server's team leads set its channels.</p>
             </div>
         </div>
 
@@ -158,20 +158,36 @@
                         <div class="actions">
                             <form method="post" action="/admin/discord/bot/servers/@g.GuildId/post">
                                 <AntiforgeryToken /><input type="hidden" name="what" value="panel" />
-                                <button class="btn btn--ghost btn--sm" type="submit" disabled="@(g.PanelChannel is null || !Api.Configured)">Post clock panel now</button>
+                                <button class="btn btn--ghost btn--sm" type="submit">Post clock panel now</button>
                             </form>
                             <form method="post" action="/admin/discord/bot/servers/@g.GuildId/post">
                                 <AntiforgeryToken /><input type="hidden" name="what" value="summary" />
-                                <button class="btn btn--ghost btn--sm" type="submit" disabled="@(g.UpdatesChannel is null || !Api.Configured)">Post last week's summary now</button>
+                                <button class="btn btn--ghost btn--sm" type="submit">Post last week's summary now</button>
                             </form>
                             @if (boardOn)
                             {
                                 <form method="post" action="/admin/discord/bot/servers/@g.GuildId/post">
                                     <AntiforgeryToken /><input type="hidden" name="what" value="leaderboard" />
-                                    <button class="btn btn--ghost btn--sm" type="submit" disabled="@(g.UpdatesChannel is null || !Api.Configured)">Post leaderboard now</button>
+                                    <button class="btn btn--ghost btn--sm" type="submit">Post leaderboard now</button>
                                 </form>
                             }
                         </div>
+                        @if (!Api.Configured)
+                        {
+                            <p class="small muted">Posting is not configured on this site. The owner must set the Discord bot token.</p>
+                        }
+                        @if (state.Paused)
+                        {
+                            <p class="small muted">Posting is paused. Start the bot above before posting.</p>
+                        }
+                        @if (g.PanelChannel is null)
+                        {
+                            <p class="small muted">Clock panel post needs a panel channel ID: enter it above and save.</p>
+                        }
+                        @if (g.UpdatesChannel is null)
+                        {
+                            <p class="small muted">Summary and leaderboard posts need an updates channel ID: enter it above and save.</p>
+                        }
                     }
                     else
                     {
@@ -277,6 +293,9 @@
             "channel" => ("That doesn't look like a channel ID or link.", false),
             "meeting" => ("Set both the meeting day and the start time, or neither.", false),
             "panel-channel" => ("A weekly meeting needs a clock panel channel.", false),
+            "panel-channel-missing" => ("Set and save a clock panel channel first.", false),
+            "updates-channel-missing" => ("Set and save an updates channel first.", false),
+            "post-kind" => ("That post option isn't supported.", false),
             "no-token" => ("Needs the bot token (Discord__BotToken) on the server.", false),
             "paused" => ("The bot is paused. Start it first.", false),
             "post" => ("Discord refused the post. Is the bot in that server, and can it see and send messages in the channel?", false),

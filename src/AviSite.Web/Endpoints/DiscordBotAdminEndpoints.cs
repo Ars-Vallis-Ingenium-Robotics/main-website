@@ -88,12 +88,15 @@ public static class DiscordBotAdminEndpoints
             if (!DiscordBotRules.CanManage(me, g)) return Back(error: "denied", anchor: "server-" + id);
             if (!api.Configured) return Back(error: "no-token", anchor: "server-" + id);
             if (store.State().Paused) return Back(error: "paused", anchor: "server-" + id);
+            if (what == "panel" && g.PanelChannel is null) return Back(error: "panel-channel-missing", anchor: "server-" + id);
+            if ((what is "summary" or "leaderboard") && g.UpdatesChannel is null) return Back(error: "updates-channel-missing", anchor: "server-" + id);
+            if (what is not ("panel" or "summary" or "leaderboard")) return Back(error: "post-kind", anchor: "server-" + id);
             var ok = what switch
             {
-                "panel" => g.PanelChannel is not null && await posts.PostClockPanelAsync(g, null, http.RequestAborted),
-                "summary" => g.UpdatesChannel is not null && await posts.PostWeeklySummaryAsync(g,
+                "panel" => await posts.PostClockPanelAsync(g, null, http.RequestAborted),
+                "summary" => await posts.PostWeeklySummaryAsync(g,
                     HoursText.WeekStart(DateOnly.FromDateTime(store.Now.ToPacific().DateTime)).AddDays(-7), http.RequestAborted),
-                "leaderboard" => g.UpdatesChannel is not null && await posts.PostLeaderboardAsync(g, http.RequestAborted),
+                "leaderboard" => await posts.PostLeaderboardAsync(g, http.RequestAborted),
                 _ => false,
             };
             return ok ? Back(done: "posted", anchor: "server-" + id) : Back(error: "post", anchor: "server-" + id);

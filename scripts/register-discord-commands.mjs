@@ -25,6 +25,14 @@ const range = {
 };
 const commands = [
   { name: "myhours", description: "View your own AVI Hours totals", options: [range] },
+  {
+    name: "clock", description: "Clock in, clock out, or check your status",
+    options: [
+      { type: 1, name: "in", description: "Start a clock session" },
+      { type: 1, name: "out", description: "End your current clock session" },
+      { type: 1, name: "status", description: "Check your current clock status" },
+    ],
+  },
   { name: "clockstatus", description: "Check your own clock-in status" },
   { name: "leaderboard", description: "This season's Hours leaderboard (if your organization shows one)" },
   {

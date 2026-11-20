@@ -1551,7 +1551,7 @@ await test("layout: buttons never touch or overlap (admin, QR maker, sign-in, ho
   const openAll = () => pg.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
   await pg.goto(BASE + "/admin/login"); await openAll(); await assertButtonsBreathe(pg, "/admin/login");
   await pg.selectOption('select[name="email"]', "owner@example.com"); await pg.click("text=Sign in (dev only)");
-  for (const path of ["/admin/people", "/admin/qr", "/admin/qr/three", "/admin/usage", "/admin/hours", "/admin/hours/team", "/admin/hours/report", "/admin/hours/settings", "/admin/hours/week", "/admin/profile", "/admin/profile/review", "/tools/qr", "/", "/about"]) {
+  for (const path of ["/admin/people", "/admin/qr", "/admin/qr/three", "/admin/usage", "/admin/hours", "/admin/hours/team", "/admin/hours/report", "/admin/hours/settings", "/admin/discord", "/admin/discord/bot", "/admin/hours/week", "/admin/profile", "/admin/profile/review", "/tools/qr", "/", "/about"]) {
     for (const w of [1440, 1024, 768, 390]) {
       await pg.setViewportSize({ width: w, height: 900 });
       await pg.goto(BASE + path); await openAll();
@@ -1559,6 +1559,36 @@ await test("layout: buttons never touch or overlap (admin, QR maker, sign-in, ho
     }
   }
   await c.close();
+});
+
+await test("Discord bot admin: post actions submit and explain missing setup", async () => {
+  const guild = (900000000000000000n + BigInt(Date.now())).toString();
+  const [c, pg] = await signIn("owner@example.com");
+  try {
+    await pg.goto(BASE + "/admin/discord/bot");
+    await pg.locator('input[name="guild"]').fill(guild);
+    await pg.locator('input[name="name"]').fill("E2E Discord");
+    await pg.locator('select[name="team"]').first().selectOption("avi");
+    await Promise.all([
+      pg.waitForURL(/done=server/),
+      pg.locator('form[action="/admin/discord/bot/servers"] button[type="submit"]').click(),
+    ]);
+    const server = pg.locator(`#server-${guild}`);
+    const posts = server.locator('form[action$="/post"]');
+    assert.equal(await posts.count(), 2, "panel and summary post controls are present");
+    assert.equal(await posts.nth(0).locator("button").isDisabled(), false, "panel action is not silently disabled");
+    assert.equal(await posts.nth(1).locator("button").isDisabled(), false, "summary action is not silently disabled");
+    await Promise.all([
+      pg.waitForURL(/error=(?:no-token|paused|panel-channel-missing)/),
+      posts.nth(0).locator("button").click(),
+    ]);
+    assert.match(await pg.locator(".alert").first().innerText(), /Needs the bot token|Set and save a clock panel channel|bot is paused/i);
+
+    await server.locator("details.discord-bot__owner > summary").click();
+    const remove = server.locator('form[action$="/remove"]');
+    await remove.locator('input[name="confirm"]').check();
+    await Promise.all([pg.waitForURL(/done=removed/), remove.locator('button[type="submit"]').click()]);
+  } finally { await c.close(); }
 });
 
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });

@@ -194,6 +194,13 @@ try {
   await expectEphemeral(await post(command("myhours", selfId)), "2.0 h"); // DMs stay personal and keep working
   await expectEphemeral(await post(inGuild(command("teamhours", selfId))), "7.0 h"); // defaults to the server's team
 
+  // /clock mirrors the clock panel's private in/out/status actions.
+  const clockSubcommand = (name, userId) => command("clock", userId, [{ type: 1, name }]);
+  await expectEphemeral(await post(inGuild(clockSubcommand("in", selfId))), "Clocked in · AVI Robotics");
+  await expectEphemeral(await post(inGuild(clockSubcommand("status", selfId))), "Clocked in");
+  await expectEphemeral(await post(inGuild(clockSubcommand("out", selfId))), "Clocked out");
+  await expectEphemeral(await post(inGuild(clockSubcommand("out", selfId))), "not clocked in");
+
   // Clock panel buttons work in any channel of a listed server, and only for linked accounts.
   await expectEphemeral(await post(inGuild(button("avi:clock:in", "333456789012345678"), otherChannel)), "Link your Discord account");
   await expectEphemeral(await post(inGuild(button("avi:clock:in", selfId), otherChannel)), "Clocked in · AVI Robotics");
@@ -238,7 +245,7 @@ try {
   assert.equal(oversized.status, 413, "oversized interactions must be rejected before parsing");
 
   success = true;
-  console.log("Discord interaction E2E passed: concurrent startup, unique-link constraint, signatures, stale-signature rejection, PING, account isolation, team permissions, aggregate-only output, allowed servers, command channels, clock buttons, pause, activity log, and ephemeral replies.");
+  console.log("Discord interaction E2E passed: concurrent startup, unique-link constraint, signatures, stale-signature rejection, PING, account isolation, team permissions, aggregate-only output, allowed servers, command channels, /clock subcommands, clock buttons, pause, activity log, and ephemeral replies.");
 } catch (error) {
   console.error(error);
   console.error(`Discord E2E scratch kept at ${scratch}`);
