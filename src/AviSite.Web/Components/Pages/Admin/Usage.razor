@@ -46,7 +46,7 @@
     private DateOnly today;
     protected override async Task OnInitializedAsync()
     {
-        counts = await Store.ReadAsync();
         today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(Clock.GetUtcNow(), TimeZoneInfo.FindSystemTimeZoneById("America/Los_Angeles")).DateTime);
+        counts = await Store.ReadAsync();
     }
 }
