@@ -3,14 +3,27 @@
 @using AviSite.Web.Endpoints
 @inject IAccountStore Accounts
 @inject HoursStore Store
+@inject BrandingStore Branding
 
-<PageTitle>Hours · AVI Robotics</PageTitle>
-<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+<PageTitle>Hours · @(brand?.Name ?? "AVI Robotics")</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /><link rel="stylesheet" href="@Assets["css/brand-fonts.css"]" /></HeadContent>
 <script src="/js/hours.js" defer></script>
 
-<section class="section admin hours">
+<section class="section admin hours report hours--overview" style="@(brand?.CssVars)">
     <div class="wrap">
         <AdminNav Current="hours" />
+        @if (brand is { } b)
+        {
+            <header class="report__brand hours__brand">
+                <div class="report__brand-id">
+                    @if (b.LogoUrl is { } logo) { <img class="report__logo" src="@logo" alt="@b.Name" /> }
+                    <div>
+                        <p class="report__org">@b.Name</p>
+                        @if (b.Tagline is { } tag) { <p class="report__tagline">@tag</p> }
+                    </div>
+                </div>
+            </header>
+        }
         <div class="section__head">
             <div>
                 <p class="eyebrow">Hours</p>
@@ -102,21 +115,17 @@
         }
 
         @* ---------- Totals ---------- *@
-        <div class="hours__totals">
+        <div class="hours__totals report__stats">
             <div class="stat"><span class="stat__num">@HoursText.Hours(Total(weekFrom, null))</span><span class="stat__label">hours this week</span></div>
             <div class="stat"><span class="stat__num">@HoursText.Hours(Total(seasonFrom, null))</span><span class="stat__label">hours this season (@seasonLabel)</span></div>
             <div class="stat"><span class="stat__num">@HoursText.Hours(Total(null, null))</span><span class="stat__label">hours all time</span></div>
         </div>
         @if (byCategory.Count > 0)
         {
-            var max = byCategory.Max(c => c.Hours);
-            <h2 class="h4">This season by category</h2>
-            <ul class="hbars" role="list">
-                @foreach (var (cat, h) in byCategory)
-                {
-                    <li><span class="hbars__label">@cat</span><span class="hbars__bar" style="--w: @((int)Math.Round(h * 100 / max))%"></span><span class="hbars__n mono">@HoursText.Hours(h) h</span></li>
-                }
-            </ul>
+            <section class="report__block hours__category">
+                <h2 class="report__h2">This season by category</h2>
+                <HoursPieChart Rows="byCategory" Label="@CategoryChartLabel" />
+            </section>
         }
 
         @* ---------- Leaderboards (each organization turns its own on) ---------- *@
@@ -195,6 +204,8 @@
     private DateTimeOffset weekFrom, seasonFrom;
     private string seasonLabel = "";
     private List<(string Cat, double Hours)> byCategory = [];
+    private Brand? brand;
+    private string CategoryChartLabel => $"Hours by category, {brand?.Name ?? "AVI Robotics"}, {seasonLabel}";
     private sealed record BoardRow(string Email, string Name, double Hours);
     private sealed record Board(string Org, string Name, string Season, List<BoardRow> Rows, int? MyRank, double MyHours);
     private List<Board> boards = [];
@@ -247,6 +258,7 @@
 
         var last = me.Length > 0 ? Store.LastUsed(me) : null;
         defTeam = teams.Any(g => g.Id == QueryTeam) ? QueryTeam! : last is { } l && teams.Any(g => g.Id == l.Team) ? l.Team : teams.FirstOrDefault()?.Id ?? "";
+        brand = defTeam.Length > 0 ? Branding.Resolve(defTeam, access.Tree) : null;
         var orgs = teams.Select(g => HoursRules.OrgOf(g.Id, access.Tree)).Distinct().ToList();
         categories = orgs.SelectMany(Store.Categories).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         defCategory = categories.Contains(QueryCategory ?? "") ? QueryCategory! : last is { } l2 && categories.Contains(l2.Category) ? l2.Category : categories.FirstOrDefault() ?? "Other";

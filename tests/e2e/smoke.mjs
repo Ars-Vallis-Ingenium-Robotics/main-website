@@ -1214,7 +1214,28 @@ await test("reports: sponsor version has no names; real PDF; branding per organi
   // Members can't change branding.
   const id = Date.now().toString(36).slice(-5), who = `br-${id}@example.com`;
   await addPerson(op, who, "sms");
+  const hoursDb = await siteDb();
+  const now = Date.now(), created = new Date(now).toISOString();
+  const addHours = hoursDb.prepare("INSERT INTO hours (email, team, category, start_utc, end_utc, note, source, created_utc, updated_utc, updated_by) VALUES (?, 'sms', ?, ?, ?, NULL, 'manual', ?, ?, ?)");
+  for (const [i, category] of ["Build", "Programming", "Outreach"].entries()) {
+    const start = new Date(now - (5 - i) * 60 * 60 * 1000).toISOString();
+    const end = new Date(Date.parse(start) + 30 * 60 * 1000).toISOString();
+    addHours.run(who, category, start, end, created, created, who);
+  }
+  hoursDb.close();
   const [mc, mp] = await signIn(who);
+  await mp.goto(BASE + "/admin/hours");
+  const overview = mp.locator(".hours--overview");
+  assert.equal(await overview.locator(".report__org").innerText(), "Smoke SMS", "the personal Hours page uses the selected team's resolved brand");
+  assert.match(await overview.getAttribute("style"), /--brand: #0f6f69/);
+  const personalPie = overview.locator("[data-hours-pie]");
+  assert.equal(await personalPie.count(), 1, "the personal Hours page uses the category pie chart");
+  assert.equal(await personalPie.locator("[data-pie-slice]").count(), 3, "each season category has a legend row");
+  const pieColors = await personalPie.locator(".hours-pie__slice--0").evaluate(el => ({
+    slice: getComputedStyle(el).getPropertyValue("--hours-pie-color").trim(),
+    brand: getComputedStyle(el.closest(".hours--overview")).getPropertyValue("--brand-accent-ui").trim(),
+  }));
+  assert.equal(pieColors.slice, pieColors.brand, "the first category slice follows the organization's brand accent");
   await mp.goto(BASE + "/admin/branding");
   assert.equal(await mp.locator(".branding-admin__card").count(), 0, "members see no branding to edit");
   // Turn SMS back to AVI's branding so other tests see the default.

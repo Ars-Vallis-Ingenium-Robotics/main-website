@@ -115,19 +115,24 @@ async function stopProcess(proc) {
 }
 
 function startApp(url) {
+  const env = { ...process.env };
+  // Keep local interaction tests isolated even when the test runner inherited real environment secrets.
+  delete env.Discord__ClientSecret;
+  delete env.Discord__RedirectUri;
+  delete env.Discord__BotToken;
+  Object.assign(env, {
+    ASPNETCORE_ENVIRONMENT: "Development",
+    ASPNETCORE_URLS: url,
+    Store__DataDirectory: dataDir,
+    Discord__ApplicationId: appId,
+    Discord__PublicKey: publicHex,
+    Discord__PublicBaseUrl: baseUrl,
+    DOTNET_CLI_TELEMETRY_OPTOUT: "1",
+    DOTNET_NOLOGO: "1",
+  });
   const proc = spawn("dotnet", ["run", "--no-build", "--no-launch-profile", "--configuration", "Release", "--project", "src/AviSite.Web/AviSite.Web.csproj"], {
     cwd: repo,
-    env: {
-      ...process.env,
-      ASPNETCORE_ENVIRONMENT: "Development",
-      ASPNETCORE_URLS: url,
-      Store__DataDirectory: dataDir,
-      Discord__ApplicationId: appId,
-      Discord__PublicKey: publicHex,
-      Discord__PublicBaseUrl: baseUrl,
-      DOTNET_CLI_TELEMETRY_OPTOUT: "1",
-      DOTNET_NOLOGO: "1",
-    },
+    env,
     stdio: ["ignore", "pipe", "pipe"],
   });
   proc.stdout.on("data", chunk => { logs += chunk.toString(); });
