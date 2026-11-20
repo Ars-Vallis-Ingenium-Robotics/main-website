@@ -2265,6 +2265,9 @@
   .discord-bot__post-actions { margin-block-start: var(--s-4); }
   .discord-bot__owner { margin-top: var(--s-4); }
   .discord-bot__owner > summary { cursor: pointer; font-weight: 600; }
+  .discord-bot__owner:not([open]) > .discord-bot__owner-actions { display: none; }
+  .discord-bot__owner-actions { display: grid; gap: var(--s-4); }
+  .discord-bot__add-heading { margin-block-start: var(--s-6); }
   .discord-bot .actions { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
 }
 /* ---------- Hours report: branded header, audience switch (/admin/hours/report) ---------- */

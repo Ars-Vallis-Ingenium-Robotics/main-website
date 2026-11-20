@@ -56,6 +56,10 @@
                         <input type="hidden" name="action" value="@(state.Paused ? "resume" : "pause")" />
                         <button class="btn @(state.Paused ? "btn--accent" : "btn--ghost")" type="submit" data-bot-toggle>@(state.Paused ? "Start the bot" : "Pause the bot")</button>
                     </form>
+                    @if (Api.InviteUrl is { } installUrl)
+                    {
+                        <a class="btn btn--accent" href="@installUrl" data-discord-bot-invite rel="noopener" target="_blank">Add bot to Discord</a>
+                    }
                     @if (Api.Configured)
                     {
                         <form method="post" action="/admin/discord/bot/commands">
@@ -73,6 +77,7 @@
                         </form>
                     }
                 </div>
+                <p class="small muted" data-discord-install-help>“Add server” below only configures this site's allow-list; it does not install the bot in Discord.@if (Api.InviteUrl is not null) { <span> Use “Add bot to Discord” above, authorize the target server (you need Manage Server permission), then add that server's ID below.</span> } else { <span> Set Discord__ApplicationId to show the install link, authorize the target server (you need Manage Server permission), then add that server's ID below.</span> }</p>
                 <p class="small muted">Paused: every command and button answers "paused" and nothing is posted; Discord's endpoint check still passes, so starting again is instant.</p>
             }
 
@@ -202,32 +207,34 @@
                     {
                         <details class="discord-bot__owner">
                             <summary>Owner: rename, move or remove</summary>
-                            <form method="post" action="/admin/discord/bot/servers" class="form">
-                                <AntiforgeryToken />
-                                <input type="hidden" name="guild" value="@g.GuildId" />
-                                <div class="qr-admin__grid">
-                                    <div class="field"><label class="label" for="name-@g.GuildId">Name</label><input id="name-@g.GuildId" name="name" value="@g.Name" /></div>
-                                    <div class="field">
-                                        <label class="label" for="team-@g.GuildId">Team</label>
-                                        <select id="team-@g.GuildId" name="team">
-                                            @foreach (var t in access.Tree.Ordered()) { <option value="@t.Id" selected="@(t.Id == g.Team)">@access.Tree.Path(t.Id)</option> }
-                                        </select>
+                            <div class="discord-bot__owner-actions">
+                                <form method="post" action="/admin/discord/bot/servers" class="form">
+                                    <AntiforgeryToken />
+                                    <input type="hidden" name="guild" value="@g.GuildId" />
+                                    <div class="qr-admin__grid">
+                                        <div class="field"><label class="label" for="name-@g.GuildId">Name</label><input id="name-@g.GuildId" name="name" value="@g.Name" /></div>
+                                        <div class="field">
+                                            <label class="label" for="team-@g.GuildId">Team</label>
+                                            <select id="team-@g.GuildId" name="team">
+                                                @foreach (var t in access.Tree.Ordered()) { <option value="@t.Id" selected="@(t.Id == g.Team)">@access.Tree.Path(t.Id)</option> }
+                                            </select>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="actions"><button class="btn btn--ghost btn--sm" type="submit">Save name and team</button></div>
-                            </form>
-                            @if (Api.Configured)
-                            {
-                                <form method="post" action="/admin/discord/bot/commands">
-                                    <AntiforgeryToken /><input type="hidden" name="scope" value="@g.GuildId" />
-                                    <button class="btn btn--ghost btn--sm" type="submit">Register commands in this server</button>
+                                    <div class="actions"><button class="btn btn--ghost btn--sm" type="submit">Save name and team</button></div>
                                 </form>
-                            }
-                            <form method="post" action="/admin/discord/bot/servers/@g.GuildId/remove" class="form">
-                                <AntiforgeryToken />
-                                <label class="check"><input type="checkbox" name="confirm" value="true" /> Yes, stop answering in @g.Name</label>
-                                <div><button class="btn btn--ghost btn--sm" type="submit">Remove server</button></div>
-                            </form>
+                                @if (Api.Configured)
+                                {
+                                    <form method="post" action="/admin/discord/bot/commands">
+                                        <AntiforgeryToken /><input type="hidden" name="scope" value="@g.GuildId" />
+                                        <button class="btn btn--ghost btn--sm" type="submit">Register commands in this server</button>
+                                    </form>
+                                }
+                                <form method="post" action="/admin/discord/bot/servers/@g.GuildId/remove" class="form">
+                                    <AntiforgeryToken />
+                                    <label class="check"><input type="checkbox" name="confirm" value="true" /> Yes, stop answering in @g.Name</label>
+                                    <div><button class="btn btn--ghost btn--sm" type="submit">Remove server</button></div>
+                                </form>
+                            </div>
                         </details>
                     }
                 </article>
@@ -235,8 +242,8 @@
 
             @if (owner)
             {
-                <h2 class="h3" id="add">Add a server</h2>
-                <p class="small muted">Once any server is listed, the bot only answers in listed servers (private DMs still work). To post panels and summaries the bot must be in the server: @if (Api.InviteUrl is { } invite) { <a href="@invite" rel="noopener" target="_blank">add the bot to a server</a> } else { <span>set Discord__ApplicationId first</span> }. Server ID: Discord settings → Advanced → Developer Mode, then right-click the server → Copy Server ID.</p>
+                <h2 class="h3 discord-bot__add-heading" id="add">Add a server</h2>
+                <p class="small muted">This form only adds the server to the site's allowed-server list; it does not install the bot in Discord. First authorize it with @if (Api.InviteUrl is { } invite) { <a href="@invite" rel="noopener" target="_blank">the add-bot-to-server link</a> } else { <span>the install link (set Discord__ApplicationId first)</span> }, then enter the Server ID. In Discord, right-click the server → Copy Server ID. Give the bot View Channel and Send Messages in any channel where it should post.</p>
                 <form method="post" action="/admin/discord/bot/servers" class="form">
                     <AntiforgeryToken />
                     <div class="qr-admin__grid">

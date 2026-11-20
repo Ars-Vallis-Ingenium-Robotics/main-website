@@ -66,7 +66,7 @@ Behavior:
 - **Weekly summary**: Mondays from 9:00 Pacific, last week's total hours and head count for the server's team, plus one line per team directly under it. Totals only, never names.
 - **Activity**: counts per command/button and result for 30 days. No Discord IDs, names or message text are stored.
 
-Posting needs the bot user in the server with View Channel and Send Messages. The page links Discord's add-to-server flow with `bot applications.commands` and exactly those permissions. One app instance claims each scheduled post in SQLite, so several instances never double-post.
+Discord installation and the site's server list are separate. On `/admin/discord/bot`, use **Add bot to Discord** and authorize the target server (the authorizing account needs Manage Server). This installs the bot user with `bot` and `applications.commands` scopes and View Channel / Send Messages permissions. Then copy the server ID and add it under **Add a server**; that entry only allows/configures the guild in this site. Removing the entry does not uninstall the bot from Discord. For channel posts, grant the bot View Channel and Send Messages in each target channel.
 
 ## Verification
 
