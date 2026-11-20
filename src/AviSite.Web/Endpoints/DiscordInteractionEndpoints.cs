@@ -12,7 +12,7 @@ using Org.BouncyCastle.Crypto.Signers;
 
 namespace AviSite.Web.Endpoints;
 
-/// <summary>Stateless Discord Interactions webhook: slash commands and clock-panel buttons. No gateway connection; every reply is private.</summary>
+/// <summary>Discord Interactions webhook: slash commands, clock-panel buttons and private clock-in choices. No gateway connection.</summary>
 public static class DiscordInteractionEndpoints
 {
     private const int MaxBodyBytes = 64 * 1024;
@@ -48,13 +48,20 @@ public static class DiscordInteractionEndpoints
             if (!root.TryGetProperty("type", out var type) || !type.TryGetInt32(out var interactionType)) return Results.BadRequest();
             // Discord endpoint verification PING. Answered even while paused, so Discord keeps the endpoint.
             if (interactionType == 1) return Results.Json(new { type = 1 });
-            if (interactionType is not (2 or 3)) return Results.BadRequest(); // 2: slash command, 3: button
+            if (interactionType is not (2 or 3)) return Results.BadRequest(); // 2: application command, 3: message component
 
             if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Object)
                 return Ephemeral("I couldn't read that command.");
-            var isButton = interactionType == 3;
-            var name = isButton ? String(data, "custom_id") ?? "" : String(data, "name") ?? "";
-            var kind = (isButton ? "button:" : "/") + name;
+            var isComponent = interactionType == 3;
+            var componentType = isComponent ? Integer(data, "component_type") : null;
+            var isButton = componentType == 2;
+            var name = isComponent ? String(data, "custom_id") ?? "" : String(data, "name") ?? "";
+            var isClockFlow = isComponent && DiscordClockInFlow.IsFlow(name);
+            var knownPanelButton = isButton && (name is DiscordCommands.ClockIn or DiscordCommands.ClockOut or DiscordCommands.ClockStatus);
+            // Never persist a user's Discord ID, selected team, category, or arbitrary custom_id in the activity log.
+            var kind = isClockFlow ? "component:clock-in-flow" : isComponent
+                ? knownPanelButton ? "button:" + name : "component:other"
+                : "/" + name;
             var guildId = String(root, "guild_id");
             var channelId = String(root, "channel_id");
             IResult Done(string outcome, IResult reply) { bot.Record(kind, outcome, guildId); return reply; }
@@ -65,7 +72,7 @@ public static class DiscordInteractionEndpoints
             // Once the owner lists servers, only those get answers. DMs and user installs (no server) stay personal.
             if (guildId is not null && server is null && bot.AnyServers())
                 return Done("blocked", Ephemeral("AVI Hours isn't enabled in this server. Ask the AVI site owner to add it."));
-            if (!isButton && server is { CommandChannels.Count: > 0 } && (channelId is null || !server.CommandChannels.Contains(channelId)))
+            if (!isComponent && server is { CommandChannels.Count: > 0 } && (channelId is null || !server.CommandChannels.Contains(channelId)))
                 return Done("channel", Ephemeral("Hours commands work in " + string.Join(", ", server.CommandChannels.Select(DiscordBotRules.Mention)) + " in this server."));
 
             var discordUserId = UserId(root);
@@ -75,10 +82,12 @@ public static class DiscordInteractionEndpoints
             if (account is null || (!account.SiteWide && account.Teams.Count == 0))
                 return Done("unlinked", Ephemeral(LinkPrompt(config)));
 
-            var reply = isButton
+            var reply = isClockFlow
+                ? await DiscordClockInFlow.HandleAsync(name, componentType ?? 0, data, discordUserId, account, server, accounts, hours, config, clock, http.RequestAborted)
+                : isButton
                 ? name switch
                 {
-                    DiscordCommands.ClockIn => await ButtonClockIn(account, server, accounts, hours, config, http.RequestAborted),
+                    DiscordCommands.ClockIn => await DiscordClockInFlow.StartAsync(account, server, accounts, hours, config, clock, http.RequestAborted),
                     DiscordCommands.ClockOut => ButtonClockOut(account, hours),
                     DiscordCommands.ClockStatus => ClockStatus(account, hours),
                     _ => null,
@@ -86,7 +95,7 @@ public static class DiscordInteractionEndpoints
                 : name switch
                 {
                     "myhours" => MyHours(data, account, hours),
-                    "clock" => await ClockCommand(data, account, server, accounts, hours, config, http.RequestAborted),
+                    "clock" => await ClockCommand(data, account, server, accounts, hours, config, clock, http.RequestAborted),
                     "clockstatus" => ClockStatus(account, hours),
                     "teamhours" => await TeamHours(data, account, server, accounts, hours, http.RequestAborted),
                     "leaderboard" => await LeaderboardReply(account, server, accounts, hours, http.RequestAborted),
@@ -96,25 +105,6 @@ public static class DiscordInteractionEndpoints
         }
     }
 
-    /// <summary>Clock-panel button: clock in to the server's team (or one under it), with the reason picked later on the site.</summary>
-    private static async Task<IResult> ButtonClockIn(Account account, DiscordGuild? server, IAccountStore accounts, HoursStore store,
-        DiscordOptions config, CancellationToken ct)
-    {
-        if (store.Running(account.Email) is { } running)
-            return Ephemeral($"You're already clocked in · {HoursText.Cat(running.Category)} · {HoursText.Duration(running.Duration(store.Now))}.");
-        var tree = await accounts.GroupsAsync(ct);
-        var loggable = HoursRules.LoggableTeams(Access.For(account, tree)).Select(g => g.Id).ToList();
-        // Prefer a team inside this server's organization; among those, the one used last.
-        HashSet<string> here = server is null ? [] : tree.WithDescendants([server.Team]);
-        var candidates = loggable.Where(here.Contains).ToList();
-        if (candidates.Count == 0) candidates = loggable;
-        var last = store.LastUsed(account.Email)?.Team;
-        var team = last is not null && candidates.Contains(last) ? last : candidates.FirstOrDefault();
-        if (team is null) return Ephemeral("You're not on a team you can log hours for yet. Ask your team lead to add you.");
-        if (store.ClockIn(account.Email, team, "") is null) return Ephemeral("You're already clocked in.");
-        var site = config.PublicBaseUrl is { Length: > 0 } b ? $" Pick what you worked on later: {b.TrimEnd('/')}/admin/hours" : "";
-        return Ephemeral($"Clocked in · {tree.Path(team)}.{site}");
-    }
 
     /// <summary>The organization's leaderboard (this server's, or the caller's own in a DM), if it turned one on. Members only.</summary>
     private static async Task<IResult> LeaderboardReply(Account account, DiscordGuild? server, IAccountStore accounts, HoursStore store, CancellationToken ct)
@@ -170,9 +160,9 @@ public static class DiscordInteractionEndpoints
 
     /// <summary>The /clock subcommands use the same linked-account and team-selection rules as the public clock panel.</summary>
     private static async Task<IResult> ClockCommand(JsonElement data, Account account, DiscordGuild? server, IAccountStore accounts,
-        HoursStore store, DiscordOptions config, CancellationToken ct) => Subcommand(data) switch
+        HoursStore store, DiscordOptions config, TimeProvider clock, CancellationToken ct) => Subcommand(data) switch
     {
-        "in" => await ButtonClockIn(account, server, accounts, store, config, ct),
+        "in" => await DiscordClockInFlow.StartAsync(account, server, accounts, store, config, clock, ct),
         "out" => ButtonClockOut(account, store),
         "status" => ClockStatus(account, store),
         _ => Ephemeral("Choose `/clock in`, `/clock out`, or `/clock status`."),
@@ -240,6 +230,9 @@ public static class DiscordInteractionEndpoints
 
     private static string? String(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+    private static int? Integer(JsonElement element, string name) =>
+        element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) ? number : null;
 
     private static string LinkPrompt(DiscordOptions config) => config.LinkingConfigured
         ? $"Link your AVI account before using Hours commands: {config.PublicBaseUrl!.TrimEnd('/')}/admin/discord"
