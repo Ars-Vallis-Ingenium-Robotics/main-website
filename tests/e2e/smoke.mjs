@@ -1267,7 +1267,18 @@ async function assertButtonsBreathe(pg, label) {
       const r = A.getBoundingClientRect(), q = B.getBoundingClientRect();
       const ox = Math.min(r.right, q.right) - Math.max(r.left, q.left), oy = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
       const name = (e) => (e.getAttribute("aria-label") || e.textContent || e.className).trim().replace(/\s+/g, " ").slice(0, 30);
-      if ((ox > 0 && oy > 0) || (ox > 0 && -oy < 4) || (oy > 0 && -ox < 4)) out.push(`${name(A)} ↔ ${name(B)} (gap ${Math.max(-ox, -oy).toFixed(1)}px)`);
+      if ((ox > 0 && oy > 0) || (ox > 0 && -oy < 4) || (oy > 0 && -ox < 4)) {
+        const rect = (q) => ({ x: Math.round(q.x), y: Math.round(q.y), right: Math.round(q.right), bottom: Math.round(q.bottom) });
+        const path = (e) => {
+          const parts = [];
+          for (let n = e, i = 0; n && i < 5; n = n.parentElement, i++) {
+            const classes = typeof n.className === "string" ? n.className.trim().split(" ").filter(Boolean).join(".") : "";
+            parts.push(`${n.tagName.toLowerCase()}${n.id ? `#${n.id}` : ""}${classes ? `.${classes}` : ""}`);
+          }
+          return parts.join(" > ");
+        };
+        out.push(`${name(A)} ↔ ${name(B)} (gap ${Math.max(-ox, -oy).toFixed(1)}px; ${JSON.stringify(rect(r))} vs ${JSON.stringify(rect(q))}; ${path(A)} ↔ ${path(B)})`);
+      }
     }
     return out;
   });
@@ -1442,6 +1453,12 @@ await test("header: Sign in when signed out; Clock in + account menu when signed
   await pg.locator("#server-923456789012345678 form[action$='/remove'] button").click();
   await pg.waitForURL(/done=removed/);
   assert.equal(await pg.locator("#server-923456789012345678").count(), 0, "removed servers disappear");
+  // Re-add the same guild to prove the site configuration can be restored after removal.
+  await pg.locator("#add-guild").fill("923456789012345678");
+  await pg.locator("#add-name").fill("Smoke test server restored");
+  await pg.locator('form[action="/admin/discord/bot/servers"]').last().locator("button[type=submit]").click();
+  await pg.waitForURL(/done=server/);
+  assert.equal(await pg.locator("#server-923456789012345678 h3").innerText(), "Smoke test server restored", "removed server can be re-added");
   await pg.goto(BASE + "/about");
   await pg.locator("header .nav--wide .account-menu > summary").click();
   await pg.locator("header .nav--wide .account-menu__panel a", { hasText: "QR codes" }).click();
@@ -1566,6 +1583,17 @@ await test("Discord bot admin: post actions submit and explain missing setup", a
   const [c, pg] = await signIn("owner@example.com");
   try {
     await pg.goto(BASE + "/admin/discord/bot");
+    const installHelp = pg.locator("[data-discord-install-help]");
+    assert.match(await installHelp.innerText(), /does not install the bot in Discord/i, "site allow-list is distinguished from the Discord install");
+    const invite = pg.locator("[data-discord-bot-invite]");
+    if (await invite.count()) {
+      const url = new URL(await invite.getAttribute("href"));
+      assert.equal(url.origin, "https://discord.com", "invite opens Discord, not a site route");
+      assert.equal(url.pathname, "/oauth2/authorize");
+      const scopes = (url.searchParams.get("scope") || "").split(/\s+/);
+      assert.ok(scopes.includes("bot") && scopes.includes("applications.commands"), "invite requests bot and command scopes");
+      assert.equal(url.searchParams.get("permissions"), "3072", "invite requests only View Channel and Send Messages");
+    }
     const add = pg.locator('form[action="/admin/discord/bot/servers"]').last();
     await add.locator('input[name="guild"]').fill(guild);
     await add.locator('input[name="name"]').fill("E2E Discord");
@@ -1590,8 +1618,30 @@ await test("Discord bot admin: post actions submit and explain missing setup", a
     ]);
     assert.match(await pg.locator(".alert").first().innerText(), /Needs the bot token|Set and save a clock panel channel|bot is paused/i);
 
-    await server.locator("details.discord-bot__owner > summary").click();
-    const remove = server.locator('form[action$="/remove"]');
+    const owner = server.locator("details.discord-bot__owner");
+    const ownerActions = owner.locator(".discord-bot__owner-actions");
+    assert.equal(await ownerActions.isVisible(), false, "collapsed owner controls stay hidden");
+    await owner.locator("summary").click();
+    assert.equal(await ownerActions.isVisible(), true, "owner controls appear when expanded");
+    const buttonGap = (a, b) => {
+      const x = Math.max(0, Math.max(a.x, b.x) - Math.min(a.x + a.width, b.x + b.width));
+      const y = Math.max(0, Math.max(a.y, b.y) - Math.min(a.y + a.height, b.y + b.height));
+      return Math.max(x, y);
+    };
+    for (const width of [1440, 1024, 768, 390]) {
+      await pg.setViewportSize({ width, height: 900 });
+      const saveName = await owner.locator('form[action="/admin/discord/bot/servers"] .actions button').boundingBox();
+      const registerForm = owner.locator('form[action="/admin/discord/bot/commands"]');
+      if (await registerForm.count()) {
+        const register = await registerForm.locator("button").boundingBox();
+        assert.ok(buttonGap(saveName, register) >= 12, `Save name and Register commands have breathing room at ${width}px`);
+      } else {
+        const actionGap = await owner.locator(".discord-bot__owner-actions").evaluate((el) => parseFloat(getComputedStyle(el).rowGap));
+        assert.ok(actionGap >= 12, `owner action groups have a visible gap at ${width}px`);
+      }
+      await assertButtonsBreathe(pg, `Discord bot admin owner controls at ${width}px`);
+    }
+    const remove = owner.locator('form[action$="/remove"]');
     await remove.locator('input[name="confirm"]').check();
     await Promise.all([pg.waitForURL(/done=removed/), remove.locator('button[type="submit"]').click()]);
   } finally { await c.close(); }
