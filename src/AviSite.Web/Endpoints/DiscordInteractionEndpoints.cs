@@ -86,6 +86,7 @@ public static class DiscordInteractionEndpoints
                 : name switch
                 {
                     "myhours" => MyHours(data, account, hours),
+                    "clock" => await ClockCommand(data, account, server, accounts, hours, config, http.RequestAborted),
                     "clockstatus" => ClockStatus(account, hours),
                     "teamhours" => await TeamHours(data, account, server, accounts, hours, http.RequestAborted),
                     "leaderboard" => await LeaderboardReply(account, server, accounts, hours, http.RequestAborted),
@@ -167,6 +168,16 @@ public static class DiscordInteractionEndpoints
         return Ephemeral($"Clocked in · {running.Team} · {HoursText.Cat(running.Category)} · {elapsed}.");
     }
 
+    /// <summary>The /clock subcommands use the same linked-account and team-selection rules as the public clock panel.</summary>
+    private static async Task<IResult> ClockCommand(JsonElement data, Account account, DiscordGuild? server, IAccountStore accounts,
+        HoursStore store, DiscordOptions config, CancellationToken ct) => Subcommand(data) switch
+    {
+        "in" => await ButtonClockIn(account, server, accounts, store, config, ct),
+        "out" => ButtonClockOut(account, store),
+        "status" => ClockStatus(account, store),
+        _ => Ephemeral("Choose `/clock in`, `/clock out`, or `/clock status`."),
+    };
+
     private static async Task<IResult> TeamHours(JsonElement data, Account account, DiscordGuild? server, IAccountStore accounts,
         HoursStore store, CancellationToken ct)
     {
@@ -208,6 +219,15 @@ public static class DiscordInteractionEndpoints
         foreach (var option in options.EnumerateArray())
             if (String(option, "name") == name && option.TryGetProperty("value", out var value) && value.ValueKind == JsonValueKind.String)
                 return value.GetString();
+        return null;
+    }
+
+    private static string? Subcommand(JsonElement data)
+    {
+        if (!data.TryGetProperty("options", out var options) || options.ValueKind != JsonValueKind.Array) return null;
+        foreach (var option in options.EnumerateArray())
+            if (option.TryGetProperty("type", out var type) && type.ValueKind == JsonValueKind.Number && type.GetInt32() == 1)
+                return String(option, "name");
         return null;
     }
 

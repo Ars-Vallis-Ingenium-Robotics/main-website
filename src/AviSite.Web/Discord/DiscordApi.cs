@@ -117,6 +117,16 @@ public static class DiscordCommands
     public static readonly object[] All =
     [
         new { name = "myhours", description = "View your own AVI Hours totals", options = new[] { Range } },
+        new
+        {
+            name = "clock", description = "Clock in, clock out, or check your status",
+            options = new[]
+            {
+                new { type = 1, name = "in", description = "Start a clock session" },
+                new { type = 1, name = "out", description = "End your current clock session" },
+                new { type = 1, name = "status", description = "Check your current clock status" },
+            },
+        },
         new { name = "clockstatus", description = "Check your own clock-in status" },
         new { name = "leaderboard", description = "This season's Hours leaderboard (if your organization shows one)" },
         new

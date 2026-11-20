@@ -41,7 +41,7 @@
             <a class="btn btn--accent" href="/admin/discord/link">Link Discord account</a>
         }
 
-        @if (Status is { } status)
+        @if (Status is { } status && !(Linked == "1" && account?.DiscordUserId is not null))
         {
             <p class="alert @(status.Success ? "alert--ok" : "")" role="status">@status.Text</p>
         }
