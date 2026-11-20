@@ -4,6 +4,7 @@ This is a stateless Discord Interactions endpoint. It is not a gateway bot: no p
 
 ## Commands
 
+- `/link` — private quick links to the Hours page and Discord account-link page; available before the caller links an account.
 - `/myhours range:<week|month|all>` — only the linked caller's own Hours totals.
 - `/clock in`, `/clock out`, `/clock status` — the same private clock actions as the channel panel. Clock-in asks for a team when more than one eligible team is available, then asks for a category. Each prompt has **Add later**: team Add later uses the displayed last-used/default team; category Add later starts with a blank category for later editing on the Hours page. Menus paginate when there are more than 25 options.
 - `/clockstatus` — only the linked caller's current clock status.
@@ -46,7 +47,7 @@ DISCORD_GUILD_ID=<test-guild-id> \
 node scripts/register-discord-commands.mjs
 ```
 
-The Discord app needs the `applications.commands` installation scope. No gateway intents are needed. Do not enable Message Content. The script registers the Hours query commands and the `/clock` subcommands above.
+The Discord app needs the `applications.commands` installation scope. No gateway intents are needed. Do not enable Message Content. The script registers `/link`, the Hours query commands, and the `/clock` subcommands above.
 
 ## Bot management (`/admin/discord/bot`)
 

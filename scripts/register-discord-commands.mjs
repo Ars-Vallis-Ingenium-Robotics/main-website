@@ -24,6 +24,7 @@ const range = {
   ],
 };
 const commands = [
+  { name: "link", description: "Open AVI Hours on the website" },
   { name: "myhours", description: "View your own AVI Hours totals", options: [range] },
   {
     name: "clock", description: "Clock in, clock out, or check your status",

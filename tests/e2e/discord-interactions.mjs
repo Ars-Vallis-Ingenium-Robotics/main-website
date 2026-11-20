@@ -170,6 +170,18 @@ try {
   const wrongApp = await post({ application_id: "423456789012345678", type: 1, version: 1 });
   assert.equal(wrongApp.status, 401, "signed requests for a different app must be rejected");
   await expectEphemeral(await post(command("myhours", "333456789012345678")), "Link your Discord account");
+  const quickLinksResponse = await post(command("link", "333456789012345678"));
+  assert.equal(quickLinksResponse.status, 200);
+  const quickLinks = await quickLinksResponse.json();
+  assert.equal(quickLinks.type, 4, "link command must return an interaction message");
+  assert.equal(quickLinks.data?.flags, 64, "website links must remain private");
+  assert.match(quickLinks.data?.content ?? "", /Quick links to AVI Hours/);
+  const websiteButtons = quickLinks.data.components[0].components;
+  assert.deepEqual(websiteButtons.map(button => [button.type, button.style, button.label, button.url]), [
+    [2, 5, "Open Hours", `${baseUrl}/admin/hours`],
+    [2, 5, "Link Discord", `${baseUrl}/admin/discord`],
+  ], "unlinked users must get mobile-friendly website and account-link URL buttons");
+  assert.ok(websiteButtons.every(button => !("custom_id" in button)), "URL buttons must not masquerade as interaction buttons");
   const malformed = await post("{");
   assert.equal(malformed.status, 400, "signed malformed JSON must be rejected");
 
