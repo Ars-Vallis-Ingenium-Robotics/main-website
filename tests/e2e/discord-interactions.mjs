@@ -32,7 +32,8 @@ function writeSeed() {
       { email: "self@example.test", name: "Private Self Name", role: "Member", teams: [{ group: "avi", role: "Lead" }], stamp: "self" },
       { email: "other@example.test", name: "Private Other Name", role: "Member", teams: [{ group: "avi", role: "Member" }], stamp: "other" },
     ],
-    groups: [{ id: "avi", name: "AVI Robotics" }, { id: "sms", name: "Sequoia Marine Solutions", parent: "avi" }],
+    groups: [{ id: "avi", name: "AVI Robotics" }, { id: "sms", name: "Sequoia Marine Solutions", parent: "avi" },
+      ...Array.from({ length: 26 }, (_, i) => ({ id: `extra${String(i).padStart(2, "0")}`, name: `ZZ Extra Team ${String(i).padStart(2, "0")}`, parent: "avi" }))],
   };
   fs.writeFileSync(path.join(dataDir, "accounts.json"), JSON.stringify(accounts));
 }
@@ -71,6 +72,25 @@ async function expectEphemeral(response, contains) {
   return json.data.content;
 }
 
+async function expectPrompt(response, contains) {
+  if (response.status !== 200) throw new Error(`expected 200, got ${response.status}: ${await response.text()}`);
+  const json = await response.json();
+  assert.equal(json.type, 4, "clock-in prompts must create a private interaction message");
+  assert.equal(json.data?.flags, 64, "clock-in prompts must be ephemeral");
+  assert.ok(Array.isArray(json.data?.components) && json.data.components.length > 0, "clock-in prompt must have interactive components");
+  if (contains) assert.ok(json.data.content.includes(contains), `prompt did not contain ${JSON.stringify(contains)}: ${json.data.content}`);
+  return json.data;
+}
+
+async function expectUpdated(response, contains) {
+  if (response.status !== 200) throw new Error(`expected 200, got ${response.status}: ${await response.text()}`);
+  const json = await response.json();
+  assert.equal(json.type, 7, "clock-in component actions must update the same private prompt");
+  assert.equal(typeof json.data?.content, "string");
+  if (contains) assert.ok(json.data.content.includes(contains), `updated prompt did not contain ${JSON.stringify(contains)}: ${json.data.content}`);
+  return json.data;
+}
+
 async function waitReady(proc, url) {
   const deadline = Date.now() + 45_000;
   while (Date.now() < deadline) {
@@ -104,6 +124,7 @@ function startApp(url) {
       Store__DataDirectory: dataDir,
       Discord__ApplicationId: appId,
       Discord__PublicKey: publicHex,
+      Discord__PublicBaseUrl: baseUrl,
       DOTNET_CLI_TELEMETRY_OPTOUT: "1",
       DOTNET_NOLOGO: "1",
     },
@@ -179,6 +200,7 @@ try {
   const otherChannel = "723456789012345678";
   const inGuild = (payload, channel = channelId, guild = guildId) => ({ ...payload, guild_id: guild, channel_id: channel });
   const button = (customId, userId) => ({ application_id: appId, type: 3, version: 1, data: { custom_id: customId, component_type: 2 }, member: { user: { id: userId } } });
+  const component = (customId, userId, componentType, values = []) => ({ application_id: appId, type: 3, version: 1, data: { custom_id: customId, component_type: componentType, ...(componentType === 3 ? { values } : {}) }, member: { user: { id: userId } } });
 
   // No servers listed yet: any server works.
   await expectEphemeral(await post(inGuild(command("myhours", selfId), channelId, "823456789012345678")), "2.0 h");
@@ -194,16 +216,69 @@ try {
   await expectEphemeral(await post(command("myhours", selfId)), "2.0 h"); // DMs stay personal and keep working
   await expectEphemeral(await post(inGuild(command("teamhours", selfId))), "7.0 h"); // defaults to the server's team
 
-  // /clock mirrors the clock panel's private in/out/status actions.
+  // /clock asks users with multiple teams to choose; category and team can each be added later.
   const clockSubcommand = (name, userId) => command("clock", userId, [{ type: 1, name }]);
-  await expectEphemeral(await post(inGuild(clockSubcommand("in", selfId))), "Clocked in · AVI Robotics");
+  const teamPrompt = await expectPrompt(await post(inGuild(clockSubcommand("in", selfId))), "Choose a team");
+  assert.match(teamPrompt.content, /Add later.*AVI Robotics/, "team Add later explains which default team will be used");
+  const teamSelect = teamPrompt.components[0].components[0];
+  assert.equal(teamSelect.type, 3, "multiple teams must be offered as a select menu");
+  assert.equal(teamSelect.options.length, 25, "team menus must respect Discord's 25-option limit");
+  assert.ok(teamSelect.options.some(o => o.value === "team:avi") && teamSelect.options.some(o => o.value === "team:sms"));
+  const nextTeams = teamPrompt.components[1].components.find(c => c.label === "Next");
+  assert.ok(nextTeams && !nextTeams.disabled, "large team lists must offer another page");
+  const expiringPrompt = await expectPrompt(await post(inGuild(clockSubcommand("in", selfId))), "Choose a team");
+  const expiredTeamId = expiringPrompt.components[0].components[0].custom_id.split(":");
+  expiredTeamId[expiredTeamId.length - 1] = "1";
+  await expectUpdated(await post(inGuild(component(expiredTeamId.join(":"), selfId, 3, ["team:sms"]))), "expired");
+  const teamPageTwo = await expectUpdated(await post(inGuild(component(nextTeams.custom_id, selfId, 2))), "Choose a team");
+  assert.equal(teamPageTwo.components[0].components[0].options.length, 3);
+  assert.ok(teamPageTwo.components[1].components.some(c => c.label === "Add later"), "Add later remains available on every team page");
+  const previousTeams = teamPageTwo.components[1].components.find(c => c.label === "Previous");
+  const teamPageOne = await expectUpdated(await post(inGuild(component(previousTeams.custom_id, selfId, 2))), "Choose a team");
+  const firstPageTeamSelect = teamPageOne.components[0].components[0];
+  const teamLaterButton = teamPageOne.components[1].components.find(c => c.label === "Add later");
+  assert.ok(teamLaterButton, "team prompt must include Add later");
+  const invalidTeam = await expectUpdated(await post(inGuild(component(firstPageTeamSelect.custom_id, selfId, 3, ["team:forged"]))), "no longer available");
+  const refreshedTeamSelect = invalidTeam.components[0].components[0];
+
+  const wrongOwner = await expectEphemeral(await post(inGuild(component(refreshedTeamSelect.custom_id, otherId, 3, ["team:sms"]))), "different Discord account");
+  assert.ok(wrongOwner);
+  const categoryPrompt = await expectUpdated(await post(inGuild(component(refreshedTeamSelect.custom_id, selfId, 3, ["team:sms"]))), "What category");
+  assert.ok(categoryPrompt.content.includes("Sequoia Marine Solutions"), "selected team controls the category prompt");
+  const categorySelect = categoryPrompt.components[0].components[0];
+  const programmingOption = categorySelect.options.find(o => o.label === "Programming");
+  assert.ok(programmingOption && programmingOption.value.length <= 100, "category option values fit Discord's limit");
+  const invalidCategory = await expectUpdated(await post(inGuild(component(categorySelect.custom_id, selfId, 3, ["category:forged"]))), "no longer available");
+  const refreshedCategorySelect = invalidCategory.components[0].components[0];
+  const refreshedProgrammingOption = refreshedCategorySelect.options.find(o => o.label === "Programming");
+  assert.ok(refreshedProgrammingOption, "invalid choices must leave a usable category menu");
+  const clockedIn = await expectUpdated(await post(inGuild(component(refreshedCategorySelect.custom_id, selfId, 3, [refreshedProgrammingOption.value]))), "Clocked in · AVI Robotics › Sequoia Marine Solutions · Programming");
+  assert.ok(clockedIn.content.includes("/admin/hours"), "the confirmation links to later edits");
+  const selectedEntry = admin.prepare("SELECT team, category FROM hours WHERE email = ? AND end_utc IS NULL").get("self@example.test");
+  assert.equal(selectedEntry.team, "sms");
+  assert.equal(selectedEntry.category, "Programming");
   await expectEphemeral(await post(inGuild(clockSubcommand("status", selfId))), "Clocked in");
   await expectEphemeral(await post(inGuild(clockSubcommand("out", selfId))), "Clocked out");
   await expectEphemeral(await post(inGuild(clockSubcommand("out", selfId))), "not clocked in");
 
+  // A single-team member skips the team question but still gets the category choice.
+  const singleTeamPrompt = await expectPrompt(await post(clockSubcommand("in", otherId)), "What category");
+  assert.ok(!singleTeamPrompt.content.includes("Choose a team"));
+  assert.equal(singleTeamPrompt.components[0].components[0].options.length, 10);
+  const otherCategoryMenu = singleTeamPrompt.components[0].components[0];
+  const outreachOption = otherCategoryMenu.options.find(o => o.label === "Outreach");
+  assert.ok(outreachOption);
+  await expectUpdated(await post(component(otherCategoryMenu.custom_id, otherId, 3, [outreachOption.value])), "Clocked in · AVI Robotics · Outreach");
+  await expectEphemeral(await post(clockSubcommand("out", otherId)), "Clocked out");
+
   // Clock panel buttons work in any channel of a listed server, and only for linked accounts.
   await expectEphemeral(await post(inGuild(button("avi:clock:in", "333456789012345678"), otherChannel)), "Link your Discord account");
-  await expectEphemeral(await post(inGuild(button("avi:clock:in", selfId), otherChannel)), "Clocked in · AVI Robotics");
+  const panelTeamPrompt = await expectPrompt(await post(inGuild(button("avi:clock:in", selfId), otherChannel)), "Choose a team");
+  const panelTeamLater = panelTeamPrompt.components[1].components.find(c => c.label === "Add later");
+  const panelCategoryPrompt = await expectUpdated(await post(inGuild(component(panelTeamLater.custom_id, selfId, 2), otherChannel)), "What category");
+  assert.ok(panelCategoryPrompt.content.includes("Sequoia Marine Solutions"), "team Add later uses the last-used team");
+  const categoryLater = panelCategoryPrompt.components[1].components.find(c => c.label === "Add later");
+  await expectUpdated(await post(inGuild(component(categoryLater.custom_id, selfId, 2), otherChannel)), "No reason yet");
   await expectEphemeral(await post(inGuild(button("avi:clock:in", selfId), otherChannel)), "already clocked in");
   await expectEphemeral(await post(inGuild(command("clockstatus", selfId))), "Clocked in");
   await expectEphemeral(await post(inGuild(button("avi:clock:status", selfId), otherChannel)), "Clocked in");
@@ -212,8 +287,28 @@ try {
   const running = admin.prepare("SELECT COUNT(*) AS n FROM hours WHERE email = ? AND end_utc IS NULL").get("self@example.test");
   assert.equal(Number(running.n), 0, "clock out from Discord must end the session");
   const panelEntry = admin.prepare("SELECT team, category, source FROM hours WHERE email = ? ORDER BY id DESC LIMIT 1").get("self@example.test");
-  assert.equal(panelEntry.team, "avi", "the panel clocks into the server's team");
-  assert.equal(panelEntry.category, "", "the reason is picked later on the site");
+  assert.equal(panelEntry.team, "sms", "team Add later uses the last-used team while allowing later edits");
+  assert.equal(panelEntry.category, "", "category Add later leaves the category blank for site editing");
+
+  // Long custom category lists paginate without losing the Add later control.
+  const addCategory = admin.prepare("INSERT INTO hours_categories (org, name, sort) VALUES (?, ?, ?)");
+  for (let i = 0; i < 27; i++) addCategory.run("avi", `Category ${String(i).padStart(2, "0")}`, i);
+  const longCategory = "L".repeat(150); // A legacy/imported category must not break Discord's 100-character value cap.
+  addCategory.run("avi", longCategory, 27);
+  const pagedTeamPrompt = await expectPrompt(await post(inGuild(clockSubcommand("in", selfId))), "Choose a team");
+  const pagedTeamSelect = pagedTeamPrompt.components[0].components[0];
+  const pagedCategoryPrompt = await expectUpdated(await post(inGuild(component(pagedTeamSelect.custom_id, selfId, 3, ["team:sms"]))), "What category");
+  assert.equal(pagedCategoryPrompt.components[0].components[0].options.length, 25);
+  const nextCategories = pagedCategoryPrompt.components[1].components.find(c => c.label === "Next");
+  assert.ok(nextCategories && pagedCategoryPrompt.components[1].components.some(c => c.label === "Add later"));
+  const lastCategoryPage = await expectUpdated(await post(inGuild(component(nextCategories.custom_id, selfId, 2))), "What category");
+  assert.equal(lastCategoryPage.components[0].components[0].options.length, 3);
+  assert.ok(lastCategoryPage.components[1].components.some(c => c.label === "Add later"));
+  const longCategoryOption = lastCategoryPage.components[0].components[0].options.find(o => o.label.endsWith("…"));
+  assert.ok(longCategoryOption && longCategoryOption.value.length <= 100 && longCategoryOption.label.length <= 100);
+  const category26Option = lastCategoryPage.components[0].components[0].options.find(o => o.label === "Category 26");
+  await expectUpdated(await post(inGuild(component(lastCategoryPage.components[0].components[0].custom_id, selfId, 3, [category26Option.value]))), "Category 26");
+  await expectEphemeral(await post(inGuild(clockSubcommand("out", selfId))), "Clocked out");
 
   // Pause: commands and buttons answer "paused" on every instance; Discord's PING still passes.
   admin.prepare("UPDATE discord_bot SET paused = 1 WHERE id = 1").run();
@@ -236,6 +331,9 @@ try {
   // The status log keeps counts by command and outcome, never who.
   const outcomes = new Set(admin.prepare("SELECT DISTINCT outcome FROM discord_events").all().map(r => r.outcome));
   for (const o of ["ok", "blocked", "channel", "unlinked", "paused"]) assert.ok(outcomes.has(o), `activity log records ${o}`);
+  const kinds = admin.prepare("SELECT DISTINCT kind FROM discord_events").all().map(r => r.kind);
+  assert.ok(kinds.includes("component:clock-in-flow"));
+  assert.ok(kinds.every(k => !k.includes(selfId) && !k.includes("team:sms") && !k.includes("category:Programming")), "flow choices never enter the activity-log kind");
   const columns = admin.prepare("PRAGMA table_info(discord_events)").all().map(c => c.name);
   assert.deepEqual(columns.sort(), ["at_utc", "guild_id", "id", "kind", "outcome"], "activity log has no user columns");
   admin.close();
@@ -245,7 +343,7 @@ try {
   assert.equal(oversized.status, 413, "oversized interactions must be rejected before parsing");
 
   success = true;
-  console.log("Discord interaction E2E passed: concurrent startup, unique-link constraint, signatures, stale-signature rejection, PING, account isolation, team permissions, aggregate-only output, allowed servers, command channels, /clock subcommands, clock buttons, pause, activity log, and ephemeral replies.");
+  console.log("Discord interaction E2E passed: signatures, account isolation, permissions, /clock team/category selection, Add later paths, component ownership and validation, clock buttons, pause, activity log, and ephemeral replies.");
 } catch (error) {
   console.error(error);
   console.error(`Discord E2E scratch kept at ${scratch}`);
