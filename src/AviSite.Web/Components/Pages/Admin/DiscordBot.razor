@@ -152,10 +152,10 @@
                             {
                                 <p class="small muted">@access.Tree.Name(org) doesn't show a leaderboard. Once its leads turn one on in <a href="/admin/hours/settings">Hours settings</a>, the bot can post it here and answer <code>/leaderboard</code>.</p>
                             }
-                            <p class="small muted">With a meeting set, a fresh clock panel (Clock in / Clock out / My status) goes up in the panel channel 15 minutes before it starts. Paste a channel ID (right-click the channel → Copy Channel ID) or its link.</p>
+                            <p class="small muted discord-bot__help">With a meeting set, a fresh clock panel (Clock in / Clock out / My status) goes up in the panel channel 15 minutes before it starts. Paste a channel ID (right-click the channel → Copy Channel ID) or its link.</p>
                             <div class="actions"><button class="btn btn--accent" type="submit">Save</button></div>
                         </form>
-                        <div class="actions">
+                        <div class="actions discord-bot__post-actions">
                             <form method="post" action="/admin/discord/bot/servers/@g.GuildId/post">
                                 <AntiforgeryToken /><input type="hidden" name="what" value="panel" />
                                 <button class="btn btn--ghost btn--sm" type="submit">Post clock panel now</button>

@@ -1566,15 +1566,21 @@ await test("Discord bot admin: post actions submit and explain missing setup", a
   const [c, pg] = await signIn("owner@example.com");
   try {
     await pg.goto(BASE + "/admin/discord/bot");
-    await pg.locator('input[name="guild"]').fill(guild);
-    await pg.locator('input[name="name"]').fill("E2E Discord");
-    await pg.locator('select[name="team"]').first().selectOption("avi");
+    const add = pg.locator('form[action="/admin/discord/bot/servers"]').last();
+    await add.locator('input[name="guild"]').fill(guild);
+    await add.locator('input[name="name"]').fill("E2E Discord");
+    await add.locator('select[name="team"]').selectOption("avi");
     await Promise.all([
       pg.waitForURL(/done=server/),
-      pg.locator('form[action="/admin/discord/bot/servers"] button[type="submit"]').click(),
+      add.locator('button[type="submit"]').click(),
     ]);
     const server = pg.locator(`#server-${guild}`);
     const posts = server.locator('form[action$="/post"]');
+    const help = server.locator(".discord-bot__help");
+    assert.equal(await help.evaluate(el => el.scrollWidth <= el.clientWidth), true, "meeting guidance wraps within the server card");
+    const saveBox = await server.locator('form[action$="/settings"] .actions button').boundingBox();
+    const postBox = await posts.nth(0).locator("button").boundingBox();
+    assert.ok(postBox.y - (saveBox.y + saveBox.height) >= 12, "post actions have a visible gap after Save");
     assert.equal(await posts.count(), 2, "panel and summary post controls are present");
     assert.equal(await posts.nth(0).locator("button").isDisabled(), false, "panel action is not silently disabled");
     assert.equal(await posts.nth(1).locator("button").isDisabled(), false, "summary action is not silently disabled");
