@@ -78,6 +78,9 @@ public static class DiscordInteractionEndpoints
             var discordUserId = UserId(root);
             if (discordUserId is null) return Done("error", Ephemeral("I couldn't identify the invoking Discord account."));
 
+            // Website shortcut is intentionally available before account linking, including to first-time users.
+            if (!isComponent && name == "link") return Done("ok", WebsiteLinks(config));
+
             var account = await accounts.FindByDiscordUserIdAsync(discordUserId, http.RequestAborted);
             if (account is null || (!account.SiteWide && account.Teams.Count == 0))
                 return Done("unlinked", Ephemeral(LinkPrompt(config)));
@@ -233,6 +236,36 @@ public static class DiscordInteractionEndpoints
 
     private static int? Integer(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) ? number : null;
+
+    private static IResult WebsiteLinks(DiscordOptions config)
+    {
+        var baseUrl = SafePublicBaseUrl(config.PublicBaseUrl);
+        if (baseUrl is null) return Ephemeral("The AVI Hours website link isn't configured on this bot.");
+
+        var buttons = new object[]
+        {
+            new { type = 2, style = 5, label = "Open Hours", url = baseUrl + "/admin/hours" },
+            new { type = 2, style = 5, label = "Link Discord", url = baseUrl + "/admin/discord" },
+        };
+        return Results.Json(new
+        {
+            type = 4,
+            data = new
+            {
+                content = "Quick links to AVI Hours. Open Hours to view or edit your time; use Link Discord if your account isn't connected yet.",
+                flags = EphemeralFlag,
+                components = new object[] { new { type = 1, components = buttons } },
+                allowed_mentions = new { parse = Array.Empty<string>() },
+            },
+        });
+    }
+
+    private static string? SafePublicBaseUrl(string? value)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttps && !(uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback))) return null;
+        return uri.GetLeftPart(UriPartial.Path).TrimEnd('/');
+    }
 
     private static string LinkPrompt(DiscordOptions config) => config.LinkingConfigured
         ? $"Link your AVI account before using Hours commands: {config.PublicBaseUrl!.TrimEnd('/')}/admin/discord"

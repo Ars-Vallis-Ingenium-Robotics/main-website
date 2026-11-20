@@ -116,6 +116,7 @@ public static class DiscordCommands
 
     public static readonly object[] All =
     [
+        new { name = "link", description = "Open AVI Hours on the website" },
         new { name = "myhours", description = "View your own AVI Hours totals", options = new[] { Range } },
         new
         {
