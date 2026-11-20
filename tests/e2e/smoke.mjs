@@ -1645,6 +1645,8 @@ await test("Discord bot admin: post actions submit and explain missing setup", a
       assert.equal(url.searchParams.get("permissions"), "3072", "invite requests only View Channel and Send Messages");
     }
     const add = pg.locator('form[action="/admin/discord/bot/servers"]').last();
+    assert.equal(await add.locator('input[name="name"]').getAttribute("placeholder"), "e.g. AVI Robotics Discord", "server name example is AVI-specific");
+    assert.equal(await add.locator('select[name="team"]').inputValue(), "avi", "new server defaults to AVI");
     await add.locator('input[name="guild"]').fill(guild);
     await add.locator('input[name="name"]').fill("E2E Discord");
     await add.locator('select[name="team"]').selectOption("avi");
