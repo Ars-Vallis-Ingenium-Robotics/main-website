@@ -2302,6 +2302,10 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .report { --brand-ui: var(--brand-dark, var(--fg)); --brand-accent-ui: var(--brand-accent-dark, var(--accent-on-ink)); }
   }
+  .hours--overview .report__stats .stat { border-color: var(--brand-ui); }
+  .hours--overview .report__stats .stat__num { color: var(--brand-ui); }
+  .hours--overview .section__head .h1 { color: var(--brand-ui); font-family: var(--brand-heading-font, var(--font-display)); font-weight: var(--brand-heading-weight, 900); font-stretch: var(--brand-heading-stretch, normal); }
+  .hours--overview .hours-pie__slice--0, .hours--overview .hours-pie__swatch--0 { --hours-pie-color: var(--brand-accent-ui); }
   .report .report__org, .report .report__h2 { color: var(--brand-ui); }
   .report .report__brand { border-bottom-color: var(--brand-ui); }
   .report .colchart__bar { fill: var(--brand-accent-ui); }
