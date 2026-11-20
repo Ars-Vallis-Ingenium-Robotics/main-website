@@ -229,11 +229,17 @@
                                         <button class="btn btn--ghost btn--sm" type="submit">Register commands in this server</button>
                                     </form>
                                 }
-                                <form method="post" action="/admin/discord/bot/servers/@g.GuildId/remove" class="form">
-                                    <AntiforgeryToken />
-                                    <label class="check"><input type="checkbox" name="confirm" value="true" /> Yes, stop answering in @g.Name</label>
-                                    <div><button class="btn btn--ghost btn--sm" type="submit">Remove server</button></div>
-                                </form>
+                                <div class="discord-bot__remove">
+                                    <p id="remove-info-@g.GuildId"><strong>Remove this server from the website.</strong> This stops the bot answering here; it does not kick or uninstall the bot from Discord.</p>
+                                    <form method="post" action="/admin/discord/bot/servers/@g.GuildId/remove" class="discord-bot__remove-form">
+                                        <AntiforgeryToken />
+                                        <label class="check">
+                                            <input type="checkbox" name="confirm" value="true" required aria-describedby="remove-info-@g.GuildId" />
+                                            <span>I understand — stop answering in <strong>@g.Name</strong> and remove it from this website.</span>
+                                        </label>
+                                        <button class="btn btn--danger-solid" type="submit">Remove server from this site</button>
+                                    </form>
+                                </div>
                             </div>
                         </details>
                     }

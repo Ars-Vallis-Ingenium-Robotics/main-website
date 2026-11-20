@@ -1470,8 +1470,18 @@ await test("header: Sign in when signed out; Clock in + account menu when signed
   await pg.waitForURL(/done=server/);
   assert.equal(await pg.locator("#server-923456789012345678 h3").innerText(), "Smoke test server");
   await pg.locator("#server-923456789012345678 summary").click();
-  await pg.locator("#server-923456789012345678 form[action$='/remove'] input[name=confirm]").check();
-  await pg.locator("#server-923456789012345678 form[action$='/remove'] button").click();
+  const removeForm = pg.locator("#server-923456789012345678 form[action$='/remove']");
+  const removeConfirm = removeForm.locator("input[name=confirm]");
+  assert.equal(await removeConfirm.getAttribute("required"), "", "removal needs explicit browser confirmation");
+  assert.match(await pg.locator("#remove-info-923456789012345678").innerText(), /does not kick or uninstall the bot from Discord/);
+  assert.match(await removeForm.innerText(), /remove it from this website/);
+  const beforeUnconfirmedClick = pg.url();
+  await removeForm.locator("button[type=submit]").click();
+  assert.equal(await removeConfirm.evaluate(el => el.validity.valueMissing), true, "the browser blocks unconfirmed removal");
+  assert.equal(pg.url(), beforeUnconfirmedClick, "unconfirmed click stays on the page, not a dead 404");
+  assert.equal(await pg.locator("#server-923456789012345678").count(), 1, "unconfirmed click keeps the server listed");
+  await removeConfirm.check();
+  await removeForm.locator("button[type=submit]").click();
   await pg.waitForURL(/done=removed/);
   assert.equal(await pg.locator("#server-923456789012345678").count(), 0, "removed servers disappear");
   // Re-add the same guild to prove the site configuration can be restored after removal.

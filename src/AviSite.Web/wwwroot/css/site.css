@@ -2267,6 +2267,11 @@
   .discord-bot__owner > summary { cursor: pointer; font-weight: 600; }
   .discord-bot__owner:not([open]) > .discord-bot__owner-actions { display: none; }
   .discord-bot__owner-actions { display: grid; gap: var(--s-4); }
+  .discord-bot__remove { display: grid; gap: var(--s-3); padding: var(--s-4); border: 2px solid var(--danger); border-left-width: 6px; border-radius: var(--radius); background: var(--surface); }
+  .discord-bot__remove > p { margin: 0; max-width: 72ch; }
+  .discord-bot__remove-form { display: grid; justify-items: start; gap: var(--s-3); }
+  .discord-bot__remove .check { align-items: flex-start; }
+  .discord-bot__remove .check input { accent-color: var(--danger); }
   .discord-bot__add-heading { margin-block-start: var(--s-6); }
   .discord-bot .actions { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
 }
