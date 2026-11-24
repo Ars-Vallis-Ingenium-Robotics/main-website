@@ -40,11 +40,13 @@
                     <div class="qr-what__fields">
                         <div class="qr-kind" data-kind="url">
                             <div class="field"><label class="label" for="qr-url">Link</label>
-                                <input id="qr-url" type="url" inputmode="url" data-qr="url" value="@(Url ?? "https://avirobotics.org")" placeholder="https://" /></div>
+                                <input id="qr-url" type="url" inputmode="url" data-qr="url" value="@(Url ?? "https://avirobotics.org")" placeholder="example.com or https://example.com" />
+                                <span class="field__hint" data-qr-url-message>Type a website address; if you leave off https://, we add it so scanners recognize it as a link.</span></div>
                         </div>
                         <div class="qr-kind" data-kind="text" hidden>
                             <div class="field"><label class="label" for="qr-text">Text</label>
-                                <textarea id="qr-text" rows="2" data-qr="text" placeholder="Anything you like"></textarea></div>
+                                <textarea id="qr-text" rows="2" data-qr="text" placeholder="Anything you like"></textarea>
+                                <span class="field__hint">Plain text is shown as text when scanned. For a clickable website, choose Link above.</span></div>
                         </div>
                         <div class="qr-kind qr-grid" data-kind="wifi" hidden>
                             <div class="field"><label class="label" for="qr-ssid">Network name</label><input id="qr-ssid" data-qr="ssid" autocomplete="off" /></div>
@@ -101,7 +103,7 @@
                     <div class="field">
                         <label class="label" for="qr-bulktext">One per line: label, then link</label>
                         <textarea id="qr-bulktext" rows="7" data-qr="bulktext" spellcheck="false" placeholder="Meeting 1 sign-in, https://forms.gle/…&#10;Meeting 2 sign-in, https://forms.gle/…&#10;https://avirobotics.org/join"></textarea>
-                        <span class="field__hint">Commas or tabs both work, so you can paste two columns straight from a spreadsheet. A line with just a link uses the link as its name.</span>
+                        <span class="field__hint">Commas or tabs both work, so you can paste two columns straight from a spreadsheet. A line with just a link uses it as the name. Website addresses without https:// are upgraded automatically; ordinary text stays text.</span>
                     </div>
                 </div>
                 <div class="qr-grid" data-bulk="number" hidden>

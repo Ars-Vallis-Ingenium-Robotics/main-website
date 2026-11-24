@@ -1,0 +1,256 @@
+@page "/admin/purchasing"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.PurchasingPolicy)]
+@using AviSite.Web.Endpoints
+@using System.Globalization
+@inject IAccountStore Accounts
+@inject PurchasingStore Store
+
+<PageTitle>Purchasing · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /></HeadContent>
+<script src="/js/purchasing.js" defer></script>
+
+<section class="section admin purchasing">
+    <div class="wrap">
+        <AdminNav Current="purchasing" />
+        <div class="section__head">
+            <div>
+                <p class="eyebrow">Team operations</p>
+                <h1 class="h1">Purchasing</h1>
+                <p class="muted">Request what your team needs. Leads review requests; approved requests get a purchase-order number and delivery tracking.</p>
+            </div>
+        </div>
+
+        @if (Message is { } message) { <p class="alert @(Done is not null ? "alert--ok" : "")" role="status">@message</p> }
+
+        @if (teams.Count == 0)
+        {
+            <p class="alert">There isn’t a team or organization available to you for a purchase request. Ask an administrator to add you.</p>
+        }
+        else
+        {
+            <section class="purchasing__new" aria-labelledby="purchase-new-title">
+                <h2 class="h3" id="purchase-new-title">New purchase request</h2>
+                <p class="muted">One request is for one supplier. Add every item you need from that supplier; split orders across suppliers so each purchase order stays clear.</p>
+                <form method="post" action="/admin/purchasing/requests" class="form purchasing__form">
+                    <AntiforgeryToken />
+                    <div class="purchase-grid">
+                        <label class="field"><span class="label">Team or subsystem</span>
+                            <select name="teamId" required>
+                                @foreach (var g in teams) { <option value="@g.Id">@Indent(g)@g.Name</option> }
+                            </select>
+                        </label>
+                        <label class="field"><span class="label">Request title</span><input name="title" maxlength="120" required placeholder="e.g. Diodes for the float controls" /></label>
+                        <label class="field"><span class="label">Supplier or store</span><input name="supplier" maxlength="120" required placeholder="e.g. DigiKey" /></label>
+                        <label class="field"><span class="label">Supplier website <span class="muted">(optional)</span></span><input name="supplierUrl" type="url" maxlength="2048" placeholder="https://…" /></label>
+                        <label class="field"><span class="label">Subsystem or project <span class="muted">(optional)</span></span><input name="subsystem" maxlength="100" placeholder="e.g. Float controls" /></label>
+                        <label class="field"><span class="label">Requested delivery date <span class="muted">(optional)</span></span><input name="requestedDelivery" type="date" min="@Today" /></label>
+                    </div>
+
+                    <div class="purchase-lines-head">
+                        <div><h3 class="h4">Items</h3><p class="small muted">Estimated unit prices are in USD. Taxes and shipping are entered once for the whole request.</p><span class="visually-hidden" data-item-count aria-live="polite">2 of 20 item rows</span></div>
+                        <button class="btn btn--ghost btn--sm" type="button" data-add-item>Add another item</button>
+                    </div>
+                    <div class="purchase-lines" data-purchase-lines>
+                        @for (var i = 0; i < 2; i++)
+                        {
+                            <fieldset class="purchase-line" data-item-row>
+                                <legend>Item @(i + 1)</legend>
+                                <label class="field"><span class="label">Item name</span><input name="itemName" maxlength="160" placeholder="Part or product" /></label>
+                                <label class="field"><span class="label">Product link <span class="muted">(optional)</span></span><input name="itemUrl" type="url" maxlength="2048" placeholder="https://…" /></label>
+                                <label class="field"><span class="label">Description <span class="muted">(optional)</span></span><input name="itemDescription" maxlength="500" placeholder="Part number, size, key details" /></label>
+                                <label class="field"><span class="label">Quantity</span><input name="quantity" type="number" min="1" max="100000" step="1" placeholder="1" /></label>
+                                <label class="field"><span class="label">Unit price (USD)</span><input name="unitPrice" type="number" min="0" max="1000000" step="0.01" placeholder="0.00" /></label>
+                                <button class="link-button purchase-line__remove" type="button" data-remove-item aria-label="Remove item @(i + 1)">Remove item</button>
+                            </fieldset>
+                        }
+                    </div>
+                    <template data-item-template>
+                        <fieldset class="purchase-line" data-item-row>
+                            <legend>Item</legend>
+                            <label class="field"><span class="label">Item name</span><input name="itemName" maxlength="160" placeholder="Part or product" /></label>
+                            <label class="field"><span class="label">Product link <span class="muted">(optional)</span></span><input name="itemUrl" type="url" maxlength="2048" placeholder="https://…" /></label>
+                            <label class="field"><span class="label">Description <span class="muted">(optional)</span></span><input name="itemDescription" maxlength="500" placeholder="Part number, size, key details" /></label>
+                            <label class="field"><span class="label">Quantity</span><input name="quantity" type="number" min="1" max="100000" step="1" placeholder="1" /></label>
+                            <label class="field"><span class="label">Unit price (USD)</span><input name="unitPrice" type="number" min="0" max="1000000" step="0.01" placeholder="0.00" /></label>
+                            <button class="link-button purchase-line__remove" type="button" data-remove-item aria-label="Remove item">Remove item</button>
+                        </fieldset>
+                    </template>
+
+                    <div class="purchase-grid">
+                        <label class="field"><span class="label">Purpose</span><textarea name="purpose" maxlength="1000" rows="3" required placeholder="What will these items be used for?"></textarea></label>
+                        <label class="field"><span class="label">Why these items?</span><textarea name="rationale" maxlength="1000" rows="3" required placeholder="Why this option, rather than a similar one?"></textarea></label>
+                        <label class="field"><span class="label">Estimated tax (USD)</span><input name="estimatedTax" type="number" min="0" step="0.01" value="0.00" /></label>
+                        <label class="field"><span class="label">Estimated shipping (USD)</span><input name="estimatedShipping" type="number" min="0" step="0.01" value="0.00" /></label>
+                    </div>
+                    <p class="field__hint">Your lead can approve or reject this request. The requester cannot approve their own request. Dates, quantities and totals are checked before saving.</p>
+                    <div class="purchase-form__actions"><button class="btn btn--accent" type="submit">Submit purchase request</button></div>
+                </form>
+            </section>
+        }
+
+        <section class="purchasing__list" aria-labelledby="purchase-list-title">
+            <div class="purchase-list__head"><div><h2 class="h3" id="purchase-list-title">Requests</h2><p class="muted">Your requests and requests for teams you lead.</p></div></div>
+            @if (requests.Count == 0)
+            {
+                <p class="purchase-empty">No purchase requests here yet.</p>
+            }
+            else
+            {
+                <div class="purchase-list">
+                    @foreach (var request in requests)
+                    {
+                        var canManage = CanManage(request);
+                        <article class="purchase-card" data-request="@request.Id" data-status="@request.Status">
+                            <header class="purchase-card__head">
+                                <div><p class="eyebrow">@request.Code · @Path(request.TeamId)</p><h3 class="h4">@request.Title</h3>
+                                    <p class="small muted">Requested by @Requester(request.RequesterEmail) · @PacificStamp(request.CreatedUtc)</p></div>
+                                <span class="tag purchase-status purchase-status--@request.Status.ToString().ToLowerInvariant()">@StatusLabel(request.Status)</span>
+                            </header>
+                            <div class="purchase-card__summary">
+                                <span><strong>@request.Supplier</strong></span>
+                                <span>@request.Lines.Count item(s)</span>
+                                <span class="purchase-card__total">Estimate: @Money.Format(request.EstimatedTotalCents)</span>
+                                @if (request.PurchaseOrderCode is not null) { <span class="mono purchase-card__po">@request.PurchaseOrderCode</span> }
+                            </div>
+                            <details class="purchase-card__details">
+                                <summary>Request details and activity</summary>
+                                <div class="purchase-details">
+                                    <dl class="purchase-facts">
+                                        <div><dt>Organization/team</dt><dd>@Path(request.TeamId)</dd></div>
+                                        <div><dt>Supplier</dt><dd>@request.Supplier@if (request.SupplierUrl is { } supplierLink) { <span> · </span><a href="@supplierLink" target="_blank" rel="noopener noreferrer">Open supplier site</a> }</dd></div>
+                                        <div><dt>Purpose</dt><dd>@request.Purpose</dd></div>
+                                        <div><dt>Why this item?</dt><dd>@request.Rationale</dd></div>
+                                        @if (request.Subsystem is not null) { <div><dt>Subsystem/project</dt><dd>@request.Subsystem</dd></div> }
+                                        @if (request.RequestedDelivery is { } expected) { <div><dt>Requested delivery</dt><dd>@expected.ToString("MMM d, yyyy", CultureInfo.InvariantCulture)</dd></div> }
+                                        @if (request.VendorOrderReference is { } reference) { <div><dt>Vendor reference</dt><dd>@reference</dd></div> }
+                                    </dl>
+                                    <div class="table-scroll purchase-table-scroll">
+                                        <table class="table purchase-table">
+                                            <thead><tr><th scope="col">Item</th><th scope="col">Description</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Received</th><th scope="col" class="num">Unit</th><th scope="col" class="num">Line estimate</th></tr></thead>
+                                            <tbody>
+                                                @foreach (var line in request.Lines)
+                                                {
+                                                    <tr><th scope="row">@if (line.ItemUrl is { } itemLink) { <a href="@itemLink" target="_blank" rel="noopener noreferrer">@line.ItemName</a> } else { @line.ItemName }</th><td>@line.Description</td><td class="num">@line.Quantity</td><td class="num">@line.QuantityReceived / @line.Quantity</td><td class="num">@Money.Format(line.UnitPriceCents)</td><td class="num">@Money.Format(line.LineTotalCents)</td></tr>
+                                                }
+                                            </tbody>
+                                            <tfoot><tr><th scope="row" colspan="5">Items</th><td class="num">@Money.Format(request.EstimatedSubtotalCents)</td></tr><tr><th scope="row" colspan="5">Tax + shipping estimate</th><td class="num">@Money.Format(request.EstimatedTaxCents + request.EstimatedShippingCents)</td></tr><tr><th scope="row" colspan="5">Estimated total</th><td class="num"><strong>@Money.Format(request.EstimatedTotalCents)</strong></td></tr></tfoot>
+                                        </table>
+                                    </div>
+                                    <div class="purchase-history">
+                                        <h4 class="h4">Activity</h4>
+                                        <ol>
+                                            @foreach (var evt in request.Events)
+                                            {
+                                                <li><strong>@EventLabel(evt.Action)</strong> · @Requester(evt.ActorEmail) · @PacificStamp(evt.AtUtc)@if (evt.Note is not null) { <span> · @evt.Note</span> }</li>
+                                            }
+                                        </ol>
+                                    </div>
+                                </div>
+                            </details>
+                            @if (request.Status == PurchaseStatus.Submitted && canManage && !string.Equals(request.RequesterEmail, email, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <div class="purchase-actions">
+                                    <form method="post" action="/admin/purchasing/requests/@request.Id/approve"><AntiforgeryToken /><label class="field purchase-note"><span class="label">Approval note <span class="muted">(optional)</span></span><input name="note" maxlength="240" /></label><button class="btn btn--ok" type="submit">Approve</button></form>
+                                    <form method="post" action="/admin/purchasing/requests/@request.Id/reject"><AntiforgeryToken /><label class="field purchase-note"><span class="label">Reason for rejecting</span><input name="note" maxlength="240" required /></label><button class="btn btn--ghost" type="submit">Reject</button></form>
+                                </div>
+                            }
+                            @if (request.Status == PurchaseStatus.Approved && canManage)
+                            {
+                                <form method="post" action="/admin/purchasing/requests/@request.Id/order" class="form purchase-transition">
+                                    <AntiforgeryToken /><h4 class="h4">Record the order</h4>
+                                    <div class="purchase-transition__fields"><label class="field"><span class="label">Date ordered</span><input type="date" name="orderedDate" min="@DateOnly.FromDateTime(request.CreatedUtc.ToPacific().DateTime).ToString("yyyy-MM-dd")" max="@Today" value="@Today" required /></label><label class="field"><span class="label">Supplier’s order reference <span class="muted">(optional)</span></span><input name="vendorReference" maxlength="100" /></label></div>
+                                    <p class="small muted">Submitting creates the internal purchase-order number.</p><button class="btn btn--accent" type="submit">Mark ordered</button>
+                                </form>
+                            }
+                            @if ((request.Status is PurchaseStatus.Ordered or PurchaseStatus.PartiallyReceived) && canManage)
+                            {
+                                <form method="post" action="/admin/purchasing/requests/@request.Id/receive" class="form purchase-transition">
+                                    <AntiforgeryToken /><h4 class="h4">Record items received</h4>
+                                    <label class="field purchase-date"><span class="label">Date received</span><input type="date" name="receivedDate" min="@DateOnly.FromDateTime(request.OrderedUtc!.Value.ToPacific().DateTime).ToString("yyyy-MM-dd")" max="@Today" value="@Today" required /></label>
+                                    <div class="purchase-receive-lines">
+                                        @foreach (var line in request.Lines.Where(l => l.Remaining > 0))
+                                        {
+                                            <label class="purchase-receive-line"><span>@line.ItemName <small class="muted">(@line.Remaining left)</small></span><span class="purchase-receive-line__qty"><input type="hidden" name="lineId" value="@line.Id" /><input type="number" name="receiveQuantity" min="0" max="@line.Remaining" step="1" value="0" aria-label="Quantity of @line.ItemName received" /></span></label>
+                                        }
+                                    </div>
+                                    <p class="small muted">Enter what arrived today. You can record the rest later.</p><button class="btn btn--accent" type="submit">Save receipt</button>
+                                </form>
+                            }
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    [SupplyParameterFromQuery] public string? Done { get; set; }
+    [SupplyParameterFromQuery] public string? Error { get; set; }
+    [SupplyParameterFromQuery(Name = "id")] public string? CreatedCode { get; set; }
+
+    private Access access = new();
+    private string email = "";
+    private List<AccountGroup> teams = [];
+    private List<PurchaseRequest> requests = [];
+    private Dictionary<string, Account> people = [];
+    private string Today { get; set; } = "";
+    private string Indent(AccountGroup group) => new('\u00a0', access.Tree.Depth(group.Id) * 3);
+    private string Path(string team) => access.Tree.Path(team);
+    private string Requester(string who) => people.TryGetValue(who, out var person) ? JsonAccountStore.DisplayName(person) : who;
+    private bool CanManage(PurchaseRequest request) => access.IsOwner || access.CanManageGroup(request.TeamId);
+    private string PacificStamp(DateTimeOffset time) => time.ToPacific().ToString("MMM d, yyyy h:mm tt", CultureInfo.InvariantCulture);
+    private static string StatusLabel(PurchaseStatus status) => status switch
+    {
+        PurchaseStatus.Submitted => "Waiting for review",
+        PurchaseStatus.Approved => "Approved · ready to order",
+        PurchaseStatus.Rejected => "Not approved",
+        PurchaseStatus.Ordered => "Ordered · awaiting delivery",
+        PurchaseStatus.PartiallyReceived => "Partially received",
+        PurchaseStatus.Received => "Received",
+        _ => status.ToString(),
+    };
+    private static string EventLabel(string action) => action switch
+    {
+        "Submitted" => "Submitted",
+        "Approved" => "Approved",
+        "Rejected" => "Rejected",
+        "Ordered" => "Marked ordered",
+        "Received" => "Received items",
+        "PartiallyReceived" => "Partially received",
+        _ => action,
+    };
+
+    private string? Message => (Done, Error) switch
+    {
+        ("submitted", _) => $"Request {CreatedCode ?? ""} submitted. Your lead can review it.",
+        ("approved", _) => $"Request {CreatedCode ?? ""} approved. Record the supplier order when it’s placed.",
+        ("rejected", _) => $"Request {CreatedCode ?? ""} rejected.",
+        ("ordered", _) => $"Purchase order created for {CreatedCode ?? "this request"}.",
+        ("received", _) => "Receipt recorded.",
+        (_, "team") => "Choose one of the teams you belong to or lead.",
+        (_, "required") => "Add a request title, supplier, purpose, and reason for choosing these items.",
+        (_, "url") => "Enter a full http or https link, or leave the link blank.",
+        (_, "date") => "Check the date. Delivery cannot be in the past; order and receipt dates must follow the request lifecycle.",
+        (_, "cost") => "Enter non-negative USD amounts with no more than two decimal places.",
+        (_, "lines") => "Add at least one complete item. Each item needs a name, quantity, and unit price; there can be up to 20 items.",
+        (_, "self") => "You can’t approve your own request.",
+        (_, "reason") => "Add a short reason when rejecting a request.",
+        (_, "state") => "That request changed or is no longer in this stage. Refresh and try again.",
+        (_, "receipt") => "Enter a positive quantity for at least one item, without exceeding what remains to be received.",
+        (_, { }) => "That action could not be completed. Check the request and try again.",
+        _ => null,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = Http!;
+        access = await http.AccessAsync(Accounts);
+        email = access.Account?.Email ?? "";
+        Today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToPacific().DateTime).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        teams = access.Tree.Ordered(g => access.IsOwner || access.CanSee(g.Id) || access.CanManageGroup(g.Id)).ToList();
+        requests = Store.ListVisible(access).ToList();
+        people = (await Accounts.ListAsync()).ToDictionary(p => p.Email, StringComparer.OrdinalIgnoreCase);
+    }
+}

@@ -98,6 +98,10 @@ public static class Money
     public static string Format(int cents) =>
         (cents / 100m).ToString("C", CultureInfo.GetCultureInfo("en-US"));
 
+    /// <summary>Display larger operational amounts without narrowing to the checkout's Int32 range.</summary>
+    public static string Format(long cents) =>
+        (cents / 100m).ToString("C", CultureInfo.GetCultureInfo("en-US"));
+
     /// <summary>PayPal wire format: "25.00" (invariant, two decimals).</summary>
     public static string ToPayPal(int cents) =>
         (cents / 100m).ToString("0.00", CultureInfo.InvariantCulture);

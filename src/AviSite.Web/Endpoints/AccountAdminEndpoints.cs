@@ -50,11 +50,12 @@ public static class AccountAdminEndpoints
             return await store.SaveAsync(target) ? Back(done: "saved") : Back(error: "denied");
         });
 
-        people.MapPost("/team/delete", async ([FromForm] string id, HttpContext http, IAccountStore store, IDynamicQrStore codes) =>
+        people.MapPost("/team/delete", async ([FromForm] string id, HttpContext http, IAccountStore store, IDynamicQrStore codes, PurchasingStore purchases) =>
         {
             var me = await http.AccessAsync(store);
             if (me.Tree.Find(id) is not { } team || !me.CanEditTeamsUnder(team.Parent)) return Back(error: "denied");
             if ((await codes.ListAsync()).Any(c => c.Team == id)) return Back(error: "team-has-codes");
+            if (purchases.HasRequestsForGroup(id)) return Back(error: "team-has-purchases");
             return await store.RemoveGroupAsync(id) ? Back(done: "team-removed") : Back(error: "team-busy");
         });
 

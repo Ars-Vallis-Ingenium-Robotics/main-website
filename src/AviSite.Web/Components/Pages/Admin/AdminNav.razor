@@ -7,6 +7,7 @@
     @if (hasAccount)
     {
         <a href="/admin/hours" class="@(Current == "hours" ? "is-current" : "")" aria-current="@(Current == "hours" ? "page" : null)">Hours</a>
+        <a href="/admin/purchasing" class="@(Current == "purchasing" ? "is-current" : "")" aria-current="@(Current == "purchasing" ? "page" : null)">Purchasing</a>
     }
     @if (isAdmin)
     {

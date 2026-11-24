@@ -75,6 +75,17 @@
   const decodeLook = (t) => JSON.parse(decodeURIComponent(escape(atob(t.replace(/-/g, "+").replace(/_/g, "/")))));
 
   // ---------- What a single code says ----------
+  function websiteUrl(raw) {
+    const value = String(raw || "").trim();
+    if (!value || /^(?:ftp|mailto|tel|javascript|data):/i.test(value)) return "";
+    const candidate = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    try {
+      const url = new URL(candidate);
+      return ["http:", "https:"].includes(url.protocol) && url.hostname ? url.href : "";
+    } catch { return ""; }
+  }
+  const looksLikeWebsite = (raw) => /^(?:https?:\/\/|www\.)/i.test(String(raw || "").trim()) || /^(?:localhost|(?:[a-z0-9-]+\.)+[a-z]{2,})(?::\d+)?(?:[/?#]\S*)?$/i.test(String(raw || "").trim());
+  const normalizeBulkText = (raw) => looksLikeWebsite(raw) ? websiteUrl(raw) || String(raw).trim() : String(raw).trim();
   const esc = (s) => String(s).replace(/([\\;,:"])/g, "\\$1");
   function payload() {
     switch (val("kind")) {
@@ -107,7 +118,7 @@
           val("vorg") && `ORG:${esc(val("vorg"))}`, val("vtitle") && `TITLE:${esc(val("vtitle"))}`, val("vtel") && `TEL:${val("vtel")}`,
           val("vemail") && `EMAIL:${val("vemail")}`, val("vurl") && `URL:${val("vurl")}`, "END:VCARD"].filter(Boolean).join("\n");
       }
-      default: return val("url").trim();
+      default: return websiteUrl(val("url"));
     }
   }
 
@@ -119,7 +130,10 @@
       const a = Math.max(0, parseInt(val("nfrom"), 10) || 0), b = Math.min(a + MAX_BULK - 1, parseInt(val("nto"), 10) || 0);
       const link = val("nlink").trim(), label = val("nlabel").trim();
       if (!link) return items;
-      for (let n = a; n <= b; n++) items.push({ label: (label || link).replaceAll("{n}", n), text: link.replaceAll("{n}", n) });
+      for (let n = a; n <= b; n++) {
+        const target = link.replaceAll("{n}", n);
+        items.push({ label: (label || link).replaceAll("{n}", n), text: websiteUrl(target) || target });
+      }
       return items;
     }
     for (const raw of val("bulktext").split(/\r?\n/)) {
@@ -128,11 +142,12 @@
       let label, text;
       if (line.includes("\t")) { const i = line.indexOf("\t"); label = line.slice(0, i).trim(); text = line.slice(i + 1).trim(); }
       else {
-        const m = line.match(/(https?:\/\/\S+|mailto:\S+|tel:\S+|www\.\S+)/i);
-        if (m) { text = m[1]; label = line.slice(0, m.index).replace(/[,;|\s]+$/, "").trim(); }
+        const m = line.match(/(https?:\/\/\S+|mailto:\S+|tel:\S+|www\.\S+)/i) || line.match(/(?<![\w@.-])(?:[a-z0-9-]+\.)+[a-z]{2,}(?:[:/?#]\S*)?/i);
+        if (m) { text = m[0]; label = line.slice(0, m.index).replace(/[,;|\s]+$/, "").trim(); }
         else { text = line; label = ""; }
       }
       if (!text) continue;
+      text = normalizeBulkText(text);
       items.push({ label: label || text.replace(/^https?:\/\//, ""), text });
       if (items.length >= MAX_BULK) break;
     }
@@ -338,8 +353,15 @@
   async function renderOne(l, logo) {
     const preview = page.querySelector("[data-qr-preview]"), status = page.querySelector("[data-qr-status]"), warn = page.querySelector("[data-qr-warn]");
     const text = payload();
+    const urlMessage = page.querySelector("[data-qr-url-message]");
+    if (urlMessage && val("kind") === "url") {
+      const rawUrl = val("url").trim();
+      urlMessage.textContent = rawUrl
+        ? text ? `QR payload is a web link: ${text}` : "That doesn't look like a valid web link. Try example.com or https://example.com."
+        : "Type a website address; if you leave off https://, we add it so scanners recognize it as a link.";
+    }
     page.querySelectorAll('[data-qr-pane="one"] [data-qr-download], [data-qr-copy]').forEach((b) => (b.disabled = !text));
-    if (!text) { preview.innerHTML = ""; preview.setAttribute("aria-label", "QR code preview (empty)"); warn.innerHTML = ""; status.textContent = "Fill in what the code should open."; current = null; return; }
+    if (!text) { preview.innerHTML = ""; preview.setAttribute("aria-label", "QR code preview (empty)"); warn.innerHTML = ""; status.textContent = val("kind") === "url" && val("url").trim() ? "Enter a valid website address." : "Fill in what the code should open."; current = null; return; }
     try {
       const out = build({ ...l, text }, logo);
       preview.innerHTML = out.svg;
@@ -374,7 +396,7 @@
       try { batch.push({ ...it, ...build(bulkLook(l, it), logo) }); } catch { bad++; }
     }
     const shown = batch.slice(0, 24);
-    grid.innerHTML = shown.map((b) => `<li><div class="qr-bulk__code">${b.svg}</div>${val("bulklabels") ? "" : `<span>${xml(b.label)}</span>`}</li>`).join("");
+    grid.innerHTML = shown.map((b) => `<li><div class="qr-bulk__code" role="img" aria-label="QR code for ${xml(b.text)}">${b.svg}</div>${val("bulklabels") ? "" : `<span>${xml(b.label)}</span>`}</li>`).join("");
     count.textContent = `${batch.length} code${batch.length === 1 ? "" : "s"}${batch.length > shown.length ? `, showing the first ${shown.length}` : ""}.`;
     const w = warnings(l, !!logo, batch[0]?.ecl || "M");
     if (bad) w.unshift(`${bad} line${bad === 1 ? " was" : "s were"} too long for a QR code and left out.`);

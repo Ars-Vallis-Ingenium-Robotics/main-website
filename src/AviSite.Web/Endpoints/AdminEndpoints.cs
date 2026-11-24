@@ -19,6 +19,8 @@ public static class AdminEndpoints
     public const string TeamClaim = "avi:team";
     /// <summary>/admin/people: owners and officers (everyone without site-wide access), and team leads (their teams).</summary>
     public const string PeoplePolicy = "People";
+    /// <summary>Purchasing requires an individually signed-in account so every business decision is attributable.</summary>
+    public const string PurchasingPolicy = "Purchasing";
     public const string LoginRateLimit = "admin-login";
 
     public static void MapAdminEndpoints(this IEndpointRouteBuilder app)
@@ -103,6 +105,19 @@ public static class AdminAuthSetup
                 o.Cookie.Path = "/";
                 o.LoginPath = "/admin/login";
                 o.AccessDeniedPath = "/admin/login";
+                // Do not disclose whether a protected URL exists to an authenticated account
+                // that lacks permission. Let the shared 403 status page render the generic 404.
+                o.Events.OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status404NotFound;
+                    return Task.CompletedTask;
+                };
+                // A deep link sent to a signed-out visitor should not reveal that the route exists either.
+                o.Events.OnRedirectToLogin = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status404NotFound;
+                    return Task.CompletedTask;
+                };
                 o.ExpireTimeSpan = TimeSpan.FromDays(30); // Google accounts stay signed in (persistent); shared-password logins end with the browser
                 o.SlidingExpiration = true;
                 o.Events.OnValidatePrincipal = AccountAuth.ValidateAsync; // removed people are out on their next click
@@ -110,7 +125,8 @@ public static class AdminAuthSetup
         services.AddAuthorizationBuilder()
             .AddPolicy(AdminEndpoints.Policy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Admin"))
             .AddPolicy(AdminEndpoints.QrPolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Admin", "Team"))
-            .AddPolicy(AdminEndpoints.PeoplePolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Owner", "Admin", "Lead"));
+            .AddPolicy(AdminEndpoints.PeoplePolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireRole("Owner", "Admin", "Lead"))
+            .AddPolicy(AdminEndpoints.PurchasingPolicy, p => p.AddAuthenticationSchemes(AdminEndpoints.Scheme).RequireAuthenticatedUser().RequireClaim(AccountAuth.EmailClaim));
         return services;
     }
 }

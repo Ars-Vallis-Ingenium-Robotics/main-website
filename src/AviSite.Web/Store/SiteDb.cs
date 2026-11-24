@@ -198,6 +198,71 @@ public sealed class SiteDb
             updated_utc TEXT
         );
         """,
+        // 7: organization-scoped purchase requisitions, immutable workflow events, PO numbering and partial receipts.
+        """
+        CREATE TABLE purchasing_sequences (
+            organization_id TEXT NOT NULL,
+            year INTEGER NOT NULL,
+            kind TEXT NOT NULL CHECK(kind IN ('REQ','PO')),
+            last_number INTEGER NOT NULL CHECK(last_number > 0),
+            PRIMARY KEY (organization_id, year, kind)
+        );
+        CREATE TABLE purchase_requests (
+            id TEXT PRIMARY KEY,
+            code TEXT NOT NULL UNIQUE,
+            po_code TEXT UNIQUE,
+            organization_id TEXT NOT NULL,
+            team_id TEXT NOT NULL,
+            requester_email TEXT NOT NULL,
+            title TEXT NOT NULL,
+            supplier TEXT NOT NULL,
+            supplier_url TEXT,
+            purpose TEXT NOT NULL,
+            rationale TEXT NOT NULL,
+            subsystem TEXT,
+            requested_delivery TEXT,
+            estimated_tax_cents INTEGER NOT NULL DEFAULT 0 CHECK(estimated_tax_cents >= 0),
+            estimated_shipping_cents INTEGER NOT NULL DEFAULT 0 CHECK(estimated_shipping_cents >= 0),
+            status TEXT NOT NULL CHECK(status IN ('Submitted','Approved','Rejected','Ordered','PartiallyReceived','Received')),
+            vendor_order_reference TEXT,
+            created_utc TEXT NOT NULL,
+            updated_utc TEXT NOT NULL,
+            ordered_utc TEXT,
+            received_utc TEXT
+        );
+        CREATE INDEX purchase_requests_by_org_status ON purchase_requests(organization_id, status, created_utc);
+        CREATE INDEX purchase_requests_by_team ON purchase_requests(team_id, created_utc);
+        CREATE INDEX purchase_requests_by_requester ON purchase_requests(requester_email, created_utc);
+        CREATE TABLE purchase_request_lines (
+            id INTEGER PRIMARY KEY,
+            request_id TEXT NOT NULL REFERENCES purchase_requests(id) ON DELETE CASCADE,
+            position INTEGER NOT NULL,
+            item_name TEXT NOT NULL,
+            item_url TEXT,
+            description TEXT,
+            quantity INTEGER NOT NULL CHECK(quantity > 0),
+            received_quantity INTEGER NOT NULL DEFAULT 0 CHECK(received_quantity >= 0 AND received_quantity <= quantity),
+            unit_price_cents INTEGER NOT NULL CHECK(unit_price_cents >= 0),
+            UNIQUE(request_id, position)
+        );
+        CREATE TABLE purchase_events (
+            id INTEGER PRIMARY KEY,
+            request_id TEXT NOT NULL REFERENCES purchase_requests(id) ON DELETE CASCADE,
+            action TEXT NOT NULL,
+            actor_email TEXT NOT NULL,
+            at_utc TEXT NOT NULL,
+            note TEXT
+        );
+        CREATE INDEX purchase_events_by_request ON purchase_events(request_id, id);
+        CREATE TABLE purchase_receipts (
+            id INTEGER PRIMARY KEY,
+            request_id TEXT NOT NULL REFERENCES purchase_requests(id) ON DELETE CASCADE,
+            line_id INTEGER NOT NULL REFERENCES purchase_request_lines(id) ON DELETE RESTRICT,
+            quantity INTEGER NOT NULL CHECK(quantity > 0),
+            received_utc TEXT NOT NULL,
+            received_by TEXT NOT NULL
+        );
+        """,
     ];
 
     private static void Migrate(SqliteConnection c)

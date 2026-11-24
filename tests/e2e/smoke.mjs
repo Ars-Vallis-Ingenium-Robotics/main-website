@@ -103,9 +103,12 @@ await test("security headers present", async () => {
   assert.equal(h["x-content-type-options"], "nosniff");
 });
 
-await test("/admin requires login", async () => {
-  await page.goto(BASE + "/admin");
-  assert.match(page.url(), /\/admin\/login/);
+await test("protected links show a generic 404 to signed-out visitors", async () => {
+  const response = await page.goto(BASE + "/admin");
+  assert.equal(response.status(), 404);
+  assert.match(page.url(), /\/admin$/);
+  assert.match(await page.locator("main").innerText(), /Page doesn't exist or you don't have access/i);
+  assert.equal((await page.request.get(BASE + "/admin/login")).status(), 200, "the explicit sign-in page remains available");
 });
 
 await test("state-changing POSTs without antiforgery token are rejected", async () => {
@@ -178,6 +181,66 @@ await test("admin: login, see order in printer table, mark picked up, CSV", asyn
   const csv = await page.request.get(BASE + "/admin/orders.csv");
   assert.equal(csv.status(), 200);
   assert.match(await csv.text(), /Test Buyer/);
+});
+
+await test("People: phone rows use readable cards and team chips stay compact", async () => {
+  const phone = await browser.newContext({ ...devices["iPhone 13"] });
+  const p = await phone.newPage();
+  await p.goto(BASE + "/admin/login");
+  await p.selectOption('select[name="email"]', "owner@example.com");
+  await p.getByRole("button", { name: "Sign in (dev only)" }).click();
+  await p.waitForURL(BASE + "/admin");
+  await p.goto(BASE + "/admin/people");
+  const id = Date.now().toString(36).slice(-5);
+  const email = `mobile-${id}@example.com`;
+  const teamName = "Engineering Renaissance Mobile Layout Verification";
+  const teamId = `mobile-layout-${id}`;
+  await p.click("text=Add a team");
+  await p.selectOption("#g-parent", "");
+  await p.fill("#g-name", teamName);
+  await p.fill("#g-id", teamId);
+  await p.getByRole("button", { name: "Add team" }).click();
+  await p.locator(".alert").first().waitFor();
+  await p.fill("#add-list", `${email}, Mobile QA User\nowner@example.com`);
+  await p.selectOption("#add-team", teamId);
+  await p.selectOption("#add-role", "Lead");
+  await p.getByRole("button", { name: "Add", exact: true }).click();
+  await p.locator(".alert").first().waitFor();
+  const owner = p.locator(`.people-admin tr[data-person="${email}"]`);
+  const chip = owner.locator(".team-chip");
+  assert.equal(await owner.evaluate((el) => getComputedStyle(el).display), "grid");
+  const geometry = await chip.evaluate((el) => ({
+    viewport: innerWidth,
+    document: document.documentElement.scrollWidth,
+    row: el.closest("tr").getBoundingClientRect().width,
+    chip: el.getBoundingClientRect().width,
+    textHeight: el.querySelector("span").getBoundingClientRect().height,
+    lineHeight: parseFloat(getComputedStyle(el.querySelector("span")).lineHeight) || parseFloat(getComputedStyle(el.querySelector("span")).fontSize) * 1.2
+  }));
+  assert.ok(geometry.document <= geometry.viewport, "no sideways page scroll");
+  assert.ok(geometry.chip <= geometry.row, "team chip fits inside the person card");
+  assert.ok(geometry.textHeight <= geometry.lineHeight * 3, `team label must not collapse to one word per line (${JSON.stringify(geometry)})`);
+  for (const width of [320, 360, 390, 640]) {
+    await p.setViewportSize({ width, height: 844 });
+    await p.goto(BASE + "/");
+    assert.equal(await p.locator(".landing__actions > .nav__quick").count(), 1, "signed-in clock control is inside the landing actions");
+    const layout = await p.locator(".landing__actions").evaluate((el) => ({
+      viewport: innerWidth,
+      document: document.documentElement.scrollWidth,
+      box: el.getBoundingClientRect().toJSON(),
+      children: Array.from(el.children).map((child) => child.getBoundingClientRect().toJSON())
+    }));
+    assert.ok(layout.document <= width, `no horizontal page overflow at ${width}px`);
+    assert.ok(layout.box.left >= 0 && layout.box.right <= width, `action cluster fits at ${width}px`);
+    assert.ok(layout.children.every((box) => box.width > 0 && box.left >= 0 && box.right <= width), `every action fits at ${width}px`);
+    for (let i = 0; i < layout.children.length; i++) for (let j = i + 1; j < layout.children.length; j++) {
+      const a = layout.children[i], b = layout.children[j];
+      const overlapX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+      const overlapY = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      assert.ok(overlapX <= 0 || overlapY <= 0, `actions overlap at ${width}px`);
+    }
+  }
+  await phone.close();
 });
 
 await test("phone layout: no horizontal scroll, menu opens and Escape closes it", async () => {
@@ -558,6 +621,17 @@ await test("tools: QR maker draws a code from ?url and offers PNG/SVG", async ()
   await page.locator("[data-qr-preview] svg").waitFor();
   assert.match(await page.locator("[data-qr-status]").innerText(), /squares/);
   assert.equal(await page.locator('[data-qr-theme="sms"]').getAttribute("aria-pressed"), "true");
+  assert.equal(await page.locator("[data-qr-preview]").getAttribute("aria-label"), "QR code for https://avirobotics.org/join");
+  await page.fill('[data-qr="url"]', "forms.gle/abc123");
+  await page.waitForFunction(() => document.querySelector("[data-qr-preview]")?.getAttribute("aria-label") === "QR code for https://forms.gle/abc123");
+  assert.match(await page.locator("[data-qr-url-message]").innerText(), /QR payload is a web link: https:\/\/forms\.gle\/abc123/);
+  await page.selectOption("#qr-kind", "text");
+  await page.locator('[data-qr="text"]').fill("forms.gle/abc123");
+  await page.waitForFunction(() => document.querySelector("[data-qr-preview]")?.getAttribute("aria-label") === "QR code for forms.gle/abc123");
+  assert.match(await page.locator('.qr-kind[data-kind="text"]').innerText(), /Plain text is shown as text/);
+  await page.selectOption("#qr-kind", "url");
+  await page.fill('[data-qr="url"]', "https://avirobotics.org/join");
+  await page.locator("[data-qr-preview] svg").waitFor();
   const [dl] = await Promise.all([page.waitForEvent("download"), page.click('[data-qr-download="svg"]')]);
   assert.match(dl.suggestedFilename(), /^qr-avirobotics-org-join\.svg$/);
   // Enter in a field must not submit the form (reload, lose everything) or trip the CSP.
@@ -598,7 +672,10 @@ await test("dynamic QR: printed codes redirect and count; admin can repoint one"
   assert.equal((await page.request.get(BASE + "/dynamicqr/not-a-code", { maxRedirects: 0 })).status(), 404);
   assert.equal((await page.request.get(BASE + "/dynamicqr/DynamicQR/aviDynamicQR-one.png")).status(), 200, "old PNGs still served");
   const anon = await browser.newContext(); const ap = await anon.newPage();
-  await ap.goto(BASE + "/admin/qr"); assert.match(ap.url(), /\/admin\/login/, "admin/qr needs login"); await anon.close();
+  const denied = await ap.goto(BASE + "/admin/qr");
+  assert.equal(denied.status(), 404, "the protected deep link returns generic not-found");
+  assert.match(await ap.locator("main").innerText(), /Page doesn't exist or you don't have access/i);
+  await anon.close();
   await page.goto(BASE + "/admin/qr"); // signed in by the admin test above
   const slug = "e2e-" + Date.now().toString(36);
   await page.fill("#slug", slug); await page.fill("#target", "/join"); await page.fill("#campaign", "e2e");
@@ -721,7 +798,9 @@ await test("QR maker works by keyboard: tab rows use arrow keys, preview says wh
   await page.focus("#qr-mode-one"); await page.keyboard.press("ArrowRight");
   assert.equal(await page.evaluate(() => document.activeElement.id), "qr-mode-bulk");
   assert.equal(await page.locator("#qr-bulk").isVisible(), true, "arrow selects the tab");
-  await page.keyboard.press("Home");
+  await page.fill("#qr-bulktext", "Tutorial Center, forms.gle/abc123");
+  await page.waitForFunction(() => document.querySelector(".qr-bulk__code")?.getAttribute("aria-label") === "QR code for https://forms.gle/abc123");
+  await page.focus("#qr-mode-bulk"); await page.keyboard.press("Home");
   assert.equal(await page.locator("#qr-one").isVisible(), true);
   await page.click(".qr-custom > summary");
   await page.focus('[data-qr-tab][aria-selected="true"]'); await page.keyboard.press("End");
@@ -836,14 +915,17 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
   await m1p.goto(BASE + "/admin/qr");
   assert.equal(await m1p.locator(`[data-qr-row="${er}-${cd}-flyer"]`).count(), 0, "members don't see each other's codes");
   await m1p.goto(BASE + "/admin/people"); assert.equal(new URL(m1p.url()).pathname, "/admin/people", "m1 leads Electrical, so they get People");
-  await mp.goto(BASE + "/admin/people"); assert.match(mp.url(), /\/admin\/login/, "plain members can't manage people");
+  const deniedPeople = await mp.goto(BASE + "/admin/people");
+  assert.equal(deniedPeople.status(), 404, "plain members get the generic not-found status");
+  assert.match(await mp.locator("main").innerText(), /Page doesn't exist or you don't have access/i);
   for (const pg of [lp, cp]) { await pg.goto(BASE + "/admin/qr"); assert.equal(await pg.locator(`[data-qr-row="${er}-${cd}-flyer"]`).count(), 1, "leads above see team codes"); }
 
   // Taking someone off their only team removes them, and they're out on their next click.
   await lp.goto(BASE + "/admin/people?team=" + cd);
   await lp.locator(`[data-person="${m2}"] .team-chip__x`).click();
   assert.match(await lp.locator("main").innerText(), /Removed/);
-  await mp.goto(BASE + "/admin/qr"); assert.match(mp.url(), /\/admin\/login/, "removed member is out");
+  await mp.goto(BASE + "/admin/qr");
+  assert.match(await mp.locator("main").innerText(), /Page doesn't exist or you don't have access/i, "a removed member gets the generic not-found page on the next click");
   // Only empty teams can be removed, and only by the owner.
   await op.goto(BASE + "/admin/people");
   assert.equal(await op.locator(`[data-team="${cd}"] .team-tree__remove`).count(), 0, "a team with people can't be removed");
@@ -853,6 +935,117 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
   await op.goto(BASE + "/admin/people");
   assert.equal(await op.locator(`[data-team="sc${id}"]`).count(), 0);
   for (const c of [oc, lc, cc, mc, m1c]) await c.close();
+});
+
+await test("purchasing: multi-org requests require team approval before PO and receipt; stock counts cannot be over-received", async () => {
+  const as = async (email) => {
+    const c = await browser.newContext(); const pg = await c.newPage();
+    await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', email);
+    await pg.getByRole("button", { name: "Sign in (dev only)" }).click(); await pg.waitForLoadState();
+    return [c, pg];
+  };
+  const id = Date.now().toString(36).slice(-5);
+  const org = `purch-org-${id}`, team = `purch-team-${id}`, otherOrg = `other-org-${id}`, otherTeam = `other-team-${id}`;
+  const requester = `buyer-${id}@example.com`, lead = `lead-${id}@example.com`, outsider = `outside-${id}@example.com`;
+  const [oc, op] = await as("owner@example.com");
+  await op.goto(BASE + "/admin/people");
+  const addTeam = async (parent, name, groupId) => {
+    await op.click("text=Add a team"); await op.selectOption("#g-parent", parent);
+    await op.fill("#g-name", name); await op.fill("#g-id", groupId);
+    await op.getByRole("button", { name: "Add team" }).click();
+    assert.match(await op.locator("main").innerText(), /Team added/);
+  };
+  const addPerson = async (email, group, role) => {
+    await op.fill("#add-list", email); await op.selectOption("#add-team", group); await op.selectOption("#add-role", role);
+    await op.getByRole("button", { name: "Add", exact: true }).click();
+    await op.locator(".alert").first().waitFor();
+  };
+  await addTeam("", "Purchasing org " + id, org); await addTeam(org, "Controls " + id, team);
+  await addTeam("", "Other org " + id, otherOrg); await addTeam(otherOrg, "Other team " + id, otherTeam);
+  await addPerson(requester, team, "Lead"); await addPerson(lead, team, "Lead"); await addPerson(outsider, otherTeam, "Lead");
+  await oc.close();
+
+  const [rc, rp] = await as(requester);
+  await rp.goto(BASE + "/admin/purchasing");
+  assert.equal((await rp.goto(BASE + "/admin/purchasing")).status(), 200);
+  assert.equal(await rp.locator('a[href="/admin/purchasing"]').count(), 1, "signed-in user sees Purchasing in admin nav");
+  await rp.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await rp.evaluate(() => document.documentElement.scrollWidth), 390, "mobile purchasing page has no horizontal overflow");
+  await rp.selectOption('select[name="teamId"]', team);
+  await rp.fill('input[name="title"]', "Diodes for the float controls");
+  await rp.fill('input[name="supplier"]', "DigiKey"); await rp.fill('input[name="supplierUrl"]', "https://www.digikey.com/");
+  await rp.fill('input[name="subsystem"]', "Float controls");
+  await rp.locator('input[name="itemName"]').nth(0).fill("1N4001 diode");
+  await rp.locator('input[name="itemUrl"]').nth(0).fill("https://www.digikey.com/en/products/detail/example");
+  await rp.locator('input[name="itemDescription"]').nth(0).fill("Rectifier diode, 1 A");
+  await rp.locator('input[name="quantity"]').nth(0).fill("2"); await rp.locator('input[name="unitPrice"]').nth(0).fill("4.74");
+  await rp.getByRole("button", { name: "Add another item" }).click();
+  assert.equal(await rp.locator('[data-item-row]').count(), 3, "the form can add line items");
+  await rp.locator('input[name="itemName"]').nth(2).fill("Heat-shrink tubing");
+  await rp.locator('input[name="quantity"]').nth(2).fill("3"); await rp.locator('input[name="unitPrice"]').nth(2).fill("1.50");
+  await rp.locator('textarea[name="purpose"]').fill("Protect the electrical joints in the float controls.");
+  await rp.locator('textarea[name="rationale"]').fill("Specified part is compatible with the existing design and available from the chosen supplier.");
+  await rp.fill('input[name="estimatedTax"]', "0.38"); await rp.fill('input[name="estimatedShipping"]', "0.00");
+  await rp.getByRole("button", { name: "Submit purchase request" }).click(); await rp.waitForURL(/done=submitted/);
+  const req = rp.locator("[data-request]").first();
+  const requestId = await req.getAttribute("data-request");
+  assert.match(await req.innerText(), /REQ-PURCH-ORG-/i);
+  assert.match(await req.innerText(), /\$14\.36/, "line estimates, tax and shipping are calculated from integer cents");
+  assert.match(await req.getAttribute("data-status"), /Submitted/);
+
+  // A requester cannot self-approve; a submitted request cannot be ordered early.
+  const requestToken = await rp.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
+  const selfApprove = await rp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/approve`, { form: { note: "self", __RequestVerificationToken: requestToken }, maxRedirects: 0 });
+  assert.match(selfApprove.headers().location, /error=self/);
+  assert.equal(await rp.locator("[data-request]").first().getAttribute("data-status"), "Submitted");
+
+  // Another org's lead gets a generic 404 and cannot approve by forging the request id.
+  const [xc, xp] = await as(outsider); await xp.goto(BASE + "/admin/purchasing");
+  assert.equal(await xp.locator(`[data-request="${requestId}"]`).count(), 0, "cross-org list stays private");
+  const outsiderToken = await xp.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
+  const crossApprove = await xp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/approve`, { form: { note: "forged", __RequestVerificationToken: outsiderToken }, maxRedirects: 0 });
+  assert.equal(crossApprove.status(), 404);
+
+  const [lc, lp] = await as(lead); await lp.goto(BASE + "/admin/purchasing");
+  const leadReq = lp.locator(`[data-request="${requestId}"]`);
+  assert.equal(await leadReq.count(), 1, "team lead can see requests in their team");
+  assert.equal(await leadReq.getAttribute("data-status"), "Submitted");
+  const leadToken = await lp.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
+  const earlyOrder = await lp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/order`, { form: { vendorReference: "EARLY", orderedDate: new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" }), __RequestVerificationToken: leadToken }, maxRedirects: 0 });
+  assert.match(earlyOrder.headers().location, /error=state/);
+  assert.equal(await leadReq.getAttribute("data-status"), "Submitted", "an unapproved request cannot become an order");
+  await leadReq.getByRole("button", { name: "Approve" }).click(); await lp.waitForURL(/done=approved/);
+  assert.equal(await lp.locator(`[data-request="${requestId}"]`).getAttribute("data-status"), "Approved");
+  const orderDate = await lp.locator(`[data-request="${requestId}"] input[name="orderedDate"]`).inputValue();
+  await lp.locator(`[data-request="${requestId}"] input[name="vendorReference"]`).fill("SUPPLIER-456");
+  await lp.locator(`[data-request="${requestId}"]`).getByRole("button", { name: "Mark ordered" }).click(); await lp.waitForURL(/done=ordered/);
+  const ordered = lp.locator(`[data-request="${requestId}"]`);
+  assert.equal(await ordered.getAttribute("data-status"), "Ordered");
+  assert.match(await ordered.innerText(), /PO-PURCH-ORG-/i);
+  assert.ok(orderDate, "order date is explicit");
+
+  const receiveForm = ordered.locator('form[action$="/receive"]');
+  await receiveForm.locator('input[name="receiveQuantity"]').first().evaluate(input => { input.value = "3"; input.form.submit(); });
+  await lp.waitForURL(/error=receipt/);
+  const afterOver = lp.locator(`[data-request="${requestId}"]`);
+  assert.equal(await afterOver.getAttribute("data-status"), "Ordered", "server rejects receiving above the ordered amount");
+
+  const quantities = afterOver.locator('input[name="receiveQuantity"]');
+  await quantities.nth(0).fill("1"); await quantities.nth(1).fill("0");
+  await afterOver.getByRole("button", { name: "Save receipt" }).click(); await lp.waitForURL(/done=received/);
+  const partial = lp.locator(`[data-request="${requestId}"]`);
+  assert.equal(await partial.getAttribute("data-status"), "PartiallyReceived");
+  await partial.locator(".purchase-card__details summary").click();
+  assert.match(await partial.innerText(), /1 \/ 2/);
+  const remaining = partial.locator('input[name="receiveQuantity"]');
+  await remaining.nth(0).fill("1"); await remaining.nth(1).fill("3");
+  await partial.getByRole("button", { name: "Save receipt" }).click(); await lp.waitForURL(/done=received/);
+  const complete = lp.locator(`[data-request="${requestId}"]`);
+  assert.equal(await complete.getAttribute("data-status"), "Received");
+  await complete.locator(".purchase-card__details summary").click();
+  assert.match(await complete.innerText(), /2 \/ 2/);
+  assert.match(await complete.locator(".purchase-history").innerText(), /Submitted[\s\S]*Approved[\s\S]*Marked ordered[\s\S]*Partially received[\s\S]*Received items/);
+  for (const c of [rc, xc, lc]) await c.close();
 });
 
 await test("accounts: the owner can also be on teams (e.g. lead of SMS); co-leads are allowed", async () => {
@@ -966,7 +1159,9 @@ async function siteDb() {
   const { DatabaseSync } = await import("node:sqlite");
   const fs = await import("node:fs"); const path = await import("node:path");
   const here = path.dirname(new URL(import.meta.url).pathname);
-  const candidates = [process.env.SITE_DB, path.join(here, "../../App_Data/site.db"), path.join(here, "../../src/AviSite.Web/App_Data/site.db")].filter((f) => f && fs.existsSync(f));
+  const candidates = process.env.SITE_DB
+    ? [process.env.SITE_DB]
+    : [path.join(here, "../../App_Data/site.db"), path.join(here, "../../src/AviSite.Web/App_Data/site.db")].filter((f) => fs.existsSync(f));
   candidates.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
   const db = new DatabaseSync(candidates[0]); db.exec("PRAGMA busy_timeout = 5000"); return db;
 }

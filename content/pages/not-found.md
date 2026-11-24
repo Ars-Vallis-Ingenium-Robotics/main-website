@@ -6,4 +6,4 @@ title: Not found · AVI Robotics
 kicker: 404
 title: Lost signal.
 
-That page doesn't exist (or it sank). Try the [home page](/) or the [shop](/shop).
+Page doesn't exist or you don't have access. Try the [home page](/) or the [shop](/shop).

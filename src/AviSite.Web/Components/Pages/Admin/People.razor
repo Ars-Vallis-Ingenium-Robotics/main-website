@@ -167,7 +167,7 @@
                                 @if (a.SiteWide) { <span class="tag">@AccountRules.Label(a.Role)</span> }
                                 @if (a.FromConfig) { <span class="small muted"> Set in server config</span> }
                             </th>
-                            <td>
+                            <td data-mobile-label="Teams">
                                 <ul class="people-admin__teams" role="list">
                                     @foreach (var t in a.Teams.Where(t => access.CanSee(t.Group)).OrderBy(t => access.Tree.Path(t.Group)))
                                     {
@@ -215,8 +215,8 @@
                                     </details>
                                 }
                             </td>
-                            <td class="small">@(a.LastSignInUtc is { } seen ? seen.ToLocalTime().ToString("MMM d, yyyy") : "Not yet")</td>
-                            <td class="qr-admin__actions">
+                            <td data-mobile-label="Last sign-in" class="small">@(a.LastSignInUtc is { } seen ? seen.ToLocalTime().ToString("MMM d, yyyy") : "Not yet")</td>
+                            <td data-mobile-label="Actions" class="qr-admin__actions">
                                 @if (self) { <span class="small muted">You</span> }
                                 else if (AccountAdminEndpoints.CanRemove(access, a))
                                 {
@@ -283,6 +283,7 @@
         "no-teams" => "Put them on a team first, or they'd have no access at all.",
         "team-busy" => "Only empty teams can be removed: take everyone off it and remove its sub-teams first.",
         "team-has-codes" => "That team still has QR codes. Delete them first (old prints of deleted codes go to the home page).",
+        "team-has-purchases" => "That team has purchase requests, so it can’t be removed. Keep it for the records.",
         _ => "You can't change that.",
     };
 
