@@ -963,7 +963,7 @@ await test("purchasing: configurable approvals are sequential, tenant-scoped, sn
   await addTeam("", "Purchasing org " + id, org); await addTeam(org, "Controls " + id, team);
   await addTeam("", "Other org " + id, otherOrg); await addTeam(otherOrg, "Other team " + id, otherTeam);
   await addPerson(requester, team, "Lead"); await addPerson(lead, team, "Lead"); await addPerson(orgLead, org, "Lead");
-  await addPerson(finance, team, "Member"); await addPerson(outsider, otherTeam, "Lead");
+  await addPerson(finance, org, "Member"); await addPerson(outsider, otherTeam, "Lead");
   await op.goto(BASE + "/admin/purchasing");
   const policyDetails = op.locator("details.purchase-policy").filter({ has: op.locator(`input[name="organizationId"][value="${org}"]`) });
   await policyDetails.locator("summary").click();
@@ -980,6 +980,12 @@ await test("purchasing: configurable approvals are sequential, tenant-scoped, sn
   await policyForm.locator('input[name="stepMinimum"]').nth(2).fill("1000");
   await policyForm.getByRole("button", { name: /Save approval chain for/ }).click(); await op.waitForURL(/done=policy/);
   const policyToken = await policyForm.locator('input[name="__RequestVerificationToken"]').first().inputValue();
+  for (const fields of [{ stepMinimum: "1" }, { stepType: "Unknown" }, { stepLabel: "x".repeat(81) }, { stepEmail: finance }]) {
+    const malformedPolicy = await op.request.post(`${BASE}/admin/purchasing/policy`, { form: {
+      organizationId: org, stepLabel: "Malformed", stepType: "Owner", stepEmail: "", stepMinimum: "0", ...fields, __RequestVerificationToken: policyToken
+    }, maxRedirects: 0 });
+    assert.equal(malformedPolicy.headers().location, "/admin/purchasing?error=policy", "malformed steps must not replace the saved policy");
+  }
   const invalidEmailPolicy = await op.request.post(`${BASE}/admin/purchasing/policy`, { form: {
     organizationId: org, stepLabel: "Outside approver", stepType: "Email", stepEmail: outsider, stepMinimum: "0", __RequestVerificationToken: policyToken
   }, maxRedirects: 0 });
@@ -992,6 +998,18 @@ await test("purchasing: configurable approvals are sequential, tenant-scoped, sn
     data: duplicatePolicyForm.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" }, maxRedirects: 0
   });
   assert.match(duplicateApproverPolicy.headers().location ?? "", /error=policy-approver/, "one named approver cannot satisfy two distinct stages");
+
+  const [gc, gp] = await as(orgLead); await gp.goto(BASE + "/admin/purchasing");
+  const orgLeadToken = await gp.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
+  const deniedSave = await gp.request.post(`${BASE}/admin/purchasing/policy`, { form: {
+    organizationId: org, stepLabel: "Owner only", stepType: "Owner", stepEmail: "", stepMinimum: "0", __RequestVerificationToken: orgLeadToken
+  }, maxRedirects: 0 });
+  const deniedReset = await gp.request.post(`${BASE}/admin/purchasing/policy/reset`, { form: {
+    organizationId: org, __RequestVerificationToken: orgLeadToken
+  }, maxRedirects: 0 });
+  assert.deepEqual([deniedSave.status(), deniedReset.status()], [404, 404], "even an organization lead cannot edit or reset their own policy");
+  assert.equal(await gp.locator('form[action^="/admin/purchasing/policy"]').count(), 0, "only owners see policy controls");
+  await gc.close();
 
   const [rc, rp] = await as(requester);
   await rp.goto(BASE + "/admin/purchasing");
@@ -1079,7 +1097,7 @@ await test("purchasing: configurable approvals are sequential, tenant-scoped, sn
   const crossApprove = await xp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/approve`, { form: { note: "forged", __RequestVerificationToken: outsiderToken }, maxRedirects: 0 });
   assert.equal(crossApprove.status(), 404);
   const unauthorizedPolicy = await xp.request.post(`${BASE}/admin/purchasing/policy`, { form: {
-    organizationId: otherOrg, stepLabel: "Forged", stepType: "Owner", stepEmail: "", stepMinimum: "0", __RequestVerificationToken: outsiderToken
+    organizationId: org, stepLabel: "Forged", stepType: "Owner", stepEmail: "", stepMinimum: "0", __RequestVerificationToken: outsiderToken
   }, maxRedirects: 0 });
   assert.equal(unauthorizedPolicy.status(), 404, "a team lead cannot configure an approval policy for another organization");
   const unauthorizedReset = await xp.request.post(`${BASE}/admin/purchasing/policy/reset`, { form: { organizationId: org, __RequestVerificationToken: outsiderToken }, maxRedirects: 0 });
@@ -1154,7 +1172,9 @@ await test("purchasing: configurable approvals are sequential, tenant-scoped, sn
   const financeReq = fp2.locator(`[data-request="${highRequestId}"]`);
   assert.equal(await financeReq.locator('[data-approval-step="3"]').getAttribute("data-approval-status"), "Pending");
   await financeReq.getByRole("button", { name: "Approve" }).click(); await fp2.waitForURL(/done=approved/);
-  assert.equal(await financeReq.getAttribute("data-status"), "Approved", "the threshold-selected finance approver completes the chain");
+  assert.equal(await financeReq.count(), 0, "a final named approver loses assignment-only visibility after approval");
+  await lp.reload();
+  assert.equal(await highLead.getAttribute("data-status"), "Approved", "the threshold-selected finance approver completes the chain");
   await fc2.close();
   for (const c of [rc, xc, lc]) await c.close();
 });
@@ -1169,6 +1189,7 @@ await test("purchasing: rejection at a later configured step is terminal", async
   const id = Date.now().toString(36).slice(-5);
   const org = `rejection-org-${id}`, team = `rejection-team-${id}`;
   const requester = `buyer-${id}@example.com`, approver = `reviewer-${id}@example.com`;
+  const laterApprovers = [`third-${id}@example.com`, `fourth-${id}@example.com`];
   const [oc, op] = await as("owner@example.com"); await op.goto(BASE + "/admin/people");
   const addTeam = async (parent, name, groupId) => {
     await op.click("text=Add a team"); await op.selectOption("#g-parent", parent);
@@ -1176,12 +1197,13 @@ await test("purchasing: rejection at a later configured step is terminal", async
     await op.getByRole("button", { name: "Add team" }).click();
     assert.match(await op.locator("main").innerText(), /Team added/);
   };
-  const addPerson = async (email, role) => {
-    await op.fill("#add-list", email); await op.selectOption("#add-team", team); await op.selectOption("#add-role", role);
+  const addPerson = async (email, group) => {
+    await op.fill("#add-list", email); await op.selectOption("#add-team", group); await op.selectOption("#add-role", "Member");
     await op.getByRole("button", { name: "Add", exact: true }).click(); await op.locator(".alert").first().waitFor();
   };
   await addTeam("", "Rejection test org " + id, org); await addTeam(org, "Team " + id, team);
-  await addPerson(requester, "Member"); await addPerson(approver, "Member");
+  await addPerson(requester, team); await addPerson(approver, org);
+  for (const later of laterApprovers) await addPerson(later, org);
   await op.goto(BASE + "/admin/purchasing");
   const policyDetails = op.locator("details.purchase-policy").filter({ has: op.locator(`input[name="organizationId"][value="${org}"]`) });
   await policyDetails.locator("summary").click();
@@ -1193,6 +1215,12 @@ await test("purchasing: rejection at a later configured step is terminal", async
   await policyForm.locator('input[name="stepLabel"]').nth(1).fill("Owner review");
   await policyForm.locator('select[name="stepType"]').nth(1).selectOption("Owner");
   await policyForm.locator('input[name="stepMinimum"]').nth(1).fill("0");
+  for (const [i, email] of laterApprovers.entries()) {
+    await policyForm.locator('input[name="stepLabel"]').nth(i + 2).fill(`Later review ${i + 1}`);
+    await policyForm.locator('select[name="stepType"]').nth(i + 2).selectOption("Email");
+    await policyForm.locator('input[name="stepEmail"]').nth(i + 2).fill(email);
+    await policyForm.locator('input[name="stepMinimum"]').nth(i + 2).fill("0");
+  }
   await policyForm.getByRole("button", { name: /Save approval chain for/ }).click(); await op.waitForURL(/done=policy/);
   await oc.close();
 
@@ -1207,6 +1235,12 @@ await test("purchasing: rejection at a later configured step is terminal", async
   const requestId = await rp.locator("[data-request]").first().getAttribute("data-request");
 
   const [uc, up] = await as("owner@example.com"); await up.goto(BASE + "/admin/purchasing");
+  const laterSessions = [];
+  for (const later of laterApprovers) {
+    const [c, p] = await as(later); await p.goto(BASE + "/admin/purchasing");
+    assert.equal(await p.locator(`[data-request="${requestId}"]`).count(), 0, "a future named approver cannot see the request");
+    laterSessions.push([c, p]);
+  }
   const unassignedOwnerView = up.locator(`[data-request="${requestId}"]`);
   assert.equal(await unassignedOwnerView.getByRole("button", { name: "Approve" }).count(), 0, "a site owner cannot bypass a specific-email approval stage");
   const ownerToken = await up.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
@@ -1216,18 +1250,30 @@ await test("purchasing: rejection at a later configured step is terminal", async
 
   const [lc, lp] = await as(approver); await lp.goto(BASE + "/admin/purchasing");
   const approverRequest = lp.locator(`[data-request="${requestId}"]`);
+  assert.equal(await approverRequest.count(), 1, "the active named approver sees a request outside their team");
   await approverRequest.getByRole("button", { name: "Approve" }).click(); await lp.waitForURL(/done=step-approved/);
-  assert.equal(await approverRequest.getAttribute("data-status"), "Submitted");
-  assert.equal(await approverRequest.locator('[data-approval-step="2"]').getAttribute("data-approval-status"), "Pending");
+  assert.equal(await approverRequest.count(), 0, "a historical named approver loses assignment-only visibility while the chain continues");
 
   const [fc, fp] = await as("owner@example.com"); await fp.goto(BASE + "/admin/purchasing");
   const ownerRequest = fp.locator(`[data-request="${requestId}"]`);
   await ownerRequest.locator('form[action$="/reject"] input[name="note"]').fill("The request needs a more specific vendor quote.");
   await ownerRequest.getByRole("button", { name: "Reject", exact: true }).click(); await fp.waitForURL(/done=rejected/);
   assert.equal(await ownerRequest.getAttribute("data-status"), "Rejected");
+  assert.deepEqual(await ownerRequest.locator("[data-approval-step]").evaluateAll(steps => steps.map(s => s.dataset.approvalStatus)),
+    ["Approved", "Rejected", "Skipped", "Skipped"], "normal rejection terminally skips every later stage");
   assert.equal(await ownerRequest.locator('input[name="orderedDate"]').count(), 0, "rejected requests cannot be ordered");
   await ownerRequest.locator(".purchase-card__details summary").click();
   assert.match(await ownerRequest.locator(".purchase-history").innerText(), /Approval step approved[\s\S]*Rejected at approval step[\s\S]*Rejected/);
+  for (const [c, p] of laterSessions) {
+    await p.reload();
+    assert.equal(await p.locator(`[data-request="${requestId}"]`).count(), 0, "a skipped named approver cannot see the rejected request");
+    const __RequestVerificationToken = await p.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
+    const lateApproval = await p.request.post(`${BASE}/admin/purchasing/requests/${requestId}/approve`, {
+      form: { __RequestVerificationToken }, maxRedirects: 0
+    });
+    assert.equal(lateApproval.status(), 404, "a skipped approver cannot reopen the terminal request");
+    await c.close();
+  }
   for (const c of [rc, lc, fc]) await c.close();
 });
 
@@ -1238,7 +1284,7 @@ await test("purchasing: site owner can close a request if its snapshotted approv
     await pg.getByRole("button", { name: "Sign in (dev only)" }).click(); await pg.waitForURL((u) => !u.pathname.startsWith("/admin/login"));
     return [c, pg];
   };
-  const id = Date.now().toString(36).slice(-5), org = `orphan-org-${id}`, team = `orphan-team-${id}`;
+  const id = Date.now().toString(36).slice(-5), org = `orphan-org-${id}`, team = `orphan-team-${id}`, otherOrg = `orphan-other-${id}`;
   const requester = `orphan-buyer-${id}@example.com`, approver = `orphan-reviewer-${id}@example.com`;
   const [oc, op] = await as("owner@example.com"); await op.goto(BASE + "/admin/people");
   const addTeam = async (parent, name, groupId) => {
@@ -1246,12 +1292,13 @@ await test("purchasing: site owner can close a request if its snapshotted approv
     await op.fill("#g-name", name); await op.fill("#g-id", groupId); await op.getByRole("button", { name: "Add team" }).click();
     assert.match(await op.locator("main").innerText(), /Team added/);
   };
-  const addPerson = async (email) => {
-    await op.fill("#add-list", email); await op.selectOption("#add-team", team); await op.selectOption("#add-role", "Member");
+  const addPerson = async (email, group) => {
+    await op.fill("#add-list", email); await op.selectOption("#add-team", group); await op.selectOption("#add-role", "Member");
     await op.getByRole("button", { name: "Add", exact: true }).click(); await op.locator(".alert").first().waitFor();
   };
   await addTeam("", "Orphan approval org " + id, org); await addTeam(org, "Orphan approval team " + id, team);
-  await addPerson(requester); await addPerson(approver);
+  await addTeam("", "Different approval org " + id, otherOrg);
+  await addPerson(requester, team); await addPerson(approver, org);
   await op.goto(BASE + "/admin/purchasing");
   const policy = op.locator("details.purchase-policy").filter({ has: op.locator(`input[name="organizationId"][value="${org}"]`) });
   await policy.locator("summary").first().click();
@@ -1271,9 +1318,24 @@ await test("purchasing: site owner can close a request if its snapshotted approv
   await rp.getByRole("button", { name: "Submit purchase request" }).click(); await rp.waitForURL(/done=submitted/);
   const requestId = await rp.locator("[data-request]").first().getAttribute("data-request");
 
+  const [ac, ap] = await as(approver); await ap.goto(BASE + "/admin/purchasing");
+  const assignedCard = ap.locator(`[data-request="${requestId}"]`);
+  assert.equal(await assignedCard.count(), 1, "the active assignee can see the request while in its organization");
   await op.goto(BASE + "/admin/people");
-  await op.locator(`[data-person="${approver}"] .team-chip__x`).click();
-  assert.match(await op.locator("main").innerText(), /Removed/);
+  await addPerson(approver, otherOrg);
+  const oldMembership = op.locator(`[data-person="${approver}"] form[action$="/team/remove"]`).filter({
+    has: op.locator(`input[name="group"][value="${org}"]`)
+  });
+  await oldMembership.getByRole("button").click();
+  await oldMembership.waitFor({ state: "detached" });
+  assert.equal((await ap.reload()).status(), 200, "the approver is still signed in as a member of the other organization");
+  assert.equal(await assignedCard.count(), 0, "the active assignment cannot grant visibility across organizations after a transfer");
+  const approverToken = await ap.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
+  const deniedApproval = await ap.request.post(`${BASE}/admin/purchasing/requests/${requestId}/approve`, {
+    form: { __RequestVerificationToken: approverToken }, maxRedirects: 0
+  });
+  assert.equal(deniedApproval.status(), 404, "a snapshot does not grant decision access after leaving the organization");
+  await ac.close();
   const requesterToken = await rp.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
   const deniedOverride = await rp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/override-reject`, {
     form: { note: "not an owner", __RequestVerificationToken: requesterToken }, maxRedirects: 0

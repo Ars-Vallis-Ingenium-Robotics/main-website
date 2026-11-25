@@ -37,7 +37,7 @@
                             <AntiforgeryToken />
                             <input type="hidden" name="organizationId" value="@org.Id" />
                             <div class="purchase-approval-rules">
-                                @for (var i = 0; i < 5; i++)
+                                @for (var i = 0; i < PurchasingStore.MaxPolicySteps; i++)
                                 {
                                     var rule = configured.FirstOrDefault(x => x.Position == i + 1);
                                     var label = rule?.Label ?? (i == 0 && !hasCustomPolicy ? "Team manager" : "");
@@ -170,7 +170,7 @@
                         var canManage = CanManage(request);
                         var canApprove = Store.CanDecide(access, request, allAccounts, true);
                         var canReject = Store.CanDecide(access, request, allAccounts, false);
-                        var currentApprovalPosition = request.Approvals.FirstOrDefault(x => x.Status == "Pending")?.Position;
+                        var currentApprovalPosition = request.CurrentApproval?.Position;
                         <article class="purchase-card" data-request="@request.Id" data-status="@request.Status">
                             <header class="purchase-card__head">
                                 <div><p class="eyebrow">@request.Code · @Path(request.TeamId)</p><h3 class="h4">@request.Title</h3>
@@ -191,7 +191,7 @@
                                         @foreach (var step in request.Approvals)
                                         {
                                             <li data-approval-step="@step.Position" data-approval-status="@step.Status">
-                                                <strong>@step.Position. @step.Label</strong> · @(step.Status switch { "Pending" => "Waiting", "Approved" => "Approved", "Rejected" => "Rejected", "Skipped" => "Skipped by site owner", _ => step.Status })
+                                                <strong>@step.Position. @step.Label</strong> · @(step.Status switch { "Pending" => "Waiting", "Skipped" when step.Note is not null => "Skipped by site owner", _ => step.Status })
                                                 @if (step.Status == "Skipped" && step.Note is { } skippedNote) { <span class="muted"> · @skippedNote</span> }
                                                 @if (step.ApproverType == "Email") { <span> · assigned to @step.ApproverValue</span> }
                                                 @if (step.ApprovedBy is { } approvedBy) { <span class="muted"> · @Requester(approvedBy)@if (step.ApprovedUtc is { } approvedAt) { <span> · @PacificStamp(approvedAt)</span> }</span> }
@@ -350,7 +350,7 @@
         (_, "url") => "Enter a full http or https link, or leave the link blank.",
         (_, "date") => "Check the date. Delivery cannot be in the past; order and receipt dates must follow the request lifecycle.",
         (_, "cost") => "Enter non-negative USD amounts with no more than two decimal places.",
-        (_, "policy") => "Use 1–5 complete steps, a $0 first-stage minimum, nondecreasing USD thresholds, and a valid person email for specific-account steps.",
+        (_, "policy") => "Use 1–5 complete steps, a $0 first-stage minimum, and nondecreasing USD thresholds. Enter an email only for specific-account steps.",
         (_, "policy-approver") => "This chain cannot be completed by distinct, eligible organization approvers. Check each role and specific account, then make sure every team has enough approvers.",
         (_, "lines") => "Add at least one complete item. Each item needs a name, quantity, and unit price; there can be up to 20 items.",
         (_, "self") => "You can’t approve your own request.",
@@ -368,7 +368,7 @@
         email = access.Account?.Email ?? "";
         Today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToPacific().DateTime).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         teams = access.Tree.Ordered(g => access.IsOwner || access.CanSee(g.Id) || access.CanManageGroup(g.Id)).ToList();
-        policyOrgs = access.Tree.All.Where(g => g.Parent is null && access.CanManageGroup(g.Id)).OrderBy(g => g.Name).ToList();
+        policyOrgs = access.IsOwner ? access.Tree.All.Where(g => g.Parent is null).OrderBy(g => g.Name).ToList() : [];
         allAccounts = (await Accounts.ListAsync()).ToList();
         policies = policyOrgs.ToDictionary(g => g.Id, g => Store.GetPolicy(g.Id));
         policyHistory = policyOrgs.ToDictionary(g => g.Id, g => Store.ListPolicyEvents(g.Id));

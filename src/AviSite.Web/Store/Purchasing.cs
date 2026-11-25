@@ -7,6 +7,7 @@ using Microsoft.Data.Sqlite;
 namespace AviSite.Web.Store;
 
 public enum PurchaseStatus { Submitted, Approved, Rejected, Ordered, PartiallyReceived, Received }
+public enum PurchasePolicySaveResult { Saved, NotFound, InvalidPolicy, NoEligibleAssignment }
 
 public sealed class PurchaseLine
 {
@@ -66,6 +67,8 @@ public sealed class PurchaseRequest
     public List<PurchaseLine> Lines { get; set; } = [];
     public List<PurchaseEvent> Events { get; set; } = [];
     public List<PurchaseApprovalStep> Approvals { get; set; } = [];
+    public PurchaseApprovalStep? CurrentApproval => Status == PurchaseStatus.Submitted
+        ? Approvals.Where(step => step.Status == "Pending").MinBy(step => step.Position) : null;
     public long EstimatedSubtotalCents => Lines.Sum(l => l.LineTotalCents);
     public long EstimatedTotalCents => checked(EstimatedSubtotalCents + EstimatedTaxCents + EstimatedShippingCents);
 }
@@ -89,6 +92,8 @@ public sealed record PurchaseDraft(
 /// <summary>Organization-scoped requisitions and their approval, order and receiving audit trail.</summary>
 public sealed class PurchasingStore(SiteDb db, TimeProvider clock)
 {
+    public const int MaxPolicySteps = 5;
+    public const long MaxPolicyMinimumCents = 100_000_000_000_000L;
     private const string HeaderColumns = "id, code, po_code, organization_id, team_id, requester_email, title, supplier, supplier_url, purpose, rationale, subsystem, requested_delivery, estimated_tax_cents, estimated_shipping_cents, status, vendor_order_reference, created_utc, updated_utc, ordered_utc, received_utc";
     private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
 
@@ -114,36 +119,74 @@ public sealed class PurchasingStore(SiteDb db, TimeProvider clock)
         return events;
     }
 
-    public static bool PolicyCanComplete(string organizationId, IReadOnlyList<PurchaseApprovalRule> rules,
+    private static bool PolicyCanComplete(string organizationId, IReadOnlyList<PurchaseApprovalRule> rules,
         IReadOnlyList<Account> accounts, GroupTree tree)
     {
-        if (rules.Count == 0) return false;
-        var orgGroups = tree.WithDescendants([organizationId]);
-        if (orgGroups.Count == 0) return false;
-        foreach (var teamId in orgGroups)
+        foreach (var teamId in tree.WithDescendants([organizationId]))
             if (!HasDistinctApproverAssignment(BuildCandidates(rules, teamId, organizationId, accounts, tree))) return false;
         return true;
     }
 
-    public void SavePolicy(string organizationId, string actor, IReadOnlyList<PurchaseApprovalRule> rules)
+    private static string? PolicyActor(Access access, string? organizationId) =>
+        access.IsOwner && access.Account is { Role: AccountRole.Owner } account && !string.IsNullOrWhiteSpace(account.Email)
+            && access.Tree.Find(organizationId) is { Parent: null } ? AccountRules.Normalize(account.Email) : null;
+
+    private static List<PurchaseApprovalRule>? ValidatePolicy(IReadOnlyList<PurchaseApprovalRule> rules)
     {
+        if (rules.Count is < 1 or > MaxPolicySteps) return null;
+        var validated = new List<PurchaseApprovalRule>(rules.Count);
+        long previousMinimum = 0;
+        foreach (var rule in rules)
+        {
+            if (rule is null || rule.Position != validated.Count + 1 || rule.Label?.Trim() is not { Length: > 0 and <= 80 } label
+                || rule.MinimumTotalCents < previousMinimum || rule.MinimumTotalCents > MaxPolicyMinimumCents
+                || (validated.Count == 0 && rule.MinimumTotalCents != 0)) return null;
+            var value = rule.ApproverValue?.Trim() ?? "";
+            switch (rule.ApproverType)
+            {
+                case "Email" when value.Length <= 254 && AccountRules.CheckEmail(value) is null:
+                    value = AccountRules.Normalize(value);
+                    break;
+                case "TeamManager" or "Lead" or "Officer" or "Owner" when value.Length == 0:
+                    break;
+                default:
+                    return null;
+            }
+            validated.Add(rule with { Label = label, ApproverValue = value });
+            previousMinimum = rule.MinimumTotalCents;
+        }
+        return validated;
+    }
+
+    public PurchasePolicySaveResult SavePolicy(string? organizationId, Access access, IReadOnlyList<PurchaseApprovalRule> rules,
+        IReadOnlyList<Account> accounts)
+    {
+        var actor = PolicyActor(access, organizationId);
+        if (actor is null || organizationId is null) return PurchasePolicySaveResult.NotFound;
+        var validated = ValidatePolicy(rules);
+        if (validated is null) return PurchasePolicySaveResult.InvalidPolicy;
+        // Check the full chain for each team. Request creation rechecks the applicable snapshot excluding its requester.
+        if (!PolicyCanComplete(organizationId, validated, accounts, access.Tree)) return PurchasePolicySaveResult.NoEligibleAssignment;
         using var c = db.Open();
         using var tx = c.BeginTransaction(deferred: false);
         var now = SiteDb.Iso(clock.GetUtcNow());
         var previousJson = JsonSerializer.Serialize(ReadPolicy(c, organizationId, tx));
-        var currentJson = JsonSerializer.Serialize(rules);
+        var currentJson = JsonSerializer.Serialize(validated);
         SiteDb.Exec(c, "INSERT INTO purchase_approval_policies (organization_id,updated_by,updated_utc) VALUES ($org,$actor,$now) ON CONFLICT(organization_id) DO UPDATE SET updated_by=excluded.updated_by, updated_utc=excluded.updated_utc",
             tx, ("$org", organizationId), ("$actor", actor), ("$now", now));
         SiteDb.Exec(c, "DELETE FROM purchase_approval_policy_steps WHERE organization_id=$org", tx, ("$org", organizationId));
-        foreach (var rule in rules)
+        foreach (var rule in validated)
             SiteDb.Exec(c, "INSERT INTO purchase_approval_policy_steps (organization_id,position,label,approver_type,approver_value,minimum_total_cents) VALUES ($org,$position,$label,$type,$value,$minimum)",
                 tx, ("$org", organizationId), ("$position", rule.Position), ("$label", rule.Label), ("$type", rule.ApproverType), ("$value", rule.ApproverValue), ("$minimum", rule.MinimumTotalCents));
         AddPolicyEvent(c, tx, organizationId, "Saved", actor, now, previousJson, currentJson);
         tx.Commit();
+        return PurchasePolicySaveResult.Saved;
     }
 
-    public void ResetPolicy(string organizationId, string actor)
+    public bool ResetPolicy(string? organizationId, Access access)
     {
+        var actor = PolicyActor(access, organizationId);
+        if (actor is null || organizationId is null) return false;
         using var c = db.Open();
         using var tx = c.BeginTransaction(deferred: false);
         var now = SiteDb.Iso(clock.GetUtcNow());
@@ -151,23 +194,25 @@ public sealed class PurchasingStore(SiteDb db, TimeProvider clock)
         SiteDb.Exec(c, "DELETE FROM purchase_approval_policies WHERE organization_id=$org", tx, ("$org", organizationId));
         AddPolicyEvent(c, tx, organizationId, "Reset", actor, now, previousJson, "[]");
         tx.Commit();
+        return true;
     }
 
     public bool CanDecide(Access access, PurchaseRequest request, IReadOnlyList<Account> accounts, bool approve)
     {
+        if (request.CurrentApproval is not { } step) return false;
         var actorEmail = AccountRules.Normalize(access.Account?.Email);
         if (actorEmail.Length == 0 || string.Equals(request.RequesterEmail, actorEmail, StringComparison.OrdinalIgnoreCase)) return false;
         var actor = accounts.FirstOrDefault(a => string.Equals(AccountRules.Normalize(a.Email), actorEmail, StringComparison.OrdinalIgnoreCase));
         if (actor is null || request.Approvals.Any(x => x.Status == "Approved" && string.Equals(x.ApprovedBy, actorEmail, StringComparison.OrdinalIgnoreCase))) return false;
         var actorAccess = Access.For(actor, access.Tree);
-        var pending = request.Approvals.Where(x => x.Status == "Pending").ToList();
-        if (pending.Count == 0 || !CanSatisfyRule(actorAccess, pending[0].ApproverType, pending[0].ApproverValue, request.TeamId, request.OrganizationId)) return false;
+        if (!CanSatisfyRule(actorAccess, step.ApproverType, step.ApproverValue, request.TeamId, request.OrganizationId)) return false;
         if (!approve) return true;
 
         var alreadyUsed = request.Approvals.Where(x => x.Status == "Approved").Select(x => x.ApprovedBy ?? "")
             .Append(actorEmail).Append(request.RequesterEmail).Where(x => x.Length > 0)
             .Select(AccountRules.Normalize).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        return HasDistinctApproverAssignment(BuildCandidates(pending.Skip(1), request.TeamId, request.OrganizationId, accounts, access.Tree), alreadyUsed);
+        var laterSteps = request.Approvals.Where(x => x.Status == "Pending" && x.Position > step.Position);
+        return HasDistinctApproverAssignment(BuildCandidates(laterSteps, request.TeamId, request.OrganizationId, accounts, access.Tree), alreadyUsed);
     }
 
     public bool HasRequestsForGroup(string groupId)
@@ -180,27 +225,43 @@ public sealed class PurchasingStore(SiteDb db, TimeProvider clock)
     public PurchaseRequest? Get(string id)
     {
         using var c = db.Open();
-        var request = ReadHeader(c, id);
+        using var tx = c.BeginTransaction(deferred: true);
+        return ReadRequest(c, tx, id);
+    }
+
+    private static PurchaseRequest? ReadRequest(SqliteConnection c, SqliteTransaction tx, string id)
+    {
+        var request = ReadHeader(c, id, tx);
         if (request is null) return null;
-        request.Lines = ReadLines(c, id);
-        request.Events = ReadEvents(c, id);
-        request.Approvals = ReadApprovals(c, id);
+        request.Lines = ReadLines(c, id, tx);
+        request.Events = ReadEvents(c, id, tx);
+        request.Approvals = ReadApprovals(c, id, tx);
         return request;
     }
 
     public IReadOnlyList<PurchaseRequest> ListVisible(Access access)
     {
         using var c = db.Open();
+        // Evaluate visibility and load the cards from the same snapshot as the active approval step.
+        using var tx = c.BeginTransaction(deferred: true);
         var ids = new List<string>();
         var groups = access.Manages.Concat(access.BelongsTo).Distinct().ToList();
         var organizations = groups.Select(group => OrganizationOf(group, access.Tree)).Distinct().ToList();
         var orgFilter = organizations.Count == 0 ? "0=1" : $"purchase_requests.organization_id IN ({string.Join(',', organizations.Select((_, i) => "$o" + i))})";
-        var assigned = $"({orgFilter} AND EXISTS (SELECT 1 FROM purchase_request_approvals pa WHERE pa.request_id=purchase_requests.id AND pa.approver_type='Email' AND pa.approver_value=$email))";
+        var assigned = $"""
+            (status='Submitted' AND {orgFilter} AND EXISTS (
+                SELECT 1 FROM purchase_request_approvals pa
+                WHERE pa.request_id=purchase_requests.id AND pa.approver_type='Email' AND pa.approver_value=$email AND pa.status='Pending'
+                  AND pa.position=(SELECT MIN(position) FROM purchase_request_approvals
+                                   WHERE request_id=purchase_requests.id AND status='Pending')
+            ))
+            """;
         var where = access.IsOwner ? "1=1" : groups.Count == 0
             ? $"(requester_email = $email OR {assigned})"
             : $"(requester_email = $email OR team_id IN ({string.Join(',', groups.Select((_, i) => "$g" + i))}) OR {assigned})";
         using (var cmd = c.CreateCommand())
         {
+            cmd.Transaction = tx;
             cmd.CommandText = $"SELECT id FROM purchase_requests WHERE {where} ORDER BY created_utc DESC LIMIT 500";
             if (!access.IsOwner) cmd.Parameters.AddWithValue("$email", AccountRules.Normalize(access.Account?.Email));
             for (var i = 0; i < groups.Count && !access.IsOwner; i++) cmd.Parameters.AddWithValue("$g" + i, groups[i]);
@@ -208,7 +269,7 @@ public sealed class PurchasingStore(SiteDb db, TimeProvider clock)
             using var r = cmd.ExecuteReader();
             while (r.Read()) ids.Add(r.GetString(0));
         }
-        return ids.Select(id => Get(id)).Where(x => x is not null).Cast<PurchaseRequest>().ToList();
+        return ids.Select(id => ReadRequest(c, tx, id)!).ToList();
     }
 
     private static string OrganizationOf(string groupId, GroupTree tree)
@@ -284,7 +345,7 @@ public sealed class PurchasingStore(SiteDb db, TimeProvider clock)
         { tx.Rollback(); return false; }
         request.Approvals = ReadApprovals(c, id, tx);
         if (!CanDecide(Access.For(currentActor, access.Tree), request, accounts, approve)) { tx.Rollback(); return false; }
-        var step = request.Approvals.First(x => x.Status == "Pending");
+        var step = request.CurrentApproval!;
         var now = clock.GetUtcNow();
         var nextStepStatus = approve ? "Approved" : "Rejected";
         using (var cmd = SiteDb.Cmd(c, "UPDATE purchase_request_approvals SET status=$status,approved_by=$actor,approved_utc=$now,note=$note WHERE request_id=$id AND position=$position AND status='Pending'",
@@ -294,6 +355,7 @@ public sealed class PurchasingStore(SiteDb db, TimeProvider clock)
         AddEvent(c, tx, id, approve ? "ApprovalStepApproved" : "ApprovalStepRejected", actor, now, eventNote);
         if (!approve)
         {
+            SiteDb.Exec(c, "UPDATE purchase_request_approvals SET status='Skipped' WHERE request_id=$id AND status='Pending'", tx, ("$id", id));
             SiteDb.Exec(c, "UPDATE purchase_requests SET status='Rejected',updated_utc=$now WHERE id=$id AND status='Submitted'", tx,
                 ("$now", SiteDb.Iso(now)), ("$id", id));
             AddEvent(c, tx, id, "Rejected", actor, now, note);
@@ -496,19 +558,19 @@ public sealed class PurchasingStore(SiteDb db, TimeProvider clock)
         };
     }
 
-    private static List<PurchaseLine> ReadLines(SqliteConnection c, string id)
+    private static List<PurchaseLine> ReadLines(SqliteConnection c, string id, SqliteTransaction tx)
     {
         var lines = new List<PurchaseLine>();
-        using var cmd = SiteDb.Cmd(c, "SELECT id,item_name,item_url,description,quantity,received_quantity,unit_price_cents FROM purchase_request_lines WHERE request_id=$id ORDER BY position", null, ("$id", id));
+        using var cmd = SiteDb.Cmd(c, "SELECT id,item_name,item_url,description,quantity,received_quantity,unit_price_cents FROM purchase_request_lines WHERE request_id=$id ORDER BY position", tx, ("$id", id));
         using var r = cmd.ExecuteReader();
         while (r.Read()) lines.Add(new PurchaseLine { Id = r.GetInt64(0), ItemName = r.GetString(1), ItemUrl = SiteDb.StrOrNull(r, 2), Description = SiteDb.StrOrNull(r, 3), Quantity = r.GetInt32(4), QuantityReceived = r.GetInt32(5), UnitPriceCents = r.GetInt64(6) });
         return lines;
     }
 
-    private static List<PurchaseEvent> ReadEvents(SqliteConnection c, string id)
+    private static List<PurchaseEvent> ReadEvents(SqliteConnection c, string id, SqliteTransaction tx)
     {
         var events = new List<PurchaseEvent>();
-        using var cmd = SiteDb.Cmd(c, "SELECT action,actor_email,at_utc,note FROM purchase_events WHERE request_id=$id ORDER BY id", null, ("$id", id));
+        using var cmd = SiteDb.Cmd(c, "SELECT action,actor_email,at_utc,note FROM purchase_events WHERE request_id=$id ORDER BY id", tx, ("$id", id));
         using var r = cmd.ExecuteReader();
         while (r.Read()) events.Add(new PurchaseEvent(r.GetString(0), r.GetString(1), SiteDb.Time(r.GetString(2)), SiteDb.StrOrNull(r, 3)));
         return events;
