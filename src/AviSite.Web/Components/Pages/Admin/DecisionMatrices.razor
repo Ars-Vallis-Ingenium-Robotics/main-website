@@ -1,0 +1,181 @@
+@page "/admin/decision-matrices"
+@page "/admin/decision-matrices/{MatrixId}/edit"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.PurchasingPolicy)]
+@using AviSite.Web.Store
+@using AviSite.Web.Endpoints
+@using System.Globalization
+@inject IAccountStore Accounts
+@inject DecisionMatrixStore Store
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor ContextAccessor
+<PageTitle>Decision matrices · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /><link rel="stylesheet" href="/css/decision-matrices.css" /></HeadContent>
+@if (MatrixId is null || editing is not null)
+{
+<section class="section admin dm"><div class="wrap">
+<h1 class="h1">@(editing is null ? "Weighted decision matrices" : "Edit decision matrix")</h1>
+<p>Compare options with explicit criteria, normalized weights, and 0–100 scores. Missing scores leave an option unranked. Ties use exact weighted scores; displayed values are rounded to four decimals.</p>
+@if (StatusMessage is { } message) { <p class="alert" role="@(Status == "invalid" ? "alert" : "status")">@message</p> }
+@if (editing is null && managed.Count > 0)
+{
+<form method="get" action="/admin/decision-matrices" class="dm-form dm-configure">
+<h2>Configure dimensions</h2><p class="dm-hint">Choose between 2–20 alternatives and 1–20 criteria. Changing dimensions starts a fresh form.</p>
+<div class="dm-grid"><label>Alternatives <select name="alternatives">@for(var count=DecisionMatrixRules.MinAlternatives;count<=DecisionMatrixRules.MaxAlternatives;count++){<option value="@count" selected="@(AlternativeCount==count)">@count</option>}</select></label><label>Criteria <select name="criteria">@for(var count=DecisionMatrixRules.MinCriteria;count<=DecisionMatrixRules.MaxCriteria;count++){<option value="@count" selected="@(CriterionCount==count)">@count</option>}</select></label></div>
+<button class="btn" type="submit">Configure matrix</button></form>
+}
+@if (editing is not null || managed.Count > 0)
+{
+    <form method="post" action="@(editing is null ? "/admin/decision-matrices/save" : $"/admin/decision-matrices/{editing.Id}/update")" class="dm-form">
+        <AntiforgeryToken />
+        @if (editing is null)
+        {
+            <h2>Create a matrix</h2>
+            <label>Managed team <select name="teamId">@foreach (var group in managed) { <option value="@group.Id">@access.Tree.Path(group.Id)</option> }</select></label>
+        }
+        else
+        {
+            <p>Team: @access.Tree.Path(editing.TeamId). Edit keeps the original dimensions; create a new matrix to change them.</p>
+            <input type="hidden" name="teamId" value="@editing.TeamId" />
+            <input type="hidden" name="expectedUpdatedUtc" value="@SiteDb.Iso(editing.UpdatedUtc)" />
+        }
+        <label>Title <input name="title" value="@editing?.Title" maxlength="160" required /></label>
+        <p class="dm-hint">@AlternativeCount alternatives × @CriterionCount criteria. Enter positive relative weights; results normalize each weight against the total.</p>
+        <div class="dm-grid">
+            @for (var i = 0; i < AlternativeCount; i++)
+            {
+                var alternative = editing?.State.Alternatives[i];
+                <div class="dm-entry">
+                    <label>Alternative @(i + 1) <input name="alternative" value="@alternative?.Name" required maxlength="120" /></label>
+                    <label>Alternative @(i + 1) notes <textarea name="alternativeNotes" maxlength="1000">@alternative?.Notes</textarea></label>
+                </div>
+            }
+        </div>
+        <div class="dm-grid">
+            @for (var i = 0; i < CriterionCount; i++)
+            {
+                var criterion = editing?.State.Criteria[i];
+                <div class="dm-entry">
+                    <label>Criterion @(i + 1) <input name="criterion" value="@criterion?.Name" required maxlength="120" /></label>
+                    <label>Weight @(i + 1) <input name="weight" value="@(criterion?.Weight.ToString(CultureInfo.InvariantCulture))" type="number" min="0.001" max="10000" step="any" required /></label>
+                    <label>Criterion @(i + 1) notes <textarea name="criterionNotes" maxlength="1000">@criterion?.Notes</textarea></label>
+                </div>
+            }
+        </div>
+        <h3>Scores and rationale</h3>
+        <div class="dm-grid">
+            @for (var a = 0; a < AlternativeCount; a++)
+            {
+                @for (var c = 0; c < CriterionCount; c++)
+                {
+                    scoreCells.TryGetValue((a, c), out var cell);
+                    var alternativeLabel = editing is null ? $"Alternative {a + 1}" : editing.State.Alternatives[a].Name;
+                    var criterionLabel = editing is null ? $"Criterion {c + 1}" : editing.State.Criteria[c].Name;
+                    <fieldset>
+                        <legend>@alternativeLabel · @criterionLabel</legend>
+                        <label>Score (blank means missing) <input name="score" value="@cell?.Score" type="number" min="0" max="100" step="1" /></label>
+                        <label>Rationale <textarea name="rationale" maxlength="1000">@cell?.Rationale</textarea></label>
+                    </fieldset>
+                }
+            }
+        </div>
+        <button class="btn btn--accent" type="submit">@(editing is null ? "Save matrix" : "Save changes")</button>
+    </form>
+}
+else
+{
+    <p class="alert">No managed team is available. Members can view matrices for teams they can see; only managers can create or change them.</p>
+}
+@if (editing is not null)
+{
+    <a href="/admin/decision-matrices">Back to decision matrices</a>
+}
+else
+{
+<h2>Visible matrices</h2>
+@foreach (var org in visible.GroupBy(matrix => matrix.OrganizationId))
+{
+    <section><h3>@access.Tree.Name(org.Key)</h3>
+    @foreach (var matrix in org)
+    {
+        <article class="dm-card">
+            <h4>@matrix.Title @(matrix.Archived ? "(archived)" : "")</h4>
+            <p>Team: @access.Tree.Path(matrix.TeamId) · Updated by @matrix.UpdatedBy at @matrix.UpdatedUtc.ToString("u")</p>
+            <p>Weights normalized: each entered weight ÷ @matrix.State.Criteria.Sum(x => x.Weight).ToString("G29"). Ties share rank; options with missing scores are unranked, not zero.</p>
+            <ol>@foreach (var result in matrix.Results.OrderBy(x => x.Rank ?? int.MaxValue)) { <li>@result.Alternative — @(result.MissingScores ? "Missing score; not ranked" : $"{result.WeightedScore:0.0000} (rank {result.Rank})")</li> }</ol>
+            <p>Audit: @string.Join(" · ", Store.AuditFor(matrix.Id, matrix.OrganizationId, matrix.TeamId).Select(a => $"{a.Action} by {a.Actor} at {a.AtUtc:u}"))</p>
+            <div class="dm-actions">
+                <a aria-label="Download CSV for @matrix.Title" href="/admin/decision-matrices/@matrix.Id/export.csv?teamId=@Uri.EscapeDataString(matrix.TeamId)">Download CSV</a>
+                @if (access.CanManageGroup(matrix.TeamId) && matrix.Archived)
+                {
+                    <form method="post" action="/admin/decision-matrices/@matrix.Id/restore">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="teamId" value="@matrix.TeamId" />
+                        <button class="btn" type="submit" aria-label="Restore @matrix.Title">Restore</button>
+                    </form>
+                }
+                else if (access.CanManageGroup(matrix.TeamId))
+                {
+                    <a aria-label="Edit @matrix.Title" href="/admin/decision-matrices/@matrix.Id/edit?teamId=@Uri.EscapeDataString(matrix.TeamId)">Edit</a>
+                    <form method="post" action="/admin/decision-matrices/@matrix.Id/archive">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="teamId" value="@matrix.TeamId" />
+                        <button class="btn" type="submit" aria-label="Archive @matrix.Title">Archive</button>
+                    </form>
+                }
+            </div>
+        </article>
+    }
+    </section>
+}
+}
+</div></section>
+}
+@code {
+    [Parameter] public string? MatrixId { get; set; }
+    [SupplyParameterFromQuery(Name = "teamId")] public string? TeamId { get; set; }
+    [SupplyParameterFromQuery(Name = "alternatives")] public string? Alternatives { get; set; }
+    [SupplyParameterFromQuery(Name = "criteria")] public string? Criteria { get; set; }
+    [SupplyParameterFromQuery(Name = "status")] public string? Status { get; set; }
+
+    private Access access = new();
+    private List<AccountGroup> managed = [];
+    private List<DecisionMatrix> visible = [];
+    private DecisionMatrix? editing;
+    private Dictionary<(int Alternative, int Criterion), MatrixScore> scoreCells = [];
+    private int AlternativeCount => editing?.State.Alternatives.Count
+        ?? ParseCount(Alternatives, 2, DecisionMatrixRules.MinAlternatives, DecisionMatrixRules.MaxAlternatives);
+    private int CriterionCount => editing?.State.Criteria.Count
+        ?? ParseCount(Criteria, 2, DecisionMatrixRules.MinCriteria, DecisionMatrixRules.MaxCriteria);
+    private string? StatusMessage => Status switch
+    {
+        "saved" => "Matrix saved.",
+        "archived" => "Matrix archived.",
+        "restored" => "Matrix restored.",
+        "invalid" => "Invalid matrix: check dimensions, required fields, weights, and scores.",
+        _ => null
+    };
+
+    private static int ParseCount(string? value, int fallback, int minimum, int maximum) =>
+        int.TryParse(value, out var parsed) && parsed >= minimum && parsed <= maximum ? parsed : fallback;
+
+    protected override async Task OnInitializedAsync()
+    {
+        access = await ContextAccessor.HttpContext!.AccessAsync(Accounts);
+        if (MatrixId is not null)
+        {
+            if (access.Account is not null && TeamId is not null && access.Tree.Find(TeamId) is not null
+                && access.CanSee(TeamId) && access.CanManageGroup(TeamId)
+                && Store.Get(MatrixId, HoursRules.OrgOf(TeamId, access.Tree), TeamId) is { Archived: false } matrix)
+            {
+                editing = matrix;
+                scoreCells = matrix.State.Scores.ToDictionary(s => (s.Alternative, s.Criterion));
+            }
+            else Navigation.NotFound();
+            return;
+        }
+
+        managed = access.Tree.Ordered(g => access.CanManageGroup(g.Id)).ToList();
+        visible = access.Tree.Ordered(g => access.CanSee(g.Id))
+            .SelectMany(g => Store.List(HoursRules.OrgOf(g.Id, access.Tree), [g.Id], true)).ToList();
+    }
+}
