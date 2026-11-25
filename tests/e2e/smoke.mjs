@@ -1,11 +1,12 @@
 // End-to-end smoke test against a running Development instance (fake PayPal).
 //   dotnet run --project src/AviSite.Web   (ASPNETCORE_ENVIRONMENT=Development)
-//   BASE_URL=http://localhost:5002 node tests/e2e/smoke.mjs
+//   BASE_URL=http://localhost:5002 SITE_DB=/path/to/isolated/site.db node tests/e2e/smoke.mjs
 // Requires: npm i -D playwright (or a global Playwright install).
 import { chromium, devices } from "playwright";
 import assert from "node:assert/strict";
 
 const BASE = process.env.BASE_URL ?? "http://127.0.0.1:5080";
+if (!process.env.SITE_DB) throw new Error("Set SITE_DB to the isolated Development database; refusing to write smoke-test rows to repository data.");
 // These tests contain write flows. Refuse remote targets and any local app not exposing Development-only sign-in.
 const baseUrl = new URL(BASE);
 if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(baseUrl.hostname)) {
@@ -1473,13 +1474,10 @@ await test("dynamic QR looks: save from the maker, reopen with it; strangers can
 // writes it straight into the database (Node's built-in SQLite). Where the site keeps it depends on how it was started.
 async function siteDb() {
   const { DatabaseSync } = await import("node:sqlite");
-  const fs = await import("node:fs"); const path = await import("node:path");
-  const here = path.dirname(new URL(import.meta.url).pathname);
-  const candidates = process.env.SITE_DB
-    ? [process.env.SITE_DB]
-    : [path.join(here, "../../App_Data/site.db"), path.join(here, "../../src/AviSite.Web/App_Data/site.db")].filter((f) => fs.existsSync(f));
-  candidates.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
-  const db = new DatabaseSync(candidates[0]); db.exec("PRAGMA busy_timeout = 5000"); return db;
+  const path = await import("node:path");
+  if (!path.isAbsolute(process.env.SITE_DB)) throw new Error("SITE_DB must be an absolute path.");
+  const dbPath = path.resolve(process.env.SITE_DB);
+  const db = new DatabaseSync(dbPath); db.exec("PRAGMA busy_timeout = 5000"); return db;
 }
 const signIn = async (email) => {
   const c = await browser.newContext({ viewport: { width: 1280, height: 900 } }); const pg = await c.newPage();

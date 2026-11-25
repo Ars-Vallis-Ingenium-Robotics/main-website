@@ -208,6 +208,7 @@ async function check() {
   const editPath = `${idPath}/edit`;
   const updatePath = `${idPath}/update`;
   const archivePath = `${idPath}/archive`;
+  const restorePath = `${idPath}/restore`;
   const csv = await lead.request.get(`${base}${csvPath}`);
   assert.equal(csv.status(), 200);
   assert.equal(csv.headers()["cache-control"], "no-store");
@@ -314,7 +315,6 @@ async function check() {
   assert.equal((await lead.goto(`${base}${scoped(editPath)}`)).status(), 404);
   await expectPost(lead, updatePath, revision, 404);
   await lead.goto(`${base}${matrix}`);
-  const restorePath = `${idPath}/restore`;
   await archived.locator(`form[action="${restorePath}"]`).getByRole("button", { name: "Restore Revised robot design" }).click();
   const restored = card(lead, "Revised robot design");
   assert.match(await restored.innerText(), /Restored by matrix-lead@example\.com/);

@@ -18,8 +18,11 @@ jobs:
       - run: dotnet build src/AviSite.Web -c Release
       - name: Start app (Development, fake PayPal)
         run: |
+          DATA_DIR="${RUNNER_TEMP}/avi-site-ci-data"
+          mkdir -p "$DATA_DIR"
+          echo "SITE_DB=$DATA_DIR/site.db" >> "$GITHUB_ENV"
           ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://127.0.0.1:5080 \
-            nohup dotnet run --project src/AviSite.Web -c Release --no-build --no-launch-profile > app.log 2>&1 &
+            Store__DataDirectory="$DATA_DIR" nohup dotnet run --project src/AviSite.Web -c Release --no-build --no-launch-profile > app.log 2>&1 &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:5080/healthz && break; sleep 2; done
       - uses: actions/setup-node@v4
         with:
@@ -32,6 +35,13 @@ jobs:
           npm install --no-save playwright@1
           npx playwright install --with-deps chromium
           node smoke.mjs
+      - name: Feature module E2E (fresh Development fixtures)
+        working-directory: tests/e2e
+        run: |
+          node inventory.mjs
+          node projects.mjs
+          node decision-matrices.mjs
+          node forms.mjs
       - if: failure()
         run: cat app.log
 

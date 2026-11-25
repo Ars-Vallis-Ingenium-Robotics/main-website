@@ -324,9 +324,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // EditForm renders during asynchronous loading; give every model a value before the first await.
+        Add ??= new();
+        NewGroup ??= new();
         await LoadAsync();
-        Add ??= new() { Team = manageable.FirstOrDefault()?.Id ?? "" };
-        NewGroup ??= new() { Parent = access.IsOwner ? "" : parentChoices.FirstOrDefault()?.Id };
+        Add.Team ??= manageable.FirstOrDefault()?.Id ?? "";
+        NewGroup.Parent ??= access.IsOwner ? "" : parentChoices.FirstOrDefault()?.Id;
     }
 
     private async Task LoadAsync()

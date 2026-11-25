@@ -18,9 +18,13 @@ fs.cpSync(path.join(repo, "src", "AviSite.Web"), source, { recursive: true, filt
 fs.mkdirSync(data, { recursive: true });
 const programPath = path.join(source, "Program.cs");
 let program = fs.readFileSync(programPath, "utf8");
-assert(!program.includes("AddInventoryModule()") && !program.includes("MapInventoryEndpoints()"), "fixture must begin with no inventory registration");
-program = program.replace("services.AddSingleton<PurchasingStore>();", "services.AddSingleton<PurchasingStore>();\nservices.AddInventoryModule();");
-program = program.replace("app.MapPurchasingEndpoints();", "app.MapPurchasingEndpoints();\napp.MapInventoryEndpoints();");
+function register(anchor, call) {
+  if (program.includes(call)) return;
+  assert.equal(program.split(anchor).length, 2, `registration anchor: ${anchor}`);
+  program = program.replace(anchor, `${call}\n${anchor}`);
+}
+register("services.AddSingleton<PurchasingStore>();", "services.AddInventoryModule();");
+register("app.MapPurchasingEndpoints();", "app.MapInventoryEndpoints();");
 fs.writeFileSync(programPath, program);
 fs.writeFileSync(path.join(data, "accounts.json"), JSON.stringify({
   accounts: [

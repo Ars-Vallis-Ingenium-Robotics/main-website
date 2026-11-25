@@ -13,6 +13,7 @@
 @if (MatrixId is null || editing is not null)
 {
 <section class="section admin dm"><div class="wrap">
+<AdminNav Current="decision-matrices" />
 <h1 class="h1">@(editing is null ? "Weighted decision matrices" : "Edit decision matrix")</h1>
 <p>Compare options with explicit criteria, normalized weights, and 0–100 scores. Missing scores leave an option unranked. Ties use exact weighted scores; displayed values are rounded to four decimals.</p>
 @if (StatusMessage is { } message) { <p class="alert" role="@(Status == "invalid" ? "alert" : "status")">@message</p> }
