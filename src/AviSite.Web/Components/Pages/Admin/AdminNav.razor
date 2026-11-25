@@ -6,6 +6,7 @@
 <nav class="admin-nav" aria-label="Admin">
     @if (hasAccount)
     {
+        <a href="/admin/tools" class="@(Current == "tools" ? "is-current" : "")" aria-current="@(Current == "tools" ? "page" : null)">Tools</a>
         <a href="/admin/hours" class="@(Current == "hours" ? "is-current" : "")" aria-current="@(Current == "hours" ? "page" : null)">Hours</a>
         <a href="/admin/purchasing" class="@(Current == "purchasing" ? "is-current" : "")" aria-current="@(Current == "purchasing" ? "page" : null)">Purchasing</a>
         <a href="/admin/inventory" class="@(Current == "inventory" ? "is-current" : "")" aria-current="@(Current == "inventory" ? "page" : null)">Inventory</a>

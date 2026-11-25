@@ -11,7 +11,7 @@
     border-radius: var(--radius);
 }
 .avi-forms__stack { display: grid; gap: 1rem; min-width: 0; }
-.avi-forms__question { min-inline-size: 0; padding: 1rem; border: 1px solid var(--steel); }
+.avi-forms__question { min-inline-size: 0; padding: 1rem; border: 1px solid var(--line-input); background: var(--surface); }
 .avi-forms__question legend { max-inline-size: 100%; padding-inline: .4rem; font-weight: 700; }
 .avi-forms__check { display: flex; gap: .65rem; align-items: center; min-height: 44px; cursor: pointer; }
 .avi-forms__check input { inline-size: 1.15rem; block-size: 1.15rem; flex: none; accent-color: var(--accent); }
@@ -22,6 +22,6 @@
 .avi-forms__list li { display: grid; gap: .15rem; }
 .avi-forms__list a { width: fit-content; min-height: 44px; display: grid; align-content: center; }
 .avi-forms details > summary { min-height: 44px; padding-block: .6rem; cursor: pointer; }
-.avi-forms__response { border-top: 1px solid var(--steel); }
+.avi-forms__response { border-top: 1px solid var(--line); }
 .avi-forms__answers dt { margin-top: .6rem; font-weight: 700; }
 .avi-forms__answers dd, .avi-forms__prewrap { white-space: pre-wrap; }

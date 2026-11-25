@@ -2213,6 +2213,111 @@ await test("Discord bot admin: post actions submit and explain missing setup", a
   } finally { await c.close(); }
 });
 
+await test("team tools: direct account-menu access, scoped cards, and dark theme", async () => {
+  const id = Date.now().toString(36).slice(-5), member = `tools-${id}@example.com`;
+  const [ownerContext, ownerPage] = await signIn("owner@example.com");
+  try {
+    await addPerson(ownerPage, member, "sms", "Member");
+    await ownerPage.goto(BASE + "/about");
+    const accountMenu = ownerPage.locator("details.account-menu");
+    await accountMenu.locator("summary").click();
+    await accountMenu.locator('a[href="/admin/tools"]').click();
+    assert.match(await ownerPage.locator("h1").innerText(), /Team tools/i);
+    assert.equal(await ownerPage.locator(".tool-hub__card").count(), 5, "owner sees all five modules");
+    assert.equal(await ownerPage.locator('.tool-hub__card[href="/admin/forms"]').count(), 1, "owner sees Forms");
+    assert.equal(await ownerPage.locator('.admin-nav a[href="/admin/tools"]').getAttribute("aria-current"), "page");
+    await ownerPage.evaluate(() => { document.documentElement.dataset.theme = "dark"; });
+    const expectedSurface = await ownerPage.evaluate(() => {
+      const probe = document.createElement("i"); probe.style.background = "var(--surface)"; document.body.append(probe);
+      const color = getComputedStyle(probe).backgroundColor; probe.remove(); return color;
+    });
+    assert.equal(await ownerPage.locator(".tool-hub__card").first().evaluate(el => getComputedStyle(el).backgroundColor), expectedSurface, "hub cards use the theme surface token");
+    for (const [route, selector, surfaceToken] of [
+      ["/admin/inventory", '.inventory-filter input[name="q"]', "--surface"],
+      ["/admin/projects", '.project-form input[name="title"]', "--surface"],
+      ["/admin/decision-matrices?alternatives=5&criteria=2", ".dm-form", "--surface"],
+      ["/admin/forms", ".avi-forms__card", "--paper-2"],
+    ]) {
+      await ownerPage.goto(BASE + route);
+      await ownerPage.evaluate(() => { document.documentElement.dataset.theme = "dark"; });
+      const tokenColor = async token => ownerPage.evaluate(token => {
+        const probe = document.createElement("i"); probe.style.backgroundColor = `var(${token})`; document.body.append(probe);
+        const color = getComputedStyle(probe).backgroundColor; probe.remove(); return color;
+      }, token);
+      const el = ownerPage.locator(selector).first();
+      assert.equal(await el.evaluate(node => getComputedStyle(node).backgroundColor), await tokenColor(surfaceToken), `${route} background follows ${surfaceToken}`);
+      assert.equal(await el.evaluate(node => getComputedStyle(node).color), await tokenColor("--fg"), `${route} foreground follows --fg`);
+      if (route.startsWith("/admin/decision-matrices")) {
+        assert.equal(await ownerPage.locator(".dm-alternative").first().evaluate(node => getComputedStyle(node).borderTopColor), await tokenColor("--line"), "matrix section border follows --line in dark mode");
+        assert.equal(await ownerPage.locator(".dm-alternative > summary").first().evaluate(node => getComputedStyle(node).display), "flex", "matrix summary aligns its text and count");
+        assert.equal(await ownerPage.locator(".dm-count").first().evaluate(node => getComputedStyle(node).backgroundColor), "rgba(0, 0, 0, 0)", "criteria count is not styled as an alert chip");
+        assert.equal(await ownerPage.locator(".dm-count").first().evaluate(node => getComputedStyle(node).borderTopWidth), "0px", "criteria count has no alert border");
+      }
+    }
+    await ownerPage.goto(BASE + "/admin/decision-matrices?alternatives=5&criteria=2");
+    assert.equal(await ownerPage.locator(".dm-alternative").count(), 5, "large score entry is grouped by alternative");
+    assert.equal(await ownerPage.locator('input[name="score"]').count(), 10, "collapsed sections retain every score field");
+    assert.equal(await ownerPage.locator(".dm-alternative").first().getAttribute("open"), null, "large matrices start collapsed");
+    await ownerPage.locator(".dm-alternative > summary").first().click();
+    assert.match(await ownerPage.locator(".dm-alternative legend").first().innerText(), /weight set above/i, "create view does not invent a weight");
+  } finally { await ownerContext.close(); }
+
+  const [memberContext, memberPage] = await signIn(member);
+  try {
+    await memberPage.goto(BASE + "/admin/tools");
+    assert.equal(await memberPage.locator(".tool-hub__card").count(), 4, "non-manager does not get a dead Forms-create card");
+    assert.equal(await memberPage.locator('.tool-hub__card[href="/admin/forms"]').count(), 0);
+    const moduleHrefs = await memberPage.locator(".tool-hub__card").evaluateAll(links => links.map(link => link.getAttribute("href")));
+    for (const href of moduleHrefs) {
+      const response = await memberPage.goto(BASE + href);
+      assert.equal(response?.status(), 200, `${href} opens for a team member`);
+      assert.equal(new URL(memberPage.url()).pathname, href, `${href} does not redirect to sign-in or a denial page`);
+      assert.equal(await memberPage.locator("h1").count(), 1, `${href} renders its page heading`);
+    }
+  } finally { await memberContext.close(); }
+});
+
+await test("project Gantt stays within 320px and 375px; schedule scroll is contained", async () => {
+  const id = Date.now().toString(36).slice(-5), title = `Mobile Gantt ${id}`;
+  const [c, pg] = await signIn("owner@example.com");
+  try {
+    await pg.goto(BASE + "/admin/projects");
+    const create = pg.locator('form[action="/admin/projects/save"]').first();
+    await create.locator('select[name="teamId"]').selectOption("sms");
+    await create.locator('input[name="title"]').fill(title);
+    await create.locator('input[name="description"]').fill("Responsive Gantt viewport fixture");
+    await Promise.all([pg.waitForURL(/result=saved/), create.locator('button').click()]);
+    const plan = pg.locator(".plan").filter({ has: pg.getByRole("heading", { name: title }) });
+    const addTask = plan.locator('form[action$="/task"]');
+    await addTask.locator('input[name="title"]').fill(`Milestone ${"long-name-".repeat(8)}`);
+    await addTask.locator('input[name="ownerEmail"]').fill("owner@example.com");
+    await addTask.locator('input[name="description"]').fill("Long-label responsive layout fixture.");
+    const start = new Date(), due = new Date(start.getTime() + 86400000);
+    await addTask.locator('input[name="startDate"]').fill(start.toISOString().slice(0, 10));
+    await addTask.locator('input[name="dueDate"]').fill(due.toISOString().slice(0, 10));
+    await Promise.all([pg.waitForURL(/result=task-saved/), addTask.locator('button').click()]);
+    const timeline = plan.locator('.timeline[aria-label^="Gantt timeline"]');
+    assert.equal(await timeline.locator(".gantt-row").count(), 1);
+    await pg.evaluate(() => { document.documentElement.dataset.theme = "dark"; });
+    const accent = await pg.evaluate(() => { const probe = document.createElement("i"); probe.style.backgroundColor = "var(--accent)"; document.body.append(probe); const color = getComputedStyle(probe).backgroundColor; probe.remove(); return color; });
+    const line = await pg.evaluate(() => { const probe = document.createElement("i"); probe.style.borderColor = "var(--line)"; probe.style.borderStyle = "solid"; document.body.append(probe); const color = getComputedStyle(probe).borderTopColor; probe.remove(); return color; });
+    assert.equal(await timeline.locator(".gantt-bar").first().evaluate(node => getComputedStyle(node).backgroundColor), accent, "Gantt bars use the theme accent in dark mode");
+    assert.equal(await timeline.locator(".gantt-row").first().evaluate(node => getComputedStyle(node).borderBottomColor), line, "Gantt grid lines use the theme line in dark mode");
+    const schedule = plan.locator("details.schedule-table");
+    await schedule.locator("summary").click();
+    for (const width of [320, 375]) {
+      await pg.setViewportSize({ width, height: 850 });
+      const metrics = await pg.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
+      assert.ok(metrics.document <= metrics.viewport, `no document overflow at ${width}px: ${JSON.stringify(metrics)}`);
+      const track = await timeline.locator(".gantt-track").boundingBox();
+      assert.ok(track && track.x >= 0 && track.x + track.width <= width + 1, `timeline track fits ${width}px`);
+      const scrollRegion = await schedule.evaluate(el => ({ client: el.clientWidth, scroll: el.scrollWidth, right: el.getBoundingClientRect().right }));
+      assert.ok(scrollRegion.scroll > scrollRegion.client, "wide schedule content scrolls inside its own disclosure");
+      assert.ok(scrollRegion.right <= width + 1, `schedule scroll region stays on-screen at ${width}px`);
+    }
+  } finally { await c.close(); }
+});
+
 await test("no console errors", async () => { assert.deepEqual(consoleErrors, [], consoleErrors.join(" | ")); });
 
 await browser.close();

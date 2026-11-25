@@ -63,20 +63,26 @@
             }
         </div>
         <h3>Scores and rationale</h3>
-        <div class="dm-grid">
+        <p class="dm-hint">Score each option from 0–100 against every criterion. Each entry shows the criterion and its weight; add a short rationale to explain the score. Expand an alternative to enter its scores. Collapsing a section keeps your entries.</p>
+        <div class="dm-alternatives">
             @for (var a = 0; a < AlternativeCount; a++)
             {
-                @for (var c = 0; c < CriterionCount; c++)
-                {
+                var altName = editing is null ? $"Alternative {a + 1}" : editing.State.Alternatives[a].Name;
+                <details class="dm-alternative" open="@(AlternativeCount <= 4)">
+                    <summary>@altName <span class="dm-count">@CriterionCount criteria</span></summary>
+                    <div class="dm-grid">
+                    @for (var c = 0; c < CriterionCount; c++)
+                    {
                     scoreCells.TryGetValue((a, c), out var cell);
-                    var alternativeLabel = editing is null ? $"Alternative {a + 1}" : editing.State.Alternatives[a].Name;
                     var criterionLabel = editing is null ? $"Criterion {c + 1}" : editing.State.Criteria[c].Name;
                     <fieldset>
-                        <legend>@alternativeLabel · @criterionLabel</legend>
+                        <legend>@criterionLabel · weight @(editing is null ? "set above" : editing.State.Criteria[c].Weight.ToString("G29", CultureInfo.InvariantCulture))</legend>
                         <label>Score (blank means missing) <input name="score" value="@cell?.Score" type="number" min="0" max="100" step="1" /></label>
                         <label>Rationale <textarea name="rationale" maxlength="1000">@cell?.Rationale</textarea></label>
                     </fieldset>
-                }
+                    }
+                    </div>
+                </details>
             }
         </div>
         <button class="btn btn--accent" type="submit">@(editing is null ? "Save matrix" : "Save changes")</button>

@@ -1,0 +1,43 @@
+@page "/admin/tools"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.PurchasingPolicy)]
+@using AviSite.Web.Endpoints
+@using AviSite.Web.Store
+@inject IAccountStore Accounts
+<PageTitle>Team tools · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /><link rel="stylesheet" href="@Assets["css/admin-tools.css"]" /></HeadContent>
+<section class="section admin"><div class="wrap">
+    <AdminNav Current="tools" />
+    <p class="eyebrow">Team operations</p><h1 class="h1">Team tools</h1>
+    <p>Choose a tool to manage your team’s work.</p>
+    @if (available.Count == 0)
+    {
+        <p class="alert" role="status">No team workspaces are available to this account yet. Ask a team lead or site administrator to add your account to the right team.</p>
+    }
+    else
+    {
+        <div class="tool-hub">
+            @for (var i = 0; i < available.Count; i++)
+            {
+                var (href, title, description) = available[i];
+                <a class="tool-hub__card" href="@href"><h2>@title</h2><p>@description</p><span aria-hidden="true">Open tool →</span></a>
+            }
+        </div>
+    }
+</div></section>
+@code {
+    [CascadingParameter] public HttpContext? Http { get; set; }
+    private readonly List<(string Href, string Title, string Description)> available = [];
+    protected override async Task OnInitializedAsync()
+    {
+        if (Http is null) return;
+        var access = await Http.AccessAsync(Accounts);
+        var groups = access.Tree.Ordered().Where(g => access.CanSee(g.Id)).ToArray();
+        if (groups.Length == 0) return;
+        available.Add(("/admin/purchasing", "Purchasing", "Submit and review purchase requests."));
+        available.Add(("/admin/inventory", "Inventory", "Track supplies, stock movements, and reorders."));
+        available.Add(("/admin/projects", "Projects", "Plan milestones, ownership, and delivery dates."));
+        available.Add(("/admin/decision-matrices", "Decision Matrices", "Compare options using weighted criteria."));
+        if (groups.Any(g => access.CanManageGroup(g.Id)))
+            available.Add(("/admin/forms", "Forms", "Create surveys and sign-ups for groups you manage."));
+    }
+}
