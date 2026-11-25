@@ -1,0 +1,97 @@
+@page "/forms/{Token}"
+@attribute [AllowAnonymous]
+@inject IAccountStore Accounts
+@inject IServiceProvider Services
+
+<PageTitle>Form · AVI Robotics</PageTitle>
+<HeadContent><link rel="stylesheet" href="/css/forms.css" /><meta name="robots" content="noindex, nofollow" /><meta name="referrer" content="no-referrer" /></HeadContent>
+
+<section class="section avi-forms avi-forms--public">
+    <div class="wrap avi-forms__wrap">
+        <p class="eyebrow">AVI Robotics · Forms</p>
+        @if (received)
+        {
+            <h1 class="h1">Response received</h1>
+            <p class="alert alert--ok" role="status">Thank you. Your response was received.</p>
+        }
+        else if (current is not { } form)
+        {
+            <h1 class="h1">Form unavailable</h1>
+            <p class="muted">This link may be incorrect or the form may have closed.</p>
+        }
+        else
+        {
+            <h1 class="h1">@form.Title</h1>
+            @if (form.Description.Length > 0) { <p class="avi-forms__prewrap">@form.Description</p> }
+            <p class="note" id="form-privacy">Your answers and the time you submit are saved. Authorized form managers can view and download them. This form doesn't record your IP address or sign-in details with your response. Don't include passwords or sensitive information. File uploads aren't supported.</p>
+            <form method="post" action="/forms/@Token/submit" class="avi-forms__card avi-forms__stack" aria-describedby="form-privacy" autocomplete="off">
+                <AntiforgeryToken />
+                <input type="hidden" name="revision" value="@form.Revision" />
+                @for (var index = 0; index < form.Questions.Length; index++)
+                {
+                    var question = form.Questions[index];
+                    var key = question.FieldName;
+                    var label = $"{index + 1}. {question.Label}" + (question.Required ? " (required)" : "");
+                    @if (question.Type is FormQuestionType.MultipleChoice)
+                    {
+                        <fieldset class="avi-forms__question">
+                            <legend>@label</legend>
+                            @if (question.Required) { <p class="muted">Choose at least one option.</p> }
+                            @foreach (var option in question.Options)
+                            {
+                                <label class="avi-forms__check"><input type="checkbox" name="@key" value="@option" /> @option</label>
+                            }
+                        </fieldset>
+                    }
+                    else
+                    {
+                        <label class="field"><span class="label">@label</span>
+                            @switch (question.Type)
+                            {
+                                case FormQuestionType.LongText:
+                                    <textarea name="@key" rows="5" maxlength="@FormsStore.LongTextLimit" required="@question.Required"></textarea>
+                                    break;
+                                case FormQuestionType.SingleChoice:
+                                    <select name="@key" required="@question.Required">
+                                        <option value="">Select an option</option>
+                                        @foreach (var option in question.Options) { <option value="@option">@option</option> }
+                                    </select>
+                                    break;
+                                case FormQuestionType.Date:
+                                    <input type="date" name="@key" required="@question.Required" />
+                                    break;
+                                case FormQuestionType.Number:
+                                    <input type="number" step="any" name="@key" required="@question.Required" />
+                                    break;
+                                default:
+                                    <input type="text" name="@key" maxlength="@FormsStore.ShortTextLimit" required="@question.Required" />
+                                    break;
+                            }
+                        </label>
+                    }
+                }
+                <div><button class="btn btn--accent" type="submit">Submit response</button></div>
+            </form>
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] private HttpContext? Http { get; set; }
+    [Parameter] public string? Token { get; set; }
+    [SupplyParameterFromQuery] public string? Receipt { get; set; }
+    private FormDefinition? current;
+    private bool received;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Http is null) return;
+        if (Services.GetService<FormsStore>() is { } store)
+        {
+            received = store.VerifyReceipt(Token, Receipt);
+            if (received) return;
+            current = store.FindPublished(Token, await Accounts.GroupsAsync(Http.RequestAborted));
+        }
+        if (current is null) Http.Response.StatusCode = 404;
+    }
+}

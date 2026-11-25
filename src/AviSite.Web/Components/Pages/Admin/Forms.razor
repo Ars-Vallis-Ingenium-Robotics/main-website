@@ -1,0 +1,223 @@
+@page "/admin/forms"
+@page "/admin/forms/{Id:guid}"
+@attribute [Authorize(AuthenticationSchemes = AdminEndpoints.Scheme)]
+@using AviSite.Web.Endpoints
+@inject IAccountStore Accounts
+@inject IServiceProvider Services
+@inject IOptions<SmsSiteOptions> Sms
+
+<PageTitle>Forms · AVI Robotics</PageTitle>
+<HeadContent><link rel="stylesheet" href="/css/forms.css" /><meta name="robots" content="noindex, nofollow" /></HeadContent>
+
+<section class="section avi-forms">
+    <div class="wrap avi-forms__wrap">
+        <p class="eyebrow">Team operations</p>
+        <h1 class="h1">Forms</h1>
+        @if (!available)
+        {
+            <p class="muted">This page is not available.</p>
+        }
+        else if (selected is not { } form)
+        {
+            <p class="muted">Create surveys and sign-ups for groups you manage. Public links allow anyone who has the link to respond.</p>
+            <section class="avi-forms__card" aria-labelledby="create-form-title">
+                <h2 class="h3" id="create-form-title">Create a form</h2>
+                <form class="avi-forms__stack" method="post" action="/admin/forms/create">
+                    <AntiforgeryToken />
+                    <label class="field"><span class="label">Owning organization or team</span>
+                        <select name="team" required>
+                            @foreach (var (team, path) in groups) { <option value="@team">@path</option> }
+                        </select>
+                    </label>
+                    <label class="field"><span class="label">Title</span><input name="title" maxlength="120" required /></label>
+                    <label class="field"><span class="label">Description (optional)</span><textarea name="description" maxlength="1000" rows="3"></textarea></label>
+                    <div><button class="btn btn--accent" type="submit">Create draft</button></div>
+                </form>
+            </section>
+            <section class="avi-forms__card" aria-labelledby="managed-forms-title">
+                <h2 class="h3" id="managed-forms-title">Forms you manage</h2>
+                @if (managed.Count == 0) { <p class="muted">No forms yet.</p> }
+                else
+                {
+                    <ul class="avi-forms__list">
+                        @foreach (var item in managed)
+                        {
+                            <li><a href="/admin/forms/@item.Id">@item.Title</a><span class="muted">@tree.Path(item.Team) · @item.Status</span></li>
+                        }
+                    </ul>
+                }
+            </section>
+        }
+        else
+        {
+            <p><a class="btn btn--ghost" href="/admin/forms">All forms</a></p>
+            <h2 class="h2">@form.Title</h2>
+            <p class="muted">@tree.Path(form.Scope.Team) · @form.Status</p>
+            @if (Saved == "1") { <p class="alert alert--ok" role="status">Changes saved.</p> }
+            @if (form.Status == FormStatus.Published)
+            {
+                <section class="avi-forms__card" aria-labelledby="share-form-title">
+                    <h3 class="h3" id="share-form-title">Share this form</h3>
+                    @if (shareToken is not null)
+                    {
+                        <p class="muted">Anyone with this link can respond. Share it only with your intended audience.</p>
+                        <label class="field"><span class="label">Public response link</span><input readonly value="@ShareUrl" /></label>
+                        <p><a href="@PublicHref">Open public response page</a></p>
+                    }
+                    else { <p class="alert">The share link could not be recovered. Contact the site administrator.</p> }
+                </section>
+            }
+            @if (form.Status != FormStatus.Archived)
+            {
+                <section class="avi-forms__card" aria-labelledby="edit-form-title">
+                    <h3 class="h3" id="edit-form-title">Edit form</h3>
+                    @if (form.Status == FormStatus.Published)
+                    {
+                        <p class="muted">Changes take effect immediately at the same link. Earlier responses keep the question labels shown when they were submitted.</p>
+                    }
+                    <form class="avi-forms__stack" method="post" action="/admin/forms/@form.Id/save">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="revision" value="@form.Revision" />
+                        <label class="field"><span class="label">Title</span><input name="title" value="@form.Title" maxlength="120" required /></label>
+                        <label class="field"><span class="label">Description (optional)</span><textarea name="description" maxlength="1000" rows="3">@form.Description</textarea></label>
+                        @for (var i = 0; i < form.Questions.Length; i++)
+                        {
+                            @EditQuestion(form.Questions[i], $"Question {i + 1}")
+                        }
+                        @if (form.Questions.Length < FormsStore.MaxQuestions)
+                        {
+                            @EditQuestion(null, "Add a question (optional)")
+                        }
+                        else { <p class="muted">This form has the maximum number of questions. Remove a question and save to make room.</p> }
+                        <div class="avi-forms__actions">
+                            <button class="btn btn--accent" type="submit" name="intent" value="save">Save changes</button>
+                            @if (form.Status == FormStatus.Draft)
+                            {
+                                <button class="btn btn--ink" type="submit" name="intent" value="publish">Save and publish</button>
+                            }
+                        </div>
+                    </form>
+                </section>
+                <details class="avi-forms__card">
+                    <summary>Archive form</summary>
+                    <form class="avi-forms__stack" method="post" action="/admin/forms/@form.Id/archive">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="revision" value="@form.Revision" />
+                        <p>Archiving permanently closes the public link and stops edits. It does not delete responses.</p>
+                        <div><button class="btn btn--ghost" type="submit">Confirm archive</button></div>
+                    </form>
+                </details>
+            }
+            @if (form.Status != FormStatus.Draft)
+            {
+                <section class="avi-forms__card" aria-labelledby="responses-title">
+                    <h3 class="h3" id="responses-title">Responses</h3>
+                    <p><a class="btn btn--ghost" href="/admin/forms/@form.Id/responses.csv" download>Download all responses (CSV)</a></p>
+                    @if (submissions.Count == 0) { <p class="muted">No responses on this page.</p> }
+                    @foreach (var response in submissions.Take(FormsStore.PageSize))
+                    {
+                        <details class="avi-forms__response">
+                            <summary>Response @response.Id · <time datetime="@response.SubmittedUtc">@DisplayUtc(response.SubmittedUtc)</time></summary>
+                            @if (response.Answers.Length == 0) { <p class="muted">No answers provided.</p> }
+                            else
+                            {
+                                <dl class="avi-forms__answers">
+                                    @foreach (var answer in response.Answers)
+                                    {
+                                        <dt>@answer.Label</dt>
+                                        @foreach (var value in answer.Values) { <dd>@value</dd> }
+                                    }
+                                </dl>
+                            }
+                        </details>
+                    }
+                    <div class="avi-forms__actions">
+                        @if (Before is not null) { <a class="btn btn--ghost" href="/admin/forms/@form.Id#responses-title">Newest responses</a> }
+                        @if (submissions.Count > FormsStore.PageSize)
+                        {
+                            <a class="btn btn--ghost" href="@($"/admin/forms/{form.Id}?before={submissions[FormsStore.PageSize - 1].Id}#responses-title")">Older responses</a>
+                        }
+                    </div>
+                </section>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] private HttpContext? Http { get; set; }
+    [Parameter] public Guid? Id { get; set; }
+    [SupplyParameterFromQuery] public string? Saved { get; set; }
+    [SupplyParameterFromQuery] public long? Before { get; set; }
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    private bool available;
+    private GroupTree tree = new([]);
+    private IReadOnlyList<(string Team, string Path)> groups = [];
+    private IReadOnlyList<FormSummary> managed = [];
+    private IReadOnlyList<FormSubmission> submissions = [];
+    private FormDefinition? selected;
+    private string? shareToken;
+    private string? PublicHref => shareToken is null ? null : Http.OnSmsHost()
+        ? $"{Sms.Value.AviBaseUrl.TrimEnd('/')}/forms/{shareToken}" : $"/forms/{shareToken}";
+    private string? ShareUrl => PublicHref is { } href ? Navigation.ToAbsoluteUri(href).AbsoluteUri : null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Http is null) return;
+        var access = await FormEndpoints.ManagerAccess(Http, Accounts);
+        if (access.Account is null || !access.LeadsAnything || Services.GetService<FormsStore>() is not { } store)
+        {
+            Http.Response.StatusCode = 404;
+            return;
+        }
+        tree = access.Tree;
+        if (Id is { } id)
+        {
+            selected = store.FindManaged(id.ToString("N"), access, out shareToken, includeShareToken: true);
+            if (selected is null)
+            {
+                Http.Response.StatusCode = 404;
+                return;
+            }
+            if (selected.Status != FormStatus.Draft)
+                submissions = store.Submissions(selected, Before ?? long.MaxValue, FormsStore.PageSize + 1);
+        }
+        else
+        {
+            groups = tree.Ordered(g => FormScope.ManagedBy(access, g.Id) is not null).Select(g => (g.Id, tree.Path(g.Id))).ToArray();
+            managed = store.ListManaged(access);
+        }
+        available = true;
+    }
+
+    private static string DisplayUtc(string timestamp) => SiteDb.Time(timestamp).ToString("yyyy-MM-dd HH:mm 'UTC'", System.Globalization.CultureInfo.InvariantCulture);
+    private static string TypeLabel(FormQuestionType type) => type switch
+    {
+        FormQuestionType.ShortText => "Short text",
+        FormQuestionType.LongText => "Long text",
+        FormQuestionType.SingleChoice => "Single choice",
+        FormQuestionType.MultipleChoice => "Multiple choice",
+        _ => type.ToString()
+    };
+
+    private RenderFragment EditQuestion(FormQuestion? q, string legend)
+    {
+        var key = q?.FieldName ?? "new";
+        var type = q?.Type ?? FormQuestionType.ShortText;
+        return @<fieldset class="avi-forms__question avi-forms__stack">
+            <legend>@legend</legend>
+            <label class="field"><span class="label">Question label</span><input name="@(key + "-label")" value="@q?.Label" maxlength="160" /></label>
+            <label class="field"><span class="label">Answer type</span>
+                <select name="@(key + "-type")">
+                    @foreach (var kind in Enum.GetValues<FormQuestionType>()) { <option value="@kind" selected="@(kind == type)">@TypeLabel(kind)</option> }
+                </select>
+            </label>
+            <label class="field"><span class="label">Options (choice types only; one per line)</span><textarea name="@(key + "-options")" maxlength="1500" rows="3">@(q is null ? "" : string.Join('\n', q.Options))</textarea></label>
+            <label class="avi-forms__check"><input type="checkbox" name="@(key + "-required")" value="true" checked="@(q?.Required == true)" /> Require an answer</label>
+            @if (q is not null)
+            {
+                <label class="avi-forms__check"><input type="checkbox" name="@(key + "-remove")" value="true" /> Remove this question when saving</label>
+            }
+        </fieldset>;
+    }
+}

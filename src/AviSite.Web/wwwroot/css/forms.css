@@ -1,0 +1,27 @@
+.avi-forms { overflow-wrap: anywhere; }
+.avi-forms__wrap { display: grid; gap: 1rem; }
+.avi-forms--public .avi-forms__wrap { max-width: 52rem; }
+.avi-forms__card {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+    padding: clamp(1rem, 3vw, 2rem);
+    background: var(--paper-2);
+    border-top: 3px solid var(--accent);
+    border-radius: var(--radius);
+}
+.avi-forms__stack { display: grid; gap: 1rem; min-width: 0; }
+.avi-forms__question { min-inline-size: 0; padding: 1rem; border: 1px solid var(--steel); }
+.avi-forms__question legend { max-inline-size: 100%; padding-inline: .4rem; font-weight: 700; }
+.avi-forms__check { display: flex; gap: .65rem; align-items: center; min-height: 44px; cursor: pointer; }
+.avi-forms__check input { inline-size: 1.15rem; block-size: 1.15rem; flex: none; accent-color: var(--accent); }
+.avi-forms :is(.field input, .field select, .field textarea) { min-width: 0; min-height: 44px; max-width: 100%; }
+.avi-forms :is(a, button, input, select, textarea, summary):focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.avi-forms__actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.avi-forms__list { display: grid; gap: .6rem; padding: 0; margin: 0; list-style: none; }
+.avi-forms__list li { display: grid; gap: .15rem; }
+.avi-forms__list a { width: fit-content; min-height: 44px; display: grid; align-content: center; }
+.avi-forms details > summary { min-height: 44px; padding-block: .6rem; cursor: pointer; }
+.avi-forms__response { border-top: 1px solid var(--steel); }
+.avi-forms__answers dt { margin-top: .6rem; font-weight: 700; }
+.avi-forms__answers dd, .avi-forms__prewrap { white-space: pre-wrap; }
