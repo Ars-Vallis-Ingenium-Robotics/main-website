@@ -1471,12 +1471,14 @@ await test("dynamic QR looks: save from the maker, reopen with it; strangers can
 
 // ---------- Hours ----------
 // A few hours tests need a session that started over a day ago; nobody can make one through the site, so the test
-// writes it straight into the database (Node's built-in SQLite). Where the site keeps it depends on how it was started.
+// writes it straight into the isolated Development database named by SITE_DB (the app must use the same directory).
 async function siteDb() {
   const { DatabaseSync } = await import("node:sqlite");
+  const fs = await import("node:fs");
   const path = await import("node:path");
   if (!path.isAbsolute(process.env.SITE_DB)) throw new Error("SITE_DB must be an absolute path.");
   const dbPath = path.resolve(process.env.SITE_DB);
+  if (!fs.existsSync(dbPath)) throw new Error(`SITE_DB does not exist: ${dbPath}`);
   const db = new DatabaseSync(dbPath); db.exec("PRAGMA busy_timeout = 5000"); return db;
 }
 const signIn = async (email) => {
