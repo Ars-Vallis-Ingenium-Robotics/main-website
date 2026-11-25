@@ -57,7 +57,7 @@
                 var criterion = editing?.State.Criteria[i];
                 <div class="dm-entry">
                     <label>Criterion @(i + 1) <input name="criterion" value="@criterion?.Name" required maxlength="120" /></label>
-                    <label>Weight @(i + 1) <input name="weight" value="@(criterion?.Weight.ToString(CultureInfo.InvariantCulture))" type="number" min="0.001" max="10000" step="any" required /></label>
+                    <label>Weight @(i + 1) <input name="weight" value="@(criterion?.Weight.ToString(CultureInfo.InvariantCulture))" type="number" min="@DecisionMatrixRules.MinWeight.ToString(CultureInfo.InvariantCulture)" max="@DecisionMatrixRules.MaxWeight.ToString(CultureInfo.InvariantCulture)" step="any" required /></label>
                     <label>Criterion @(i + 1) notes <textarea name="criterionNotes" maxlength="1000">@criterion?.Notes</textarea></label>
                 </div>
             }

@@ -18,6 +18,7 @@ public static class DecisionMatrixRules
 {
     public const int MinAlternatives = 2, MaxAlternatives = 20;
     public const int MinCriteria = 1, MaxCriteria = 20;
+    public const decimal MinWeight = 0.001m, MaxWeight = 10000m;
 
     public static bool ValidDimensions(int alternatives, int criteria) =>
         alternatives is >= MinAlternatives and <= MaxAlternatives && criteria is >= MinCriteria and <= MaxCriteria;
@@ -41,7 +42,7 @@ public static class DecisionMatrixRules
     {
         if (string.IsNullOrWhiteSpace(d.Title) || d.Title.Length > 160 || d.OrganizationId.Length is < 1 or > 100 || d.TeamId.Length is < 1 or > 100) throw new ArgumentException("Title and valid scope are required.");
         if (!ValidDimensions(d.Alternatives.Count, d.Criteria.Count)) throw new ArgumentException("Use 2–20 alternatives and 1–20 criteria.");
-        if (d.Alternatives.Any(a => a is null || string.IsNullOrWhiteSpace(a.Name) || a.Name.Length > 120 || (a.Notes?.Length ?? 0) > 1000) || d.Criteria.Any(c => c is null || string.IsNullOrWhiteSpace(c.Name) || c.Name.Length > 120 || c.Weight <= 0 || c.Weight > 10000 || (c.Notes?.Length ?? 0) > 1000) || d.Criteria.Sum(c => c.Weight) > 100000) throw new ArgumentException("Names, notes, and positive weights are required within limits.");
+        if (d.Alternatives.Any(a => a is null || string.IsNullOrWhiteSpace(a.Name) || a.Name.Length > 120 || (a.Notes?.Length ?? 0) > 1000) || d.Criteria.Any(c => c is null || string.IsNullOrWhiteSpace(c.Name) || c.Name.Length > 120 || c.Weight < MinWeight || c.Weight > MaxWeight || (c.Notes?.Length ?? 0) > 1000) || d.Criteria.Sum(c => c.Weight) > MaxWeight * MaxCriteria) throw new ArgumentException("Names, notes, and weights within the per-criterion and total limits are required.");
         if (d.Alternatives.Select(a => a.Name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() != d.Alternatives.Count
             || d.Criteria.Select(c => c.Name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() != d.Criteria.Count)
             throw new ArgumentException("Alternative and criterion names must be unique.");
@@ -66,7 +67,7 @@ public sealed class DecisionMatrixStore(SiteDb db, TimeProvider clock)
         var rows = new List<DecisionMatrix>(); using var r = cmd.ExecuteReader(); while (r.Read())
         {
             try { var d = JsonSerializer.Deserialize<MatrixDraft>(r.GetString(5))!; rows.Add(new(r.GetString(0),r.GetString(1),r.GetString(2),r.GetString(3),r.GetInt64(4)!=0,r.GetString(6),SiteDb.Time(r.GetString(7)),d,DecisionMatrixRules.Calculate(d))); }
-            catch (Exception ex) when (ex is JsonException or ArgumentException or NullReferenceException or InvalidOperationException or OverflowException) { /* Skip corrupt module rows rather than failing the whole page. */ }
+            catch (Exception ex) when (ex is JsonException or ArgumentException or NullReferenceException or InvalidOperationException or OverflowException or FormatException) { /* Skip corrupt module rows rather than failing the whole page. */ }
         }
         return rows;
     }

@@ -223,7 +223,7 @@ async function check() {
   replaceFields(maximum, "alternative", Array.from({ length: 20 }, (_, i) => `Option ${i + 1}`));
   replaceFields(maximum, "alternativeNotes", Array(20).fill(""));
   replaceFields(maximum, "criterion", Array.from({ length: 20 }, (_, i) => `Metric ${i + 1}`));
-  replaceFields(maximum, "weight", Array(20).fill("1"));
+  replaceFields(maximum, "weight", Array(20).fill("10000"));
   replaceFields(maximum, "criterionNotes", Array(20).fill(""));
   replaceFields(maximum, "score", Array(400).fill(""));
   replaceFields(maximum, "rationale", Array(400).fill(""));
