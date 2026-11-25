@@ -2398,6 +2398,18 @@
   .purchase-line input { width: 100%; min-width: 0; }
   .purchase-line__remove { margin-bottom: var(--s-2); }
   .purchase-form__actions { display: flex; justify-content: flex-end; margin-top: var(--s-3); }
+  .purchase-policy { margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px solid var(--line); }
+  .purchase-policy > summary { cursor: pointer; font-weight: 700; }
+  .purchase-policy__form { margin-top: var(--s-3); }
+  .purchase-policy__reset { margin-top: var(--s-2); }
+  .purchase-approval-rules { display: grid; gap: var(--s-3); }
+  .purchase-approval-rule { min-width: 0; margin: 0; padding: var(--s-3); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-3); align-items: end; border: 1px solid var(--line); border-radius: var(--radius); }
+  .purchase-approval-rule legend { padding-inline: var(--s-2); font-weight: 700; }
+  .purchase-approval-rule .field, .purchase-approval-rule input, .purchase-approval-rule select { min-width: 0; width: 100%; }
+  .purchase-approval-chain { margin-top: var(--s-3); padding: var(--s-3); border-radius: var(--radius-sm); background: var(--surface); }
+  .purchase-approval-chain p { margin: 0 0 var(--s-1); }
+  .purchase-approval-chain ol { margin: 0; padding-left: 1.35rem; display: grid; gap: var(--s-1); }
+  .purchase-approval-chain li { overflow-wrap: anywhere; }
   .purchase-list { display: grid; gap: var(--s-4); margin-top: var(--s-4); }
   .purchase-empty { padding: var(--s-5); border: 1px dashed var(--line-strong); border-radius: var(--radius); color: var(--text-muted); }
   .purchase-card { min-width: 0; padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
@@ -2435,12 +2447,12 @@
   .purchase-receive-line > span:first-child { overflow-wrap: anywhere; }
   .purchase-receive-line__qty input { width: 100%; min-height: 44px; }
   @media (max-width: 56rem) {
-    .purchase-line { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .purchase-line, .purchase-approval-rule { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .purchase-line__remove { justify-self: start; }
   }
   @media (max-width: 40rem) {
     .purchase-grid, .purchase-transition__fields, .purchase-facts { grid-template-columns: minmax(0, 1fr); }
-    .purchase-line { grid-template-columns: minmax(0, 1fr); }
+    .purchase-line, .purchase-approval-rule { grid-template-columns: minmax(0, 1fr); }
     .purchase-card__head { flex-direction: column; }
     .purchase-actions, .purchase-actions form { align-items: stretch; }
     .purchase-actions form { width: 100%; }

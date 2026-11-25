@@ -263,6 +263,51 @@ public sealed class SiteDb
             received_by TEXT NOT NULL
         );
         """,
+        // 8: configurable per-organization purchase-approval chains; request steps are immutable snapshots.
+        """
+        CREATE TABLE purchase_approval_policies (
+            organization_id TEXT PRIMARY KEY,
+            updated_by TEXT NOT NULL,
+            updated_utc TEXT NOT NULL
+        );
+        CREATE TABLE purchase_approval_policy_steps (
+            organization_id TEXT NOT NULL REFERENCES purchase_approval_policies(organization_id) ON DELETE CASCADE,
+            position INTEGER NOT NULL CHECK(position > 0),
+            label TEXT NOT NULL,
+            approver_type TEXT NOT NULL CHECK(approver_type IN ('TeamManager','Lead','Officer','Owner','Email')),
+            approver_value TEXT NOT NULL DEFAULT '',
+            minimum_total_cents INTEGER NOT NULL DEFAULT 0 CHECK(minimum_total_cents >= 0),
+            PRIMARY KEY(organization_id, position)
+        );
+        CREATE TABLE purchase_request_approvals (
+            request_id TEXT NOT NULL REFERENCES purchase_requests(id) ON DELETE CASCADE,
+            position INTEGER NOT NULL CHECK(position > 0),
+            label TEXT NOT NULL,
+            approver_type TEXT NOT NULL CHECK(approver_type IN ('TeamManager','Lead','Officer','Owner','Email')),
+            approver_value TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL CHECK(status IN ('Pending','Approved','Rejected','Skipped')),
+            approved_by TEXT,
+            approved_utc TEXT,
+            note TEXT,
+            PRIMARY KEY(request_id, position)
+        );
+        CREATE INDEX purchase_approvals_by_pending_email ON purchase_request_approvals(approver_type, approver_value, status);
+        INSERT INTO purchase_request_approvals (request_id, position, label, approver_type, approver_value, status)
+            SELECT id, 1, 'Team manager', 'TeamManager', '', 'Pending' FROM purchase_requests WHERE status='Submitted';
+        """,
+        // 9: immutable history of organization approval-policy changes.
+        """
+        CREATE TABLE purchase_approval_policy_events (
+            id INTEGER PRIMARY KEY,
+            organization_id TEXT NOT NULL,
+            action TEXT NOT NULL CHECK(action IN ('Saved','Reset')),
+            actor_email TEXT NOT NULL,
+            at_utc TEXT NOT NULL,
+            previous_policy_json TEXT NOT NULL,
+            new_policy_json TEXT NOT NULL
+        );
+        CREATE INDEX purchase_approval_policy_events_by_org ON purchase_approval_policy_events(organization_id, id);
+        """,
     ];
 
     private static void Migrate(SqliteConnection c)

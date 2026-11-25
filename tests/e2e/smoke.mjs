@@ -23,7 +23,7 @@ const ONLY = process.env.ONLY;
 async function test(name, fn) {
   if (ONLY && !name.includes(ONLY) && !new RegExp(ONLY).test(name)) return;
   try { await fn(); results.push(["PASS", name]); }
-  catch (e) { results.push(["FAIL", name, e.message.split("\n")[0]]); }
+  catch (e) { console.error(e.stack); results.push(["FAIL", name, e.message.split("\n")[0]]); }
 }
 
 const browser = await chromium.launch();
@@ -937,7 +937,7 @@ await test("accounts: organizations with sub-teams, bulk add, leads manage every
   for (const c of [oc, lc, cc, mc, m1c]) await c.close();
 });
 
-await test("purchasing: multi-org requests require team approval before PO and receipt; stock counts cannot be over-received", async () => {
+await test("purchasing: configurable approvals are sequential, tenant-scoped, snapshotted and gate PO/receipt", async () => {
   const as = async (email) => {
     const c = await browser.newContext(); const pg = await c.newPage();
     await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', email);
@@ -946,7 +946,7 @@ await test("purchasing: multi-org requests require team approval before PO and r
   };
   const id = Date.now().toString(36).slice(-5);
   const org = `purch-org-${id}`, team = `purch-team-${id}`, otherOrg = `other-org-${id}`, otherTeam = `other-team-${id}`;
-  const requester = `buyer-${id}@example.com`, lead = `lead-${id}@example.com`, outsider = `outside-${id}@example.com`;
+  const requester = `buyer-${id}@example.com`, lead = `lead-${id}@example.com`, orgLead = `orglead-${id}@example.com`, finance = `finance-${id}@example.com`, outsider = `outside-${id}@example.com`;
   const [oc, op] = await as("owner@example.com");
   await op.goto(BASE + "/admin/people");
   const addTeam = async (parent, name, groupId) => {
@@ -962,8 +962,36 @@ await test("purchasing: multi-org requests require team approval before PO and r
   };
   await addTeam("", "Purchasing org " + id, org); await addTeam(org, "Controls " + id, team);
   await addTeam("", "Other org " + id, otherOrg); await addTeam(otherOrg, "Other team " + id, otherTeam);
-  await addPerson(requester, team, "Lead"); await addPerson(lead, team, "Lead"); await addPerson(outsider, otherTeam, "Lead");
-  await oc.close();
+  await addPerson(requester, team, "Lead"); await addPerson(lead, team, "Lead"); await addPerson(orgLead, org, "Lead");
+  await addPerson(finance, team, "Member"); await addPerson(outsider, otherTeam, "Lead");
+  await op.goto(BASE + "/admin/purchasing");
+  const policyDetails = op.locator("details.purchase-policy").filter({ has: op.locator(`input[name="organizationId"][value="${org}"]`) });
+  await policyDetails.locator("summary").click();
+  const policyForm = policyDetails.locator('form[action="/admin/purchasing/policy"]');
+  await policyForm.locator('input[name="stepLabel"]').nth(0).fill("Team lead review");
+  await policyForm.locator('select[name="stepType"]').nth(0).selectOption("Lead");
+  await policyForm.locator('input[name="stepMinimum"]').nth(0).fill("0");
+  await policyForm.locator('input[name="stepLabel"]').nth(1).fill("Owner review");
+  await policyForm.locator('select[name="stepType"]').nth(1).selectOption("Owner");
+  await policyForm.locator('input[name="stepMinimum"]').nth(1).fill("10");
+  await policyForm.locator('input[name="stepLabel"]').nth(2).fill("High-value finance review");
+  await policyForm.locator('select[name="stepType"]').nth(2).selectOption("Email");
+  await policyForm.locator('input[name="stepEmail"]').nth(2).fill(finance);
+  await policyForm.locator('input[name="stepMinimum"]').nth(2).fill("1000");
+  await policyForm.getByRole("button", { name: /Save approval chain for/ }).click(); await op.waitForURL(/done=policy/);
+  const policyToken = await policyForm.locator('input[name="__RequestVerificationToken"]').first().inputValue();
+  const invalidEmailPolicy = await op.request.post(`${BASE}/admin/purchasing/policy`, { form: {
+    organizationId: org, stepLabel: "Outside approver", stepType: "Email", stepEmail: outsider, stepMinimum: "0", __RequestVerificationToken: policyToken
+  }, maxRedirects: 0 });
+  assert.match(invalidEmailPolicy.headers().location ?? "", /error=policy-approver/, "specific approvers must belong to this organization");
+  const duplicatePolicyForm = new URLSearchParams();
+  for (const [key, value] of [["organizationId", org], ["stepLabel", "Finance one"], ["stepLabel", "Finance two"],
+    ["stepType", "Email"], ["stepType", "Email"], ["stepEmail", finance], ["stepEmail", finance],
+    ["stepMinimum", "0"], ["stepMinimum", "1000"], ["__RequestVerificationToken", policyToken]]) duplicatePolicyForm.append(key, value);
+  const duplicateApproverPolicy = await op.request.post(`${BASE}/admin/purchasing/policy`, {
+    data: duplicatePolicyForm.toString(), headers: { "Content-Type": "application/x-www-form-urlencoded" }, maxRedirects: 0
+  });
+  assert.match(duplicateApproverPolicy.headers().location ?? "", /error=policy-approver/, "one named approver cannot satisfy two distinct stages");
 
   const [rc, rp] = await as(requester);
   await rp.goto(BASE + "/admin/purchasing");
@@ -998,6 +1026,51 @@ await test("purchasing: multi-org requests require team approval before PO and r
   const selfApprove = await rp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/approve`, { form: { note: "self", __RequestVerificationToken: requestToken }, maxRedirects: 0 });
   assert.match(selfApprove.headers().location, /error=self/);
   assert.equal(await rp.locator("[data-request]").first().getAttribute("data-status"), "Submitted");
+  const ownerTokenBeforeLead = await op.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').first().inputValue();
+  const outOfTurn = await op.request.post(`${BASE}/admin/purchasing/requests/${requestId}/approve`, { form: { note: "out of turn", __RequestVerificationToken: ownerTokenBeforeLead }, maxRedirects: 0 });
+  assert.equal(outOfTurn.status(), 404, "the later owner stage cannot approve while the lead stage is pending");
+
+  // A request at the exact $1,000 boundary gets the finance step.
+  await rp.selectOption('select[name="teamId"]', team);
+  await rp.fill('input[name="title"]', "High threshold request"); await rp.fill('input[name="supplier"]', "DigiKey");
+  await rp.locator('input[name="itemName"]').nth(0).fill("Controller board");
+  await rp.locator('input[name="quantity"]').nth(0).fill("1"); await rp.locator('input[name="unitPrice"]').nth(0).fill("1000.00");
+  await rp.locator('textarea[name="purpose"]').fill("Replace the controller board.");
+  await rp.locator('textarea[name="rationale"]').fill("The replacement is the approved compatible part.");
+  await rp.getByRole("button", { name: "Submit purchase request" }).click(); await rp.waitForURL(/done=submitted/);
+  const highRequest = rp.locator("[data-request]").filter({ hasText: "High threshold request" });
+  const highRequestId = await highRequest.getAttribute("data-request");
+  assert.equal(await highRequest.locator("[data-approval-step]").count(), 3, "the $1,000 threshold is inclusive");
+  assert.equal(await highRequest.locator('[data-approval-step="3"]').getAttribute("data-approval-status"), "Pending");
+
+  // Changing the organization policy does not rewrite an already-submitted request's approval snapshot.
+  await op.goto(BASE + "/admin/purchasing");
+  const resetDetails = op.locator("details.purchase-policy").filter({ has: op.locator(`input[name="organizationId"][value="${org}"]`) });
+  await resetDetails.locator("summary").first().click();
+  const resetPolicy = resetDetails.locator('form[action="/admin/purchasing/policy/reset"]');
+  await resetPolicy.getByRole("button", { name: "Reset to the default one-step chain" }).click(); await op.waitForURL(/done=policy-reset/);
+  await resetDetails.locator("summary").first().click();
+  const history = resetDetails.locator("details.purchase-policy-history");
+  await history.locator("summary").click();
+  assert.match(await history.innerText(), /Reset to default[\s\S]*Saved approval chain/, "policy edits and reset are auditable, newest first");
+  await rp.reload();
+  const requestAfterPolicyReset = rp.locator(`[data-request="${requestId}"]`);
+  assert.equal(await requestAfterPolicyReset.locator("[data-approval-step]").count(), 2, "threshold removes the $1,000 stage; the in-flight request retains its two-step snapshot");
+  assert.equal(await requestAfterPolicyReset.locator('[data-approval-step="3"]').count(), 0, "the above-threshold stage is not included");
+  const highRequestAfterReset = rp.locator(`[data-request="${highRequestId}"]`);
+  assert.equal(await highRequestAfterReset.locator("[data-approval-step]").count(), 3, "the high-value request also keeps its configured snapshot after reset");
+
+  await rp.selectOption('select[name="teamId"]', team);
+  await rp.fill('input[name="title"]', "Default fallback request"); await rp.fill('input[name="supplier"]', "DigiKey");
+  await rp.locator('input[name="itemName"]').nth(0).fill("Fallback part");
+  await rp.locator('input[name="quantity"]').nth(0).fill("1"); await rp.locator('input[name="unitPrice"]').nth(0).fill("2.00");
+  await rp.locator('textarea[name="purpose"]').fill("Check the default approval route.");
+  await rp.locator('textarea[name="rationale"]').fill("This verifies the safe default remains active after policy reset.");
+  await rp.getByRole("button", { name: "Submit purchase request" }).click(); await rp.waitForURL(/done=submitted/);
+  const defaultRequest = rp.locator("[data-request]").filter({ hasText: "Default fallback request" });
+  assert.equal(await defaultRequest.locator("[data-approval-step]").count(), 1, "an organization without a custom policy gets one default stage");
+  assert.match(await defaultRequest.locator('[data-approval-step="1"]').innerText(), /Team manager[\s\S]*Waiting/);
+  await oc.close();
 
   // Another org's lead gets a generic 404 and cannot approve by forging the request id.
   const [xc, xp] = await as(outsider); await xp.goto(BASE + "/admin/purchasing");
@@ -1005,6 +1078,12 @@ await test("purchasing: multi-org requests require team approval before PO and r
   const outsiderToken = await xp.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
   const crossApprove = await xp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/approve`, { form: { note: "forged", __RequestVerificationToken: outsiderToken }, maxRedirects: 0 });
   assert.equal(crossApprove.status(), 404);
+  const unauthorizedPolicy = await xp.request.post(`${BASE}/admin/purchasing/policy`, { form: {
+    organizationId: otherOrg, stepLabel: "Forged", stepType: "Owner", stepEmail: "", stepMinimum: "0", __RequestVerificationToken: outsiderToken
+  }, maxRedirects: 0 });
+  assert.equal(unauthorizedPolicy.status(), 404, "a team lead cannot configure an approval policy for another organization");
+  const unauthorizedReset = await xp.request.post(`${BASE}/admin/purchasing/policy/reset`, { form: { organizationId: org, __RequestVerificationToken: outsiderToken }, maxRedirects: 0 });
+  assert.equal(unauthorizedReset.status(), 404, "a team lead cannot reset another organization's approval policy");
 
   const [lc, lp] = await as(lead); await lp.goto(BASE + "/admin/purchasing");
   const leadReq = lp.locator(`[data-request="${requestId}"]`);
@@ -1014,11 +1093,30 @@ await test("purchasing: multi-org requests require team approval before PO and r
   const earlyOrder = await lp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/order`, { form: { vendorReference: "EARLY", orderedDate: new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" }), __RequestVerificationToken: leadToken }, maxRedirects: 0 });
   assert.match(earlyOrder.headers().location, /error=state/);
   assert.equal(await leadReq.getAttribute("data-status"), "Submitted", "an unapproved request cannot become an order");
-  await leadReq.getByRole("button", { name: "Approve" }).click(); await lp.waitForURL(/done=approved/);
-  assert.equal(await lp.locator(`[data-request="${requestId}"]`).getAttribute("data-status"), "Approved");
-  const orderDate = await lp.locator(`[data-request="${requestId}"] input[name="orderedDate"]`).inputValue();
-  await lp.locator(`[data-request="${requestId}"] input[name="vendorReference"]`).fill("SUPPLIER-456");
-  await lp.locator(`[data-request="${requestId}"]`).getByRole("button", { name: "Mark ordered" }).click(); await lp.waitForURL(/done=ordered/);
+  await leadReq.getByRole("button", { name: "Approve" }).click(); await lp.waitForURL(/done=step-approved/);
+  assert.equal(await lp.locator(`[data-request="${requestId}"]`).getAttribute("data-status"), "Submitted", "first approval advances the chain but does not authorize ordering");
+  assert.equal(await leadReq.locator('[data-approval-step="1"]').getAttribute("data-approval-status"), "Approved");
+  assert.equal(await leadReq.locator('[data-approval-step="2"]').getAttribute("data-approval-status"), "Pending");
+  assert.equal(await leadReq.locator('input[name="orderedDate"]').count(), 0, "an intermediate approval does not expose order entry");
+  const intermediateOrder = await lp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/order`, { form: {
+    vendorReference: "INTERMEDIATE", orderedDate: new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" }), __RequestVerificationToken: leadToken
+  }, maxRedirects: 0 });
+  assert.match(intermediateOrder.headers().location, /error=state/, "the server blocks ordering before the final approval");
+  const prematureReceipt = await lp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/receive`, { form: {
+    receivedDate: new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" }), lineId: "1", receiveQuantity: "1", __RequestVerificationToken: leadToken
+  }, maxRedirects: 0 });
+  assert.match(prematureReceipt.headers().location, /error=date/, "the server blocks receiving before an order exists");
+  const [fc, fp] = await as("owner@example.com"); await fp.goto(BASE + "/admin/purchasing");
+  const ownerReq = fp.locator(`[data-request="${requestId}"]`);
+  await ownerReq.getByRole("button", { name: "Approve" }).click(); await fp.waitForURL(/done=approved/);
+  assert.equal(await ownerReq.getAttribute("data-status"), "Approved", "the final configured approval enables ordering");
+  await fc.close();
+  await lp.reload();
+  const approvedReq = lp.locator(`[data-request="${requestId}"]`);
+  assert.equal(await approvedReq.getAttribute("data-status"), "Approved");
+  const orderDate = await approvedReq.locator('input[name="orderedDate"]').inputValue();
+  await approvedReq.locator('input[name="vendorReference"]').fill("SUPPLIER-456");
+  await approvedReq.getByRole("button", { name: "Mark ordered" }).click(); await lp.waitForURL(/done=ordered/);
   const ordered = lp.locator(`[data-request="${requestId}"]`);
   assert.equal(await ordered.getAttribute("data-status"), "Ordered");
   assert.match(await ordered.innerText(), /PO-PURCH-ORG-/i);
@@ -1045,7 +1143,163 @@ await test("purchasing: multi-org requests require team approval before PO and r
   await complete.locator(".purchase-card__details summary").click();
   assert.match(await complete.innerText(), /2 \/ 2/);
   assert.match(await complete.locator(".purchase-history").innerText(), /Submitted[\s\S]*Approved[\s\S]*Marked ordered[\s\S]*Partially received[\s\S]*Received items/);
+
+  await lp.reload();
+  const highLead = lp.locator(`[data-request="${highRequestId}"]`);
+  await highLead.getByRole("button", { name: "Approve" }).click(); await lp.waitForURL(/done=step-approved/);
+  const [hc, hp] = await as("owner@example.com"); await hp.goto(BASE + "/admin/purchasing");
+  const highOwner = hp.locator(`[data-request="${highRequestId}"]`);
+  await highOwner.getByRole("button", { name: "Approve" }).click(); await hp.waitForURL(/done=step-approved/); await hc.close();
+  const [fc2, fp2] = await as(finance); await fp2.goto(BASE + "/admin/purchasing");
+  const financeReq = fp2.locator(`[data-request="${highRequestId}"]`);
+  assert.equal(await financeReq.locator('[data-approval-step="3"]').getAttribute("data-approval-status"), "Pending");
+  await financeReq.getByRole("button", { name: "Approve" }).click(); await fp2.waitForURL(/done=approved/);
+  assert.equal(await financeReq.getAttribute("data-status"), "Approved", "the threshold-selected finance approver completes the chain");
+  await fc2.close();
   for (const c of [rc, xc, lc]) await c.close();
+});
+
+await test("purchasing: rejection at a later configured step is terminal", async () => {
+  const as = async (email) => {
+    const c = await browser.newContext(); const pg = await c.newPage();
+    await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', email);
+    await pg.getByRole("button", { name: "Sign in (dev only)" }).click(); await pg.waitForLoadState();
+    return [c, pg];
+  };
+  const id = Date.now().toString(36).slice(-5);
+  const org = `rejection-org-${id}`, team = `rejection-team-${id}`;
+  const requester = `buyer-${id}@example.com`, approver = `reviewer-${id}@example.com`;
+  const [oc, op] = await as("owner@example.com"); await op.goto(BASE + "/admin/people");
+  const addTeam = async (parent, name, groupId) => {
+    await op.click("text=Add a team"); await op.selectOption("#g-parent", parent);
+    await op.fill("#g-name", name); await op.fill("#g-id", groupId);
+    await op.getByRole("button", { name: "Add team" }).click();
+    assert.match(await op.locator("main").innerText(), /Team added/);
+  };
+  const addPerson = async (email, role) => {
+    await op.fill("#add-list", email); await op.selectOption("#add-team", team); await op.selectOption("#add-role", role);
+    await op.getByRole("button", { name: "Add", exact: true }).click(); await op.locator(".alert").first().waitFor();
+  };
+  await addTeam("", "Rejection test org " + id, org); await addTeam(org, "Team " + id, team);
+  await addPerson(requester, "Member"); await addPerson(approver, "Member");
+  await op.goto(BASE + "/admin/purchasing");
+  const policyDetails = op.locator("details.purchase-policy").filter({ has: op.locator(`input[name="organizationId"][value="${org}"]`) });
+  await policyDetails.locator("summary").click();
+  const policyForm = policyDetails.locator('form[action="/admin/purchasing/policy"]');
+  await policyForm.locator('input[name="stepLabel"]').nth(0).fill("Named account review");
+  await policyForm.locator('select[name="stepType"]').nth(0).selectOption("Email");
+  await policyForm.locator('input[name="stepEmail"]').nth(0).fill(approver);
+  await policyForm.locator('input[name="stepMinimum"]').nth(0).fill("0");
+  await policyForm.locator('input[name="stepLabel"]').nth(1).fill("Owner review");
+  await policyForm.locator('select[name="stepType"]').nth(1).selectOption("Owner");
+  await policyForm.locator('input[name="stepMinimum"]').nth(1).fill("0");
+  await policyForm.getByRole("button", { name: /Save approval chain for/ }).click(); await op.waitForURL(/done=policy/);
+  await oc.close();
+
+  const [rc, rp] = await as(requester); await rp.goto(BASE + "/admin/purchasing");
+  await rp.selectOption('select[name="teamId"]', team);
+  await rp.fill('input[name="title"]', "Connector replacement"); await rp.fill('input[name="supplier"]', "Parts supplier");
+  await rp.locator('input[name="itemName"]').nth(0).fill("Connector");
+  await rp.locator('input[name="quantity"]').nth(0).fill("1"); await rp.locator('input[name="unitPrice"]').nth(0).fill("12.00");
+  await rp.locator('textarea[name="purpose"]').fill("Replace a damaged connector.");
+  await rp.locator('textarea[name="rationale"]').fill("The replacement matches the existing wiring.");
+  await rp.getByRole("button", { name: "Submit purchase request" }).click(); await rp.waitForURL(/done=submitted/);
+  const requestId = await rp.locator("[data-request]").first().getAttribute("data-request");
+
+  const [uc, up] = await as("owner@example.com"); await up.goto(BASE + "/admin/purchasing");
+  const unassignedOwnerView = up.locator(`[data-request="${requestId}"]`);
+  assert.equal(await unassignedOwnerView.getByRole("button", { name: "Approve" }).count(), 0, "a site owner cannot bypass a specific-email approval stage");
+  const ownerToken = await up.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
+  const wrongApprover = await up.request.post(`${BASE}/admin/purchasing/requests/${requestId}/approve`, { form: { note: "wrong actor", __RequestVerificationToken: ownerToken }, maxRedirects: 0 });
+  assert.equal(wrongApprover.status(), 404, "approval identity is enforced on the server");
+  await uc.close();
+
+  const [lc, lp] = await as(approver); await lp.goto(BASE + "/admin/purchasing");
+  const approverRequest = lp.locator(`[data-request="${requestId}"]`);
+  await approverRequest.getByRole("button", { name: "Approve" }).click(); await lp.waitForURL(/done=step-approved/);
+  assert.equal(await approverRequest.getAttribute("data-status"), "Submitted");
+  assert.equal(await approverRequest.locator('[data-approval-step="2"]').getAttribute("data-approval-status"), "Pending");
+
+  const [fc, fp] = await as("owner@example.com"); await fp.goto(BASE + "/admin/purchasing");
+  const ownerRequest = fp.locator(`[data-request="${requestId}"]`);
+  await ownerRequest.locator('form[action$="/reject"] input[name="note"]').fill("The request needs a more specific vendor quote.");
+  await ownerRequest.getByRole("button", { name: "Reject", exact: true }).click(); await fp.waitForURL(/done=rejected/);
+  assert.equal(await ownerRequest.getAttribute("data-status"), "Rejected");
+  assert.equal(await ownerRequest.locator('input[name="orderedDate"]').count(), 0, "rejected requests cannot be ordered");
+  await ownerRequest.locator(".purchase-card__details summary").click();
+  assert.match(await ownerRequest.locator(".purchase-history").innerText(), /Approval step approved[\s\S]*Rejected at approval step[\s\S]*Rejected/);
+  for (const c of [rc, lc, fc]) await c.close();
+});
+
+await test("purchasing: site owner can close a request if its snapshotted approver disappears", async () => {
+  const as = async (email) => {
+    const c = await browser.newContext(); const pg = await c.newPage();
+    await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', email);
+    await pg.getByRole("button", { name: "Sign in (dev only)" }).click(); await pg.waitForURL((u) => !u.pathname.startsWith("/admin/login"));
+    return [c, pg];
+  };
+  const id = Date.now().toString(36).slice(-5), org = `orphan-org-${id}`, team = `orphan-team-${id}`;
+  const requester = `orphan-buyer-${id}@example.com`, approver = `orphan-reviewer-${id}@example.com`;
+  const [oc, op] = await as("owner@example.com"); await op.goto(BASE + "/admin/people");
+  const addTeam = async (parent, name, groupId) => {
+    await op.click("text=Add a team"); await op.selectOption("#g-parent", parent);
+    await op.fill("#g-name", name); await op.fill("#g-id", groupId); await op.getByRole("button", { name: "Add team" }).click();
+    assert.match(await op.locator("main").innerText(), /Team added/);
+  };
+  const addPerson = async (email) => {
+    await op.fill("#add-list", email); await op.selectOption("#add-team", team); await op.selectOption("#add-role", "Member");
+    await op.getByRole("button", { name: "Add", exact: true }).click(); await op.locator(".alert").first().waitFor();
+  };
+  await addTeam("", "Orphan approval org " + id, org); await addTeam(org, "Orphan approval team " + id, team);
+  await addPerson(requester); await addPerson(approver);
+  await op.goto(BASE + "/admin/purchasing");
+  const policy = op.locator("details.purchase-policy").filter({ has: op.locator(`input[name="organizationId"][value="${org}"]`) });
+  await policy.locator("summary").first().click();
+  const form = policy.locator('form[action="/admin/purchasing/policy"]');
+  await form.locator('input[name="stepLabel"]').first().fill("Assigned reviewer");
+  await form.locator('select[name="stepType"]').first().selectOption("Email");
+  await form.locator('input[name="stepEmail"]').first().fill(approver);
+  await form.locator('input[name="stepMinimum"]').first().fill("0");
+  await form.getByRole("button", { name: /Save approval chain for/ }).click(); await op.waitForURL(/done=policy/);
+
+  const [rc, rp] = await as(requester); await rp.goto(BASE + "/admin/purchasing");
+  await rp.selectOption('select[name="teamId"]', team); await rp.fill('input[name="title"]', "Orphaned approval request");
+  await rp.fill('input[name="supplier"]', "Parts supplier"); await rp.locator('input[name="itemName"]').first().fill("Connector");
+  await rp.locator('input[name="quantity"]').first().fill("1"); await rp.locator('input[name="unitPrice"]').first().fill("12.00");
+  await rp.locator('textarea[name="purpose"]').fill("Replace a damaged connector.");
+  await rp.locator('textarea[name="rationale"]').fill("The replacement matches the existing wiring.");
+  await rp.getByRole("button", { name: "Submit purchase request" }).click(); await rp.waitForURL(/done=submitted/);
+  const requestId = await rp.locator("[data-request]").first().getAttribute("data-request");
+
+  await op.goto(BASE + "/admin/people");
+  await op.locator(`[data-person="${approver}"] .team-chip__x`).click();
+  assert.match(await op.locator("main").innerText(), /Removed/);
+  const requesterToken = await rp.locator('form[action="/admin/purchasing/requests"] input[name="__RequestVerificationToken"]').inputValue();
+  const deniedOverride = await rp.request.post(`${BASE}/admin/purchasing/requests/${requestId}/override-reject`, {
+    form: { note: "not an owner", __RequestVerificationToken: requesterToken }, maxRedirects: 0
+  });
+  assert.equal(deniedOverride.status(), 404, "only a site owner can use the terminal override");
+
+  await op.goto(BASE + "/admin/purchasing");
+  const ownerRequest = op.locator(`[data-request="${requestId}"]`);
+  assert.equal(await ownerRequest.getByRole("button", { name: "Approve", exact: true }).count(), 0, "an owner cannot impersonate the missing reviewer");
+  assert.equal(await ownerRequest.getByRole("button", { name: "Reject", exact: true }).count(), 0, "normal rejection remains bound to the current step");
+  await op.setViewportSize({ width: 390, height: 844 });
+  const mobileWidth = await op.evaluate(() => ({ client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
+  assert.ok(mobileWidth.scroll <= mobileWidth.client, `owner override page must not overflow on mobile: ${JSON.stringify(mobileWidth)}`);
+  const override = ownerRequest.locator('form[action$="/override-reject"]');
+  const overrideBox = await override.boundingBox();
+  assert.ok(overrideBox && overrideBox.x >= 0 && overrideBox.x + overrideBox.width <= 390, "owner override form fits the mobile viewport");
+  await override.locator('input[name="note"]').fill("The assigned approver left the organization; closing safely.");
+  await override.getByRole("button", { name: "Reject as site owner" }).click(); await op.waitForURL(/done=override-rejected/);
+  const rejected = op.locator(`[data-request="${requestId}"]`);
+  assert.equal(await rejected.getAttribute("data-status"), "Rejected");
+  assert.equal(await rejected.locator('[data-approval-step="1"]').getAttribute("data-approval-status"), "Skipped");
+  assert.match(await rejected.locator('[data-approval-step="1"]').innerText(), /Skipped by site owner[\s\S]*The assigned approver left/);
+  await rejected.locator(".purchase-card__details summary").click();
+  assert.match(await rejected.locator(".purchase-history").innerText(), /Rejected by site owner \(override\)[\s\S]*The assigned approver left/);
+  assert.equal(await rejected.locator('input[name="orderedDate"]').count(), 0, "owner override cannot create an order");
+  await rc.close(); await oc.close();
 });
 
 await test("accounts: the owner can also be on teams (e.g. lead of SMS); co-leads are allowed", async () => {
@@ -1167,11 +1421,14 @@ async function siteDb() {
 }
 const signIn = async (email) => {
   const c = await browser.newContext({ viewport: { width: 1280, height: 900 } }); const pg = await c.newPage();
-  await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', email); await pg.click("text=Sign in (dev only)");
-  await pg.waitForLoadState(); return [c, pg];
+  await pg.goto(BASE + "/admin/login"); await pg.selectOption('select[name="email"]', email); await pg.getByRole("button", { name: "Sign in (dev only)" }).click();
+  await pg.waitForURL((url) => !url.pathname.startsWith("/admin/login"), { timeout: 10_000 });
+  await pg.waitForLoadState("domcontentloaded"); return [c, pg];
 };
 const addPerson = async (pg, list, team, role = "Member") => {
-  await pg.goto(BASE + "/admin/people");
+  const response = await pg.goto(BASE + "/admin/people");
+  assert.equal(response?.status(), 200, `/admin/people should load for ${pg.url()}: ${await pg.locator("main").innerText()}`);
+  await pg.locator("#add-list").waitFor({ state: "visible", timeout: 10_000 });
   await pg.fill("#add-list", list); await pg.selectOption("#add-team", team); await pg.selectOption("#add-role", role);
   await Promise.all([pg.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/admin/people"), pg.getByRole("button", { name: "Add", exact: true }).click()]);
 };

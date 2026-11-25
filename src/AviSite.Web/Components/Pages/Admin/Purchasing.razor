@@ -16,11 +16,79 @@
             <div>
                 <p class="eyebrow">Team operations</p>
                 <h1 class="h1">Purchasing</h1>
-                <p class="muted">Request what your team needs. Leads review requests; approved requests get a purchase-order number and delivery tracking.</p>
+                <p class="muted">Request what your team needs. Requests follow the organization’s configured approval chain; approved requests get a purchase-order number and delivery tracking.</p>
             </div>
         </div>
 
         @if (Message is { } message) { <p class="alert @(Done is not null ? "alert--ok" : "")" role="status">@message</p> }
+
+        @if (policyOrgs.Count > 0)
+        {
+            <section class="purchasing__new purchasing__policy" aria-labelledby="purchase-policy-title">
+                <h2 class="h3" id="purchase-policy-title">Approval chains</h2>
+                <p class="muted">Set the approval sequence for each organization. Each request keeps the chain it was submitted with; only the current step can act.</p>
+                @foreach (var org in policyOrgs)
+                {
+                    var configured = policies.TryGetValue(org.Id, out var saved) ? saved : Array.Empty<PurchaseApprovalRule>();
+                    var hasCustomPolicy = configured.Count > 0;
+                    <details class="purchase-policy">
+                        <summary>@org.Name · @(hasCustomPolicy ? $"{configured.Count} configured step(s)" : "default: team manager")</summary>
+                        <form method="post" action="/admin/purchasing/policy" class="form purchase-policy__form">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="organizationId" value="@org.Id" />
+                            <div class="purchase-approval-rules">
+                                @for (var i = 0; i < 5; i++)
+                                {
+                                    var rule = configured.FirstOrDefault(x => x.Position == i + 1);
+                                    var label = rule?.Label ?? (i == 0 && !hasCustomPolicy ? "Team manager" : "");
+                                    var type = rule?.ApproverType ?? (i == 0 && !hasCustomPolicy ? "TeamManager" : "");
+                                    var minimum = rule is not null ? PolicyMoney(rule.MinimumTotalCents) : i == 0 && !hasCustomPolicy ? "0.00" : "";
+                                    <fieldset class="purchase-approval-rule">
+                                        <legend>Step @(i + 1)</legend>
+                                        <label class="field"><span class="label">Step name</span><input name="stepLabel" maxlength="80" value="@label" placeholder="e.g. Team lead" /></label>
+                                        <label class="field"><span class="label">Who approves?</span>
+                                            <select name="stepType">
+                                                <option value="" selected="@(type == "")">Not used</option>
+                                                <option value="TeamManager" selected="@(type == "TeamManager")">Team manager</option>
+                                                <option value="Lead" selected="@(type == "Lead")">Team lead only</option>
+                                                <option value="Officer" selected="@(type == "Officer")">AVI officer</option>
+                                                <option value="Owner" selected="@(type == "Owner")">Site owner</option>
+                                                <option value="Email" selected="@(type == "Email")">Specific account</option>
+                                            </select>
+                                        </label>
+                                        <label class="field"><span class="label">Specific account email <span class="muted">(only for that option)</span></span><input name="stepEmail" type="email" maxlength="254" value="@rule?.ApproverValue" placeholder="name@example.com" /></label>
+                                        <label class="field"><span class="label">Minimum request total (USD)</span><input name="stepMinimum" type="number" min="0" step="0.01" value="@minimum" placeholder="0.00" /></label>
+                                    </fieldset>
+                                }
+                            </div>
+                            <p class="field__hint">Stages run top to bottom. A stage applies at or above its minimum total; the first stage must start at $0. Thresholds must not decrease. Each step needs a distinct eligible approver; specific accounts must belong to this organization.</p>
+                            <div class="purchase-form__actions"><button class="btn btn--accent" type="submit">Save approval chain for @org.Name</button></div>
+                        </form>
+                        @if (hasCustomPolicy)
+                        {
+                            <form method="post" action="/admin/purchasing/policy/reset" class="purchase-policy__reset">
+                                <AntiforgeryToken /><input type="hidden" name="organizationId" value="@org.Id" />
+                                <button class="link-button" type="submit">Reset to the default one-step chain</button>
+                            </form>
+                        }
+                        @if (policyHistory.TryGetValue(org.Id, out var changes) && changes.Count > 0)
+                        {
+                            <details class="purchase-policy-history">
+                                <summary>Policy change history</summary>
+                                <ol>
+                                    @foreach (var change in changes)
+                                    {
+                                        <li><strong>@(change.Action == "Reset" ? "Reset to default" : "Saved approval chain")</strong> · @Requester(change.ActorEmail) · @PacificStamp(change.AtUtc)
+                                            @if (change.Action == "Saved") { <span> · @string.Join(" → ", change.NewRules.Select(rule => $"{rule.Label} ({rule.ApproverType}, ≥ {PolicyMoney(rule.MinimumTotalCents)})"))</span> }
+                                        </li>
+                                    }
+                                </ol>
+                            </details>
+                        }
+                    </details>
+                }
+            </section>
+        }
 
         @if (teams.Count == 0)
         {
@@ -100,6 +168,9 @@
                     @foreach (var request in requests)
                     {
                         var canManage = CanManage(request);
+                        var canApprove = Store.CanDecide(access, request, allAccounts, true);
+                        var canReject = Store.CanDecide(access, request, allAccounts, false);
+                        var currentApprovalPosition = request.Approvals.FirstOrDefault(x => x.Status == "Pending")?.Position;
                         <article class="purchase-card" data-request="@request.Id" data-status="@request.Status">
                             <header class="purchase-card__head">
                                 <div><p class="eyebrow">@request.Code · @Path(request.TeamId)</p><h3 class="h4">@request.Title</h3>
@@ -112,6 +183,24 @@
                                 <span class="purchase-card__total">Estimate: @Money.Format(request.EstimatedTotalCents)</span>
                                 @if (request.PurchaseOrderCode is not null) { <span class="mono purchase-card__po">@request.PurchaseOrderCode</span> }
                             </div>
+                            @if (request.Approvals.Count > 0)
+                            {
+                                <div class="purchase-approval-chain" aria-label="Approval chain for @request.Code">
+                                    <p class="small muted"><strong>Approval progress</strong></p>
+                                    <ol>
+                                        @foreach (var step in request.Approvals)
+                                        {
+                                            <li data-approval-step="@step.Position" data-approval-status="@step.Status">
+                                                <strong>@step.Position. @step.Label</strong> · @(step.Status switch { "Pending" => "Waiting", "Approved" => "Approved", "Rejected" => "Rejected", "Skipped" => "Skipped by site owner", _ => step.Status })
+                                                @if (step.Status == "Skipped" && step.Note is { } skippedNote) { <span class="muted"> · @skippedNote</span> }
+                                                @if (step.ApproverType == "Email") { <span> · assigned to @step.ApproverValue</span> }
+                                                @if (step.ApprovedBy is { } approvedBy) { <span class="muted"> · @Requester(approvedBy)@if (step.ApprovedUtc is { } approvedAt) { <span> · @PacificStamp(approvedAt)</span> }</span> }
+                                                @if (step.Status == "Pending" && step.Position == currentApprovalPosition) { <span class="muted"> · current step</span> }
+                                            </li>
+                                        }
+                                    </ol>
+                                </div>
+                            }
                             <details class="purchase-card__details">
                                 <summary>Request details and activity</summary>
                                 <div class="purchase-details">
@@ -147,12 +236,27 @@
                                     </div>
                                 </div>
                             </details>
-                            @if (request.Status == PurchaseStatus.Submitted && canManage && !string.Equals(request.RequesterEmail, email, StringComparison.OrdinalIgnoreCase))
+                            @if (request.Status == PurchaseStatus.Submitted && (canApprove || canReject))
                             {
                                 <div class="purchase-actions">
-                                    <form method="post" action="/admin/purchasing/requests/@request.Id/approve"><AntiforgeryToken /><label class="field purchase-note"><span class="label">Approval note <span class="muted">(optional)</span></span><input name="note" maxlength="240" /></label><button class="btn btn--ok" type="submit">Approve</button></form>
-                                    <form method="post" action="/admin/purchasing/requests/@request.Id/reject"><AntiforgeryToken /><label class="field purchase-note"><span class="label">Reason for rejecting</span><input name="note" maxlength="240" required /></label><button class="btn btn--ghost" type="submit">Reject</button></form>
+                                    @if (canApprove)
+                                    {
+                                        <form method="post" action="/admin/purchasing/requests/@request.Id/approve"><AntiforgeryToken /><label class="field purchase-note"><span class="label">Approval note <span class="muted">(optional)</span></span><input name="note" maxlength="240" /></label><button class="btn btn--ok" type="submit">Approve</button></form>
+                                    }
+                                    @if (canReject)
+                                    {
+                                        <form method="post" action="/admin/purchasing/requests/@request.Id/reject"><AntiforgeryToken /><label class="field purchase-note"><span class="label">Reason for rejecting</span><input name="note" maxlength="240" required /></label><button class="btn btn--ghost" type="submit">Reject</button></form>
+                                    }
                                 </div>
+                            }
+                            @if (access.IsOwner && request.Status == PurchaseStatus.Submitted)
+                            {
+                                <form method="post" action="/admin/purchasing/requests/@request.Id/override-reject" class="form purchase-override">
+                                    <AntiforgeryToken />
+                                    <p class="small muted">Owner-only emergency action for an unavailable or orphaned approver. This rejects the request; it never approves or orders it.</p>
+                                    <label class="field"><span class="label">Reason for owner override</span><input name="note" maxlength="240" required /></label>
+                                    <button class="btn btn--ghost" type="submit">Reject as site owner</button>
+                                </form>
                             }
                             @if (request.Status == PurchaseStatus.Approved && canManage)
                             {
@@ -192,10 +296,15 @@
 
     private Access access = new();
     private string email = "";
+    private List<Account> allAccounts = [];
     private List<AccountGroup> teams = [];
     private List<PurchaseRequest> requests = [];
+    private List<AccountGroup> policyOrgs = [];
+    private Dictionary<string, IReadOnlyList<PurchaseApprovalRule>> policies = [];
+    private Dictionary<string, IReadOnlyList<PurchasePolicyEvent>> policyHistory = [];
     private Dictionary<string, Account> people = [];
     private string Today { get; set; } = "";
+    private static string PolicyMoney(long cents) => (cents / 100m).ToString("0.00", CultureInfo.InvariantCulture);
     private string Indent(AccountGroup group) => new('\u00a0', access.Tree.Depth(group.Id) * 3);
     private string Path(string team) => access.Tree.Path(team);
     private string Requester(string who) => people.TryGetValue(who, out var person) ? JsonAccountStore.DisplayName(person) : who;
@@ -214,8 +323,11 @@
     private static string EventLabel(string action) => action switch
     {
         "Submitted" => "Submitted",
-        "Approved" => "Approved",
+        "ApprovalStepApproved" => "Approval step approved",
+        "ApprovalStepRejected" => "Rejected at approval step",
+        "Approved" => "Approved · all steps complete",
         "Rejected" => "Rejected",
+        "OwnerOverrideRejected" => "Rejected by site owner (override)",
         "Ordered" => "Marked ordered",
         "Received" => "Received items",
         "PartiallyReceived" => "Partially received",
@@ -224,9 +336,13 @@
 
     private string? Message => (Done, Error) switch
     {
-        ("submitted", _) => $"Request {CreatedCode ?? ""} submitted. Your lead can review it.",
-        ("approved", _) => $"Request {CreatedCode ?? ""} approved. Record the supplier order when it’s placed.",
+        ("submitted", _) => $"Request {CreatedCode ?? ""} submitted. The first eligible approver can review it.",
+        ("step-approved", _) => $"Approval step recorded for {CreatedCode ?? "this request"}; it is waiting for the next approver.",
+        ("approved", _) => $"Request {CreatedCode ?? ""} fully approved. Record the supplier order when it’s placed.",
+        ("policy", _) => "Approval chain saved. New requests will use it; requests already submitted keep their original chain.",
+        ("policy-reset", _) => "Approval chain reset to the default one-step team-manager review.",
         ("rejected", _) => $"Request {CreatedCode ?? ""} rejected.",
+        ("override-rejected", _) => $"Request {CreatedCode ?? ""} rejected by the site owner with an audited override.",
         ("ordered", _) => $"Purchase order created for {CreatedCode ?? "this request"}.",
         ("received", _) => "Receipt recorded.",
         (_, "team") => "Choose one of the teams you belong to or lead.",
@@ -234,6 +350,8 @@
         (_, "url") => "Enter a full http or https link, or leave the link blank.",
         (_, "date") => "Check the date. Delivery cannot be in the past; order and receipt dates must follow the request lifecycle.",
         (_, "cost") => "Enter non-negative USD amounts with no more than two decimal places.",
+        (_, "policy") => "Use 1–5 complete steps, a $0 first-stage minimum, nondecreasing USD thresholds, and a valid person email for specific-account steps.",
+        (_, "policy-approver") => "This chain cannot be completed by distinct, eligible organization approvers. Check each role and specific account, then make sure every team has enough approvers.",
         (_, "lines") => "Add at least one complete item. Each item needs a name, quantity, and unit price; there can be up to 20 items.",
         (_, "self") => "You can’t approve your own request.",
         (_, "reason") => "Add a short reason when rejecting a request.",
@@ -250,7 +368,11 @@
         email = access.Account?.Email ?? "";
         Today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToPacific().DateTime).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         teams = access.Tree.Ordered(g => access.IsOwner || access.CanSee(g.Id) || access.CanManageGroup(g.Id)).ToList();
+        policyOrgs = access.Tree.All.Where(g => g.Parent is null && access.CanManageGroup(g.Id)).OrderBy(g => g.Name).ToList();
+        allAccounts = (await Accounts.ListAsync()).ToList();
+        policies = policyOrgs.ToDictionary(g => g.Id, g => Store.GetPolicy(g.Id));
+        policyHistory = policyOrgs.ToDictionary(g => g.Id, g => Store.ListPolicyEvents(g.Id));
         requests = Store.ListVisible(access).ToList();
-        people = (await Accounts.ListAsync()).ToDictionary(p => p.Email, StringComparer.OrdinalIgnoreCase);
+        people = allAccounts.ToDictionary(p => p.Email, StringComparer.OrdinalIgnoreCase);
     }
 }

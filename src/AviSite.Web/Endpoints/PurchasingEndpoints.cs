@@ -17,6 +17,51 @@ public static class PurchasingEndpoints
     {
         var group = app.MapGroup("/admin/purchasing").RequireAuthorization(AdminEndpoints.PurchasingPolicy);
 
+        group.MapPost("/policy", async ([FromForm] string? organizationId, HttpContext http, IAccountStore accounts, PurchasingStore store) =>
+        {
+            var access = await http.AccessAsync(accounts);
+            var actor = access.Account?.Email;
+            var organization = access.Tree.Find(organizationId);
+            if (actor is null || organization is null || organization.Parent is not null || !access.CanManageGroup(organization.Id)) return Results.NotFound();
+            var form = await http.Request.ReadFormAsync(http.RequestAborted);
+            var labels = form["stepLabel"].ToArray();
+            var types = form["stepType"].ToArray();
+            var emails = form["stepEmail"].ToArray();
+            var minimums = form["stepMinimum"].ToArray();
+            if (labels.Length != types.Length || labels.Length != emails.Length || labels.Length != minimums.Length || labels.Length > 5) return Back(error: "policy");
+            var rules = new List<PurchaseApprovalRule>();
+            long previousMinimum = -1;
+            for (var i = 0; i < labels.Length; i++)
+            {
+                var label = Clean(labels[i], 80);
+                var type = types[i]?.Trim();
+                var email = Clean(emails[i], 254);
+                var minimumText = minimums[i]?.Trim();
+                var touched = label is not null || !string.IsNullOrWhiteSpace(type) || email is not null || !string.IsNullOrWhiteSpace(minimumText);
+                if (!touched) continue;
+                if (label is null || type is not ("TeamManager" or "Lead" or "Officer" or "Owner" or "Email")
+                    || !TryApprovalThreshold(minimumText, out var minimum) || minimum < previousMinimum
+                    || (rules.Count == 0 && minimum != 0)
+                    || (type == "Email" && (email is null || !Regex.IsMatch(email, "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")))) return Back(error: "policy");
+                rules.Add(new PurchaseApprovalRule(rules.Count + 1, label, type, type == "Email" ? email!.ToLowerInvariant() : "", minimum));
+                previousMinimum = minimum;
+            }
+            if (rules.Count == 0) return Back(error: "policy");
+            var configuredAccounts = await accounts.ListAsync(http.RequestAborted);
+            if (!PurchasingStore.PolicyCanComplete(organization.Id, rules, configuredAccounts, access.Tree)) return Back(error: "policy-approver");
+            store.SavePolicy(organization.Id, actor, rules);
+            return Back(done: "policy");
+        });
+
+        group.MapPost("/policy/reset", async ([FromForm] string? organizationId, HttpContext http, IAccountStore accounts, PurchasingStore store) =>
+        {
+            var access = await http.AccessAsync(accounts);
+            var organization = access.Tree.Find(organizationId);
+            if (access.Account?.Email is null || organization is null || organization.Parent is not null || !access.CanManageGroup(organization.Id)) return Results.NotFound();
+            store.ResetPolicy(organization.Id, access.Account.Email);
+            return Back(done: "policy-reset");
+        });
+
         group.MapPost("/requests", async ([FromForm] string? teamId, [FromForm] string? title, [FromForm] string? supplier,
             [FromForm] string? supplierUrl, [FromForm] string? purpose, [FromForm] string? rationale, [FromForm] string? subsystem,
             [FromForm] string? requestedDelivery, [FromForm] string? estimatedTax, [FromForm] string? estimatedShipping,
@@ -70,9 +115,10 @@ public static class PurchasingEndpoints
             if (lines.Sum(l => checked((long)l.Quantity * l.UnitPriceCents)) + tax + shipping > 100_000_000_000_000L) return Back(error: "cost");
 
             var orgId = HoursRules.OrgOf(teamId!, access.Tree); // derive tenant from the validated group; never trust a posted org id
+            var availableAccounts = await accounts.ListAsync(http.RequestAborted);
             var request = store.Create(new PurchaseDraft(orgId, teamId!, actor, title, supplier, supplierUrl, purpose, rationale, subsystem,
-                string.IsNullOrWhiteSpace(requestedDelivery) ? null : delivery, tax, shipping, lines));
-            return Back(done: "submitted", id: request.Code);
+                string.IsNullOrWhiteSpace(requestedDelivery) ? null : delivery, tax, shipping, lines), availableAccounts, access.Tree);
+            return request is null ? Back(error: "policy-approver") : Back(done: "submitted", id: request.Code);
         });
 
 
@@ -80,6 +126,19 @@ public static class PurchasingEndpoints
             await Decide(id, true, note, http, accounts, store));
         group.MapPost("/requests/{id}/reject", async ([FromRoute] string id, [FromForm] string? note, HttpContext http, IAccountStore accounts, PurchasingStore store) =>
             await Decide(id, false, note, http, accounts, store));
+        group.MapPost("/requests/{id}/override-reject", async ([FromRoute] string id, [FromForm] string? note,
+            HttpContext http, IAccountStore accounts, PurchasingStore store) =>
+        {
+            var access = await http.AccessAsync(accounts);
+            var actor = access.Account?.Email;
+            var request = store.Get(id);
+            if (actor is null || request is null || !access.IsOwner) return Results.NotFound();
+            note = Clean(note, 240);
+            if (note is null) return Back(error: "reason");
+            return store.OwnerOverrideReject(id, actor, access, note)
+                ? Back(done: "override-rejected", id: request.Code)
+                : Back(error: "state");
+        });
 
         group.MapPost("/requests/{id}/order", async ([FromRoute] string id, [FromForm] string? orderedDate, [FromForm] string? vendorReference,
             HttpContext http, IAccountStore accounts, PurchasingStore store, TimeProvider clock) =>
@@ -124,12 +183,16 @@ public static class PurchasingEndpoints
         var access = await http.AccessAsync(accounts);
         var actor = access.Account?.Email;
         var request = store.Get(id);
-        if (actor is null || request is null || !CanManage(access, request)) return Results.NotFound();
+        var currentAccounts = await accounts.ListAsync(http.RequestAborted);
+        if (actor is null || request is null) return Results.NotFound();
         if (string.Equals(request.RequesterEmail, actor, StringComparison.OrdinalIgnoreCase)) return Back(error: "self");
+        if (!store.CanDecide(access, request, currentAccounts, approve)) return Results.NotFound();
         note = Clean(note, 240);
         if (!approve && note is null) return Back(error: "reason");
-        var ok = store.Decide(id, actor, approve, note);
-        return ok ? Back(done: approve ? "approved" : "rejected", id: request.Code) : Back(error: "state");
+        var ok = store.Decide(id, actor, access, currentAccounts, approve, note);
+        if (!ok) return Back(error: "state");
+        var finalApproval = approve && store.Get(id)?.Status == PurchaseStatus.Approved;
+        return Back(done: approve ? finalApproval ? "approved" : "step-approved" : "rejected", id: request.Code);
     }
 
     private static bool CanManage(Access access, PurchaseRequest request) => access.IsOwner || access.CanManageGroup(request.TeamId);
@@ -154,6 +217,16 @@ public static class PurchasingEndpoints
         var trimmed = raw.Trim();
         if (trimmed.Length > 2048 || !Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https") || string.IsNullOrWhiteSpace(uri.Host)) return false;
         value = uri.AbsoluteUri;
+        return true;
+    }
+
+    private static bool TryApprovalThreshold(string? raw, out long cents)
+    {
+        cents = 0;
+        if (string.IsNullOrWhiteSpace(raw)) return true;
+        if (!decimal.TryParse(raw.Trim(), NumberStyles.AllowDecimalPoint, Invariant, out var amount)
+            || amount < 0 || amount > 1_000_000_000_000m || amount * 100 != decimal.Truncate(amount * 100)) return false;
+        cents = decimal.ToInt64(amount * 100);
         return true;
     }
 
