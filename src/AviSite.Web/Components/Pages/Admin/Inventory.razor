@@ -1,0 +1,37 @@
+@page "/admin/inventory"
+@attribute [Authorize(Policy = AviSite.Web.Endpoints.AdminEndpoints.PurchasingPolicy)]
+@using AviSite.Web.Endpoints
+@using AviSite.Web.Store
+@inject IAccountStore Accounts
+@inject InventoryStore Stock
+<PageTitle>Inventory · AVI Robotics</PageTitle>
+<HeadContent><meta name="robots" content="noindex" /><link rel="stylesheet" href="/css/inventory.css" /></HeadContent>
+<section class="section admin inventory"><div class="wrap">
+    <p class="eyebrow">Team supplies</p><h1 class="h1">Inventory</h1>
+    <p class="muted">See what is on hand, record every stock movement, and catch items that need reordering.</p>
+    @if (organization is null) { <p role="status">Your account has no inventory groups yet.</p> }
+    else {
+        <form method="get" action="/admin/inventory" class="inventory-filter"><label>Organization <select name="organizationId"><option value="@organization.Id">@organization.Name</option></select></label><label>Search items <input name="q" value="@Query" placeholder="Name, SKU, category or location" /></label><label class="inventory-check"><input type="checkbox" name="low" value="true" checked="@(Low == "true")" /> Needs reorder</label><button class="btn btn--ink" type="submit">Search</button><a class="btn btn--ghost" href="/admin/inventory/items.csv?organizationId=@organization.Id">Download CSV</a></form>
+        @if (Status is not null) { <p class="inventory-status" role="status">@StatusText</p> }
+        <div class="inventory-list"><h2 class="h2">Items</h2>
+        @if (items.Count == 0) { <p>No items match. Add an item below.</p> }
+        @foreach(var item in items) { <article class="inventory-card"><div><h3>@item.Name</h3><p class="muted">@item.Sku · @item.Category · @item.Location</p></div><p class="inventory-balance @(item.Balance <= item.Minimum ? "is-low" : "")"><strong>@item.Balance</strong> @item.Unit <span>minimum @item.Minimum</span></p>
+          <details><summary>Record stock movement</summary><form method="post" action="/admin/inventory/movement" class="inventory-move"><AntiforgeryToken/><input type="hidden" name="itemId" value="@item.Id"/><input type="hidden" name="organizationId" value="@organization.Id"/><label>Action<select name="kind"><option>Receive</option><option>Issue</option><option>Adjust</option></select></label><label>Quantity<input type="number" name="quantity" min="0.001" step="0.001" required/></label><label>Reason<input name="reason" maxlength="240" required/></label><button class="btn btn--accent">Save movement</button></form></details>
+          <details><summary>Transaction history</summary><ol>@foreach(var movement in Stock.Ledger(item.Id,organization.Id)){<li>@movement.AtUtc.ToString("u") — @movement.Kind @movement.Quantity; balance @movement.BalanceAfter; @movement.Reason (@movement.Actor)</li>}</ol></details>
+        </article> }
+        </div>
+        @if (CanManage) { <details class="inventory-create"><summary>Add an item</summary><form method="post" action="/admin/inventory/items" class="inventory-form"><AntiforgeryToken/><label>Team<select name="teamId" required>@foreach(var team in managedTeams){<option value="@team.Id">@team.Name</option>}</select></label><label>Name<input name="name" maxlength="120" required/></label><label>SKU<input name="sku" maxlength="60" required/></label><label>Category<input name="category" maxlength="80" required/></label><label>Location<input name="location" maxlength="120" required/></label><label>Unit<input name="unit" maxlength="30" placeholder="each, box, metre" required/></label><label>Reorder when at or below<input type="number" name="minimum" min="0" step="0.001" value="0" required/></label><label>Opening on-hand quantity<input type="number" name="openingQuantity" min="0" step="0.001" value="0" required/></label><label>Opening balance reason<input name="openingReason" maxlength="240" placeholder="Required when quantity is above zero"/></label><label>Supplier<input name="supplier" maxlength="120"/></label><label>Notes<textarea name="notes" maxlength="1000"></textarea></label><button class="btn btn--accent">Create item</button></form></details> }
+    }
+</div></section>
+@code {
+ [CascadingParameter] public HttpContext? Http {get;set;}
+ [SupplyParameterFromQuery(Name="organizationId")] public string? OrganizationId {get;set;}
+ [SupplyParameterFromQuery(Name="q")] public string? Query {get;set;}
+ [SupplyParameterFromQuery(Name="low")] public string? Low {get;set;}
+ [SupplyParameterFromQuery(Name="status")] public string? Status {get;set;}
+ private Account? account; private Access access=new(); private AccountGroup? organization; private List<AccountGroup> managedTeams=[]; private IReadOnlyList<InventoryItem> items=[];
+ private bool CanManage=>managedTeams.Count>0;
+ private string StatusText=>Status switch{"created"=>"Item added.","saved"=>"Stock movement recorded.","stock"=>"That movement would make stock negative, or the item is outside this organization.","duplicate"=>"That SKU already exists in this organization.",_=>"Check the item details and try again."};
+ protected override async Task OnInitializedAsync(){if(Http is null)return;access=await Http.AccessAsync(Accounts);account=access.Account;var groups=access.Tree.All;var roots=groups.Where(g=>g.Parent is null&&groups.Any(child=>IsWithin(child.Id,g.Id)&&access.CanSee(child.Id))).ToList();organization=roots.FirstOrDefault(g=>g.Id==OrganizationId)??roots.FirstOrDefault();if(organization is null)return; managedTeams=groups.Where(g=>access.CanManageGroup(g.Id)&&IsWithin(g.Id,organization.Id)).ToList();items=Stock.List(organization.Id,Query,Low=="true");}
+ private bool IsWithin(string child,string root){for(var g=access.Tree.Find(child);g is not null;g=access.Tree.Find(g.Parent))if(g.Id==root)return true;return false;}
+}
