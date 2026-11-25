@@ -102,7 +102,7 @@ else
             <h4>@matrix.Title @(matrix.Archived ? "(archived)" : "")</h4>
             <p>Team: @access.Tree.Path(matrix.TeamId) · Updated by @matrix.UpdatedBy at @matrix.UpdatedUtc.ToString("u")</p>
             <p>Weights normalized: each entered weight ÷ @matrix.State.Criteria.Sum(x => x.Weight).ToString("G29"). Ties share rank; options with missing scores are unranked, not zero.</p>
-            <ol>@foreach (var result in matrix.Results.OrderBy(x => x.Rank ?? int.MaxValue)) { <li>@result.Alternative — @(result.MissingScores ? "Missing score; not ranked" : $"{result.WeightedScore:0.0000} (rank {result.Rank})")</li> }</ol>
+            <ol>@foreach (var result in matrix.Results.OrderBy(x => x.Rank ?? int.MaxValue)) { <li>@result.Alternative — @(result.MissingScores ? "Missing score; not ranked" : $"{result.WeightedScore?.ToString("0.0000", CultureInfo.InvariantCulture)} (rank {result.Rank})")</li> }</ol>
             <p>Audit: @string.Join(" · ", Store.AuditFor(matrix.Id, matrix.OrganizationId, matrix.TeamId).Select(a => $"{a.Action} by {a.Actor} at {a.AtUtc:u}"))</p>
             <div class="dm-actions">
                 <a aria-label="Download CSV for @matrix.Title" href="/admin/decision-matrices/@matrix.Id/export.csv?teamId=@Uri.EscapeDataString(matrix.TeamId)">Download CSV</a>

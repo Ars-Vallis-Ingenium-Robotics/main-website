@@ -45,7 +45,7 @@ public static class DecisionMatrixRules
         if (d.Alternatives.Select(a => a.Name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() != d.Alternatives.Count
             || d.Criteria.Select(c => c.Name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() != d.Criteria.Count)
             throw new ArgumentException("Alternative and criterion names must be unique.");
-        if (d.Scores.Count != d.Alternatives.Count * d.Criteria.Count || d.Scores.Any(s => s is null || s.Alternative < 0 || s.Alternative >= d.Alternatives.Count || s.Criterion < 0 || s.Criterion >= d.Criteria.Count || s.Score is < 0 or > 100 || (s.Rationale?.Length ?? 0) > 1000) || d.Scores.Select(s => (s.Alternative, s.Criterion)).Distinct().Count() != d.Scores.Count) throw new ArgumentException("Each alternative/criterion pair must have exactly one score (0–100) or an explicit blank, with valid rationale.");
+        if (d.Scores.Count != d.Alternatives.Count * d.Criteria.Count || d.Scores.Any(s => s is null || s.Alternative < 0 || s.Alternative >= d.Alternatives.Count || s.Criterion < 0 || s.Criterion >= d.Criteria.Count || s.Score is < 0 or > 100 || s.Rationale is null || s.Rationale.Replace("\r\n", "\n").Length > 1000) || d.Scores.Select(s => (s.Alternative, s.Criterion)).Distinct().Count() != d.Scores.Count) throw new ArgumentException("Each alternative/criterion pair must have exactly one score (0–100) or an explicit blank, with valid rationale.");
     }
 }
 
@@ -72,7 +72,13 @@ public sealed class DecisionMatrixStore(SiteDb db, TimeProvider clock)
     }
 
     public DecisionMatrix? Get(string id, string org, string team)
-    { using var c=db.Open(); using var cmd=SiteDb.Cmd(c,"SELECT title,archived,state_json,updated_by,updated_utc FROM decision_matrices WHERE id=$id AND organization_id=$org AND team_id=$team",null,("$id",id),("$org",org),("$team",team)); using var r=cmd.ExecuteReader(); if(!r.Read()) return null; var d=JsonSerializer.Deserialize<MatrixDraft>(r.GetString(2))!; return new(id,org,team,r.GetString(0),r.GetInt64(1)!=0,r.GetString(3),SiteDb.Time(r.GetString(4)),d,DecisionMatrixRules.Calculate(d)); }
+    { using var c=db.Open(); using var cmd=SiteDb.Cmd(c,"SELECT title,archived,state_json,updated_by,updated_utc FROM decision_matrices WHERE id=$id AND organization_id=$org AND team_id=$team",null,("$id",id),("$org",org),("$team",team)); using var r=cmd.ExecuteReader(); if(!r.Read()) return null; try { var d=JsonSerializer.Deserialize<MatrixDraft>(r.GetString(2)); if(d is null)return null; return new(id,org,team,r.GetString(0),r.GetInt64(1)!=0,r.GetString(3),SiteDb.Time(r.GetString(4)),d,DecisionMatrixRules.Calculate(d)); } catch (Exception ex) when (ex is JsonException or ArgumentException or NullReferenceException or InvalidOperationException or OverflowException or FormatException) { return null; } }
+    private static string NextTimestamp(DateTimeOffset current, string? previous)
+    {
+        var now = current.ToUniversalTime();
+        if (previous is not null && DateTimeOffset.TryParseExact(previous, "yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsed) && now <= parsed) now = parsed.AddMilliseconds(1);
+        return SiteDb.Iso(now);
+    }
     public bool Save(MatrixDraft draft, string actor, bool editing, string? expectedUpdatedUtc = null)
     {
         DecisionMatrixRules.Validate(draft);
@@ -86,11 +92,8 @@ public sealed class DecisionMatrixStore(SiteDb db, TimeProvider clock)
             Criteria = draft.Criteria.Select(c => c with { Name = c.Name.Trim() }).ToArray(),
             Scores = draft.Scores.Select(s => s with { Rationale = s.Rationale.Trim() }).ToArray()
         };
-        var now = SiteDb.Iso(clock.GetUtcNow());
-        if (editing && expectedUpdatedUtc is not null && string.CompareOrdinal(now, expectedUpdatedUtc) <= 0
-            && DateTimeOffset.TryParseExact(expectedUpdatedUtc, "yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture,
-                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var expected))
-            now = SiteDb.Iso(expected.AddMilliseconds(1));
+        var now = NextTimestamp(clock.GetUtcNow(), expectedUpdatedUtc);
+
         using var c = db.Open();
         using var tx = c.BeginTransaction();
         using var write = SiteDb.Cmd(c, editing ? """
@@ -108,9 +111,9 @@ public sealed class DecisionMatrixStore(SiteDb db, TimeProvider clock)
         return true;
     }
     public bool Archive(string id,string org,string team,string actor,bool archived)
-    { using var c=db.Open(); using var tx=c.BeginTransaction(); var now=SiteDb.Iso(clock.GetUtcNow()); var draft=Read(c,tx,id,org,team); if(draft is null)return false; using var update=SiteDb.Cmd(c,"UPDATE decision_matrices SET archived=$a,updated_by=$actor,updated_utc=$now WHERE id=$id AND organization_id=$org AND team_id=$team AND archived<>$a",tx,("$a",archived?1:0),("$actor",actor),("$now",now),("$id",id),("$org",org),("$team",team)); if(update.ExecuteNonQuery()!=1)return false; Audit(c,tx,draft,archived?"Archived":"Restored",actor,now); tx.Commit(); return true; }
+    { using var c=db.Open(); using var tx=c.BeginTransaction(); var draft=Read(c,tx,id,org,team); if(draft is null)return false; using var current=SiteDb.Cmd(c,"SELECT updated_utc FROM decision_matrices WHERE id=$id AND organization_id=$org AND team_id=$team",tx,("$id",id),("$org",org),("$team",team)); var now=NextTimestamp(clock.GetUtcNow(),current.ExecuteScalar() as string); using var update=SiteDb.Cmd(c,"UPDATE decision_matrices SET archived=$a,updated_by=$actor,updated_utc=$now WHERE id=$id AND organization_id=$org AND team_id=$team AND archived<>$a",tx,("$a",archived?1:0),("$actor",actor),("$now",now),("$id",id),("$org",org),("$team",team)); if(update.ExecuteNonQuery()!=1)return false; Audit(c,tx,draft,archived?"Archived":"Restored",actor,now); tx.Commit(); return true; }
     public IReadOnlyList<MatrixAudit> AuditFor(string id,string org,string team)
     { using var c=db.Open(); using var cmd=SiteDb.Cmd(c,"SELECT action,actor,at_utc FROM decision_matrix_audit WHERE matrix_id=$id AND organization_id=$org AND team_id=$team ORDER BY id",null,("$id",id),("$org",org),("$team",team)); var a=new List<MatrixAudit>(); using var r=cmd.ExecuteReader(); while(r.Read())a.Add(new(r.GetString(0),r.GetString(1),SiteDb.Time(r.GetString(2)))); return a; }
-    private static MatrixDraft? Read(SqliteConnection c,SqliteTransaction tx,string id,string org,string team){using var cmd=SiteDb.Cmd(c,"SELECT state_json FROM decision_matrices WHERE id=$id AND organization_id=$org AND team_id=$team",tx,("$id",id),("$org",org),("$team",team)); return cmd.ExecuteScalar() is string s?JsonSerializer.Deserialize<MatrixDraft>(s):null;}
+    private static MatrixDraft? Read(SqliteConnection c,SqliteTransaction tx,string id,string org,string team){using var cmd=SiteDb.Cmd(c,"SELECT state_json FROM decision_matrices WHERE id=$id AND organization_id=$org AND team_id=$team",tx,("$id",id),("$org",org),("$team",team)); if(cmd.ExecuteScalar() is not string s)return null; try { var draft=JsonSerializer.Deserialize<MatrixDraft>(s); if(draft is null)return null; DecisionMatrixRules.Validate(draft); return draft; } catch (Exception ex) when (ex is JsonException or ArgumentException or NullReferenceException or InvalidOperationException or OverflowException or FormatException) { return null; }}
     private static void Audit(SqliteConnection c,SqliteTransaction tx,MatrixDraft d,string action,string actor,string now)=>SiteDb.Exec(c,"INSERT INTO decision_matrix_audit(matrix_id,organization_id,team_id,action,actor,at_utc) VALUES($id,$org,$team,$action,$actor,$now)",tx,("$id",d.Id),("$org",d.OrganizationId),("$team",d.TeamId),("$action",action),("$actor",actor),("$now",now));
 }

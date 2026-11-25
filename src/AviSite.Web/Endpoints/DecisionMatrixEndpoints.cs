@@ -34,7 +34,8 @@ public static class DecisionMatrixEndpoints
         if (access.Account?.Email is not { } actor || teamId is null || access.Tree.Find(teamId) is null
             || !access.CanSee(teamId) || !access.CanManageGroup(teamId)) return Results.NotFound();
         var org = HoursRules.OrgOf(teamId, access.Tree);
-        if (editId is not null && store.Get(editId, org, teamId) is not { Archived: false }) return Results.NotFound();
+        var existing = editId is null ? null : store.Get(editId, org, teamId);
+        if (editId is not null && existing is not { Archived: false }) return Results.NotFound();
 
         var form = await http.Request.ReadFormAsync(http.RequestAborted);
         var alternatives = form["alternative"].ToArray(); var aNotes = form["alternativeNotes"].ToArray();
@@ -47,6 +48,7 @@ public static class DecisionMatrixEndpoints
         if (!DecisionMatrixRules.ValidDimensions(alternatives.Length, criteria.Length)
             || alternatives.Length != aNotes.Length || criteria.Length != weights.Length || criteria.Length != cNotes.Length
             || rawScores.Length != alternatives.Length * criteria.Length || rawScores.Length != rationales.Length) return Invalid();
+        if (existing is not null && (alternatives.Length != existing.State.Alternatives.Count || criteria.Length != existing.State.Criteria.Count)) return Invalid();
 
         try
         {
@@ -56,7 +58,8 @@ public static class DecisionMatrixEndpoints
                 rawScores.Select((score, i) => new MatrixScore(i / criteria.Length, i % criteria.Length,
                     string.IsNullOrWhiteSpace(score) ? null : int.Parse(score, CultureInfo.InvariantCulture), rationales[i] ?? "")).ToArray());
             var versions = form!["expectedUpdatedUtc"];
-            var expectedVersion = versions.Count == 1 ? versions[0] : null;
+            if (editId is not null && (versions.Count != 1 || string.IsNullOrWhiteSpace(versions[0]))) return Invalid();
+            var expectedVersion = editId is null ? null : versions[0];
             return store.Save(draft, actor, editId is not null, expectedVersion)
                 ? Back("saved")
                 : editId is null ? Results.NotFound() : Results.Text("This matrix changed in another session. Reload it before saving again.", statusCode: StatusCodes.Status409Conflict);

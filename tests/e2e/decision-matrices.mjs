@@ -229,7 +229,7 @@ async function check() {
   replaceFields(maximum, "rationale", Array(400).fill(""));
   await expectPost(lead, `${matrix}/save`, maximum, 302, "saved");
   assert.equal((await lead.goto(`${base}${matrix}`)).status(), 200);
-  assert.equal(await card(lead, "Maximum dimensions").count(), 1, "20×20 matrix saves across the default form-field limit");
+  assert.equal(await card(lead, "Maximum dimensions").count(), 1, "20×20 matrix saves with 400 repeated score and rationale fields");
   const csvResponseHeaders = await lead.request.get(`${base}${csvPath}`);
   assert.equal(csvResponseHeaders.status(), 200, "existing matrix remains available after max-size save");
   const parentLead = await signIn(parentLeadEmail);
@@ -288,6 +288,18 @@ async function check() {
   const noToken = new URLSearchParams(revision);
   noToken.delete(token);
   await expectPost(lead, updatePath, noToken, 400);
+  const malformedToken = new URLSearchParams(revision);
+  malformedToken.set("expectedUpdatedUtc", "not-a-timestamp");
+  await expectPost(lead, updatePath, malformedToken, 409);
+  const multiToken = new URLSearchParams(revision);
+  multiToken.append("expectedUpdatedUtc", "second-token");
+  await expectPost(lead, updatePath, multiToken, 302, "invalid");
+  const changedDimensions = new URLSearchParams(revision);
+  replaceFields(changedDimensions, "alternative", ["Delta", "Beta"]);
+  replaceFields(changedDimensions, "alternativeNotes", ["Prototype", "Incumbent"]);
+  replaceFields(changedDimensions, "score", ["100", "50", "80", "50", "100", "70"]);
+  replaceFields(changedDimensions, "rationale", ["Repeatable", "Trial", "Timing", "Estimate", "Tested", "Measured"]);
+  await expectPost(lead, updatePath, changedDimensions, 302, "invalid");
   const badRevision = new URLSearchParams(revision);
   replaceFields(badRevision, "weight", ["0", "1", "1"]);
   await expectPost(lead, updatePath, badRevision, 302, "invalid");
@@ -314,11 +326,15 @@ async function check() {
   await expectPost(lead, archivePath, new URLSearchParams({ teamId: team, [token]: archiveToken }), 404);
   assert.equal((await lead.goto(`${base}${scoped(editPath)}`)).status(), 404);
   await expectPost(lead, updatePath, revision, 404);
+  const memberRestoreFields = new URLSearchParams({ teamId: team });
+  memberRestoreFields.set(token, await field(member.locator('form[action="/admin/logout"]').first(), token).inputValue());
+  await expectPost(member, restorePath, memberRestoreFields, 404);
   await lead.goto(`${base}${matrix}`);
   await archived.locator(`form[action="${restorePath}"]`).getByRole("button", { name: "Restore Revised robot design" }).click();
   const restored = card(lead, "Revised robot design");
   assert.match(await restored.innerText(), /Restored by matrix-lead@example\.com/);
   assert.equal(await card(lead, "Revised robot design (archived)").count(), 0);
+  await expectPost(lead, restorePath, new URLSearchParams({ teamId: team, [token]: archiveToken }), 404);
   console.log("PASS live decision matrices: configurable 2×1–20×20 creation, weighted ties/missing scores, validation, CSV safety, edit concurrency, archive/restore, antiforgery, and access isolation");
 }
 
